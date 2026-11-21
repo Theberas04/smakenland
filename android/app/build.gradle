@@ -57,6 +57,10 @@ android {
 }
 
 dependencies {
+  // De kotlin-standaardbibliotheek wordt door meerdere androidx-delen meegetrokken;
+  // zonder deze BOM botst kotlin-stdlib-jdk8 (1.6.21) met kotlin-stdlib (1.8.22)
+  // en weigert de bouw op dubbele klassen.
+  implementation platform('org.jetbrains.kotlin:kotlin-bom:1.8.22')
   // Deze versies passen bij compileSdk 35. Nieuwere androidx.core (1.17) eist
   // compileSdk 36 en dan moet ook de Android Gradle Plugin omhoog; dat is voor
   // deze dunne WebView-schil niet nodig.

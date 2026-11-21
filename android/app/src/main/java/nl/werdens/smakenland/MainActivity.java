@@ -39,7 +39,9 @@ public class MainActivity extends ComponentActivity {
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    WindowCompat.enableEdgeToEdge(getWindow());
+    // Rand tot rand: de app tekent onder de systeembalken, en de houder eronder
+    // zet de balken als padding. setDecorFitsSystemWindows werkt in elke androidx.core.
+    WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
 
     webView = new WebView(this);
     webView.setBackgroundColor(Color.rgb(246, 241, 231));
