@@ -65,10 +65,7 @@ def main():
     for naam, svg in data["kisten"].items():
         html.append(f'<div class="cel kistvak">{svg}<small>{naam}</small></div>')
     html.append("</div>")
-    html.append('<h2>Gebieden (achtergrond)</h2><div class="rij" style="grid-template-columns:repeat(3,1fr)">')
-    for naam, svg in data["gebieden"].items():
-        html.append(f'<div class="lucht">{svg}<small>{naam}</small></div>')
-    html.append("</div></body></html>")
+    html.append("</body></html>")
 
     with open(PROEF, "w", encoding="utf-8") as f:
         f.write("\n".join(html))
@@ -81,7 +78,7 @@ def main():
     ])
     subprocess.run([
         chromium(), "--headless=new", "--no-sandbox", "--disable-gpu", "--hide-scrollbars",
-        "--force-device-scale-factor=1", "--window-size=1180,2150",
+        "--force-device-scale-factor=1", "--window-size=1120,1180",
         f"--screenshot={DOEL}", "file://" + PROEF,
     ], check=True, env=omgeving, capture_output=True)
     os.remove(PROEF)

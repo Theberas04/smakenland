@@ -242,15 +242,22 @@ def boeket(p):
 
 
 def lotus(p):
-    return item(p, schaduw(50, 84, 28, 5) + f'''
-<defs>{verloop(p + '-a', [[0, '#ffd9ec'], [1, '#d05b96']])}
-{verloop(p + '-b', [[0, '#ffeaf4'], [1, '#e88ab5']])}</defs>
-<ellipse cx="30" cy="56" rx="16" ry="9" fill="url(#{p}-b)" transform="rotate(18 30 56)"/>
-<ellipse cx="70" cy="56" rx="16" ry="9" fill="url(#{p}-b)" transform="rotate(-18 70 56)"/>
-<ellipse cx="50" cy="52" rx="15" ry="13" fill="url(#{p}-a)"/>
-<ellipse cx="50" cy="60" rx="24" ry="10" fill="url(#{p}-b)" opacity=".95"/>
-<path d="M50 44 C54 50 54 58 50 64" fill="none" stroke="#b8447a" stroke-width="1.6" opacity=".5"/>
-<path d="M42 46 C46 52 46 58 42 62 M58 46 C54 52 54 58 58 62" fill="none" stroke="#b8447a" stroke-width="1.4" opacity=".4"/>''')
+    # Bloemblaadjes met een punt: dat leest als een lotus, platte ovalen niet.
+    def blad(cx, cy, schaal, rot, donker):
+        return (f'<path d="M0 -16 C7 -7 8 6 0 15 C-8 6 -7 -7 0 -16 Z" '
+                f'fill="{"url(#%s-b)" % p if donker else "url(#%s-a)" % p}" '
+                f'transform="translate({cx} {cy}) rotate({rot}) scale({schaal})"/>')
+    return item(p, schaduw(50, 88, 26, 5) + f'''
+<defs>{verloop(p + '-a', [[0, '#ffe1f0'], [0.55, '#ef8fbc'], [1, '#c2447a']])}
+{verloop(p + '-b', [[0, '#ffd0e6'], [0.5, '#e8749f'], [1, '#a02a5e']])}</defs>
+<ellipse cx="50" cy="80" rx="30" ry="7" fill="#2b2721" opacity=".18"/>
+{blad(50, 52, 1.15, -58, True)}
+{blad(50, 52, 1.15, 58, True)}
+{blad(50, 52, 1.25, -30, False)}
+{blad(50, 52, 1.25, 30, False)}
+{blad(50, 52, 1.5, 0, False)}
+<path d="M50 40 C53 46 53 52 50 58" fill="none" stroke="#b8447a" stroke-width="1.4" opacity=".5"/>
+<ellipse cx="50" cy="80" rx="22" ry="4" fill="#8e3a63" opacity=".35"/>''')
 
 
 def blossem(p):
@@ -373,27 +380,30 @@ def inktvis(p):
 
 
 def kreeft(p):
-    return item(p, schaduw(50, 90, 24, 5) + f'''
+    return item(p, schaduw(50, 92, 24, 5) + f'''
 <defs>{verloop(p + '-a', [[0, '#ff9a76'], [0.5, '#e2542c'], [1, '#a02a10']])}
-{verloop(p + '-b', [[0, '#ff8a6b'], [1, '#b03318']])}</defs>
-<!-- scharen -->
-<path d="M30 40 C18 32 8 34 6 42 C10 50 22 52 30 48 Z" fill="url(#{p}-b)"/>
-<path d="M70 40 C82 32 92 34 94 42 C90 50 78 52 70 48 Z" fill="url(#{p}-b)"/>
-<path d="M12 34 C18 26 26 26 30 32" fill="none" stroke="#a02a10" stroke-width="3.4" stroke-linecap="round"/>
-<path d="M88 34 C82 26 74 26 70 32" fill="none" stroke="#a02a10" stroke-width="3.4" stroke-linecap="round"/>
-<path d="M14 44 C8 38 4 38 2 42 M86 44 C92 38 96 38 98 42" fill="none" stroke="#a02a10" stroke-width="2.6" stroke-linecap="round"/>
-<!-- lijf -->
-<path d="M50 34 C64 34 70 46 68 60 C66 74 58 80 50 80 C42 80 34 74 32 60 C30 46 36 34 50 34 Z" fill="url(#{p}-a)"/>
-<path d="M34 52 C42 57 58 57 66 52 M34 60 C42 65 58 65 66 60 M36 68 C43 73 57 73 64 68" fill="none" stroke="#8c2a12" stroke-width="1.8" opacity=".7"/>
-<!-- staart -->
-<path d="M42 80 L34 92 L44 88 L50 94 L56 88 L66 92 L58 80 Z" fill="url(#{p}-a)"/>
-<!-- voetjes -->
-<path d="M32 56 L20 62 M32 66 L20 74 M68 56 L80 62 M68 66 L80 74" stroke="#a02a10" stroke-width="3.4" stroke-linecap="round"/>
-<!-- ogen en voelsprieten -->
-<path d="M44 36 C42 26 36 22 30 22 M56 36 C58 26 64 22 70 22" fill="none" stroke="#a02a10" stroke-width="2.4" stroke-linecap="round"/>
-<circle cx="43" cy="40" r="3.4" fill="#ffffff"/><circle cx="57" cy="40" r="3.4" fill="#ffffff"/>
-<circle cx="43" cy="41" r="2" fill="#2b2721"/><circle cx="57" cy="41" r="2" fill="#2b2721"/>
-<path d="M44 28 C48 24 52 24 56 28" fill="none" stroke="#ffffff" stroke-width="2" opacity=".5"/>''')
+{verloop(p + '-b', [[0, '#ff8a6b'], [1, '#c2331a']])}</defs>
+<!-- scharen: twee lobben met een opening ertussen, zodat het een schaar leest -->
+<path d="M32 44 C22 34 10 34 4 40 C10 46 22 48 32 48 Z" fill="url(#{p}-b)"/>
+<path d="M33 50 C24 50 12 50 5 46 C12 54 24 56 33 54 Z" fill="url(#{p}-b)"/>
+<path d="M68 44 C78 34 90 34 96 40 C90 46 78 48 68 48 Z" fill="url(#{p}-b)"/>
+<path d="M67 50 C76 50 88 50 95 46 C88 54 76 56 67 54 Z" fill="url(#{p}-b)"/>
+<!-- armen naar het lijf -->
+<path d="M44 52 C36 50 32 46 30 44 M56 52 C64 50 68 46 70 44" fill="none" stroke="#b03318" stroke-width="5" stroke-linecap="round"/>
+<!-- voelsprieten: dun, recht omhoog -->
+<path d="M44 32 L36 16 M56 32 L64 16" fill="none" stroke="#c2331a" stroke-width="2.2" stroke-linecap="round"/>
+<circle cx="36" cy="15" r="2" fill="#c2331a"/><circle cx="64" cy="15" r="2" fill="#c2331a"/>
+<!-- lijf met segmenten -->
+<path d="M50 30 C63 30 69 40 67 54 C65 68 58 78 50 78 C42 78 35 68 33 54 C31 40 37 30 50 30 Z" fill="url(#{p}-a)"/>
+<path d="M35 44 C42 49 58 49 65 44 M35 54 C42 59 58 59 65 54 M36 64 C43 69 57 69 64 64" fill="none" stroke="#8c2a12" stroke-width="1.8" opacity=".65"/>
+<!-- poten -->
+<path d="M34 58 L22 66 M35 68 L24 78 M66 58 L78 66 M65 68 L76 78" stroke="#b03318" stroke-width="3.2" stroke-linecap="round"/>
+<!-- staartwaaier -->
+<path d="M42 78 L32 90 L44 87 L50 94 L56 87 L68 90 L58 78 Z" fill="url(#{p}-a)"/>
+<!-- ogen -->
+<circle cx="44" cy="36" r="3.2" fill="#ffffff"/><circle cx="56" cy="36" r="3.2" fill="#ffffff"/>
+<circle cx="44" cy="37" r="1.8" fill="#2b2721"/><circle cx="56" cy="37" r="1.8" fill="#2b2721"/>
+<path d="M44 28 C48 24 52 24 56 28" fill="none" stroke="#ffffff" stroke-width="2" opacity=".45"/>''')
 
 
 def walvis(p):
