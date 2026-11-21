@@ -1,0 +1,8 @@
+# Opgeruimd materiaal
+node_modules/
+*.log
+.cache/
+__pycache__/
+
+# Tijdelijke profielen van de schermafbeeldingen
+docs/_icoon.html

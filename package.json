@@ -1,0 +1,13 @@
+{
+  "name": "smakenland",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Smakenland - een merge-spel voor de browser: oogst uit kisten, versmelt drie gelijke items en reis door de wereld.",
+  "scripts": {
+    "test": "node --test tests/engine.test.mjs",
+    "smoke": "node tests/smoke.mjs 8231",
+    "icons": "python3 tools/render_icons.py",
+    "beeld": "python3 scripts/shoot.py 8231"
+  },
+  "license": "UNLICENSED"
+}
