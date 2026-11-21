@@ -96,7 +96,8 @@
 
   function kleinBeeld(keten, tier, grootte) {
     const rij = ART.ketens[keten];
-    return '<span class="mini-kunst" style="width:' + (grootte || 26) + 'px">' +
+    const maat = grootte || 26;
+    return '<span class="mini-kunst" style="width:' + maat + 'px;height:' + maat + 'px">' +
       (rij ? rij[tier - 1] : '') + '</span>';
   }
 
@@ -280,6 +281,8 @@
       const view = window.SmakenlandSudokuView;
       houder.innerHTML = view ? view.kop() : '';
       $('merk-klein').textContent = 'sudoku';
+      // Het sudokubord is pas te meten als het zichtbaar is.
+      if (view && view.pasMaat) view.pasMaat();
       return;
     }
     if (scherm === 'kaart') {
@@ -579,6 +582,8 @@
     });
   }
 
+  let laatsteBordMaat = '';
+
   function pasMaat() {
     const breedte = bord.clientWidth;
     if (!breedte) return;
@@ -587,6 +592,18 @@
     const pad = parseFloat(stijl.paddingLeft) || 8;
     const tegel = (breedte - 2 * pad - (E.COLS - 1) * gap) / E.COLS;
     document.documentElement.style.setProperty('--tegel', tegel.toFixed(1) + 'px');
+    // Meld de GEMETEN maat van het bord, niet de bedoelde: de emulator-smoketest
+    // leest dit uit logcat en ziet zo dat het bord op een echt toestel acht rijen
+    // hoog is. Op de WebView van Android 11 klapte het bord in doordat `aspect-ratio`
+    // daar niet bestaat — met deze regel valt dat meteen op.
+    window.requestAnimationFrame(function () {
+      const hoogte = Math.round(bord.getBoundingClientRect().height);
+      const maat = E.COLS + 'x' + E.ROWS + ' hoogte=' + hoogte + ' tegel=' + Math.round(tegel);
+      if (maat !== laatsteBordMaat) {
+        laatsteBordMaat = maat;
+        console.info('SmakenlandBord=' + maat);
+      }
+    });
   }
 
   function bouwBord() {
@@ -1007,6 +1024,12 @@
 
     window.addEventListener('pagehide', function () { if (vrij) bewaarVrijNu(); });
     window.addEventListener('resize', pasMaat);
+    // De maat van de tegels volgt de echte breedte van het bord. Een resize--event
+    // alleen is niet genoeg: het bord kan ook van breedte veranderen doordat een
+    // paneel verschijnt, en dan stonden de tegels niet meer vierkant.
+    if (typeof ResizeObserver === 'function') {
+      new ResizeObserver(pasMaat).observe(bord);
+    }
     document.addEventListener('visibilitychange', function () {
       if (document.visibilityState === 'hidden') { if (vrij) bewaarVrijNu(); }
       else { E.tickEnergie(vrij); renderAlles(); }

@@ -47,6 +47,32 @@
     return (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
   }
 
+  /**
+   * Maakt het sudokubord vierkant door de hoogte gelijk te zetten aan de breedte.
+   * Bewust met de hand en niet met `aspect-ratio`: de WebView van Android 11 kent
+   * dat niet, en dan klapt het bord in tot een streep van een paar pixels.
+   */
+  function pasMaat() {
+    const houder = $('sudoku-bord');
+    if (!houder) return;
+    // De buitenmaat (met randen) is de maat die vierkant moet worden: met
+    // border-box is dat precies de hoogte die we moeten zetten.
+    const breedte = Math.round(houder.getBoundingClientRect().width);
+    if (!breedte) return;                       // scherm staat nog verborgen
+    houder.style.height = breedte + 'px';
+    window.requestAnimationFrame(function () {
+      const r = houder.getBoundingClientRect();
+      const maat = 'breedte=' + Math.round(r.width) + ' hoogte=' + Math.round(r.height) +
+        ' tegel=' + Math.round(r.width / 9);
+      if (maat !== laatsteMaat) {
+        laatsteMaat = maat;
+        console.info('SmakenlandSudoku ' + maat);
+      }
+    });
+  }
+
+  let laatsteMaat = '';
+
   function niveauKies(niveau) {
     Array.from(document.querySelectorAll('#sudoku-niveaus button')).forEach(function (b) {
       b.setAttribute('aria-pressed', b.dataset.niveau === niveau ? 'true' : 'false');
@@ -64,6 +90,7 @@
     niveauKies(puzzel.niveau);
     bewaar();
     render();
+    pasMaat();
   }
 
   // -------------------------------------------------------------- tekenen
@@ -284,6 +311,7 @@
       }
     }
     render();
+    pasMaat();                 // het bord moet vierkant staan zodra het zichtbaar is
     if (!klaar) startTimer();
   }
 
@@ -335,6 +363,7 @@
   function start() {
     bouw();
     bind();
+    window.addEventListener('resize', pasMaat);
     window.SmakenlandSudokuView = {
       toon: toon, opnieuw: opnieuw, kop: kop, statistiek: statistiek,
       nieuw: nieuwSpel,
@@ -343,7 +372,7 @@
       get klaar() { return klaar; },
       get fouten() { return fouten; },
       zetCijfer: zetCijfer, kiesCel: kiesCel, wis: wis, hint: hint,
-      timerUit: stopTimer
+      timerUit: stopTimer, pasMaat: pasMaat
     };
   }
 

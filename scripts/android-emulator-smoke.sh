@@ -81,6 +81,30 @@ adb exec-out screencap -p > scherm-level.png 2>/dev/null || true
 start_en_wacht "sudoku" "SmakenlandScherm=sudoku"
 adb exec-out screencap -p > scherm-sudoku.png 2>/dev/null || true
 
+# De maten die de pagina zelf meldt. Op een oude WebView (Android 11) kende CSS
+# `aspect-ratio` nog niet en klapten het bord en het sudokubord in tot niets; deze
+# twee regels zijn de controle dat dat niet meer gebeurt.
+bord_maat="$(adb logcat -d | grep -o 'SmakenlandBord=7x8 hoogte=[0-9]* tegel=[0-9]*' | tail -1 || true)"
+sudoku_maat="$(adb logcat -d | grep -o 'SmakenlandSudoku breedte=[0-9]* hoogte=[0-9]* tegel=[0-9]*' | tail -1 || true)"
+echo "bord:   ${bord_maat:-niets gemeld}"
+echo "sudoku: ${sudoku_maat:-niets gemeld}"
+bord_hoogte="$(echo "$bord_maat" | sed -n 's/.*hoogte=\([0-9]*\).*/\1/p')"
+bord_tegel="$(echo "$bord_maat" | sed -n 's/.*tegel=\([0-9]*\).*/\1/p')"
+sud_breedte="$(echo "$sudoku_maat" | sed -n 's/.*breedte=\([0-9]*\).*/\1/p')"
+sud_hoogte="$(echo "$sudoku_maat" | sed -n 's/.*hoogte=\([0-9]*\).*/\1/p')"
+if [ -z "$bord_hoogte" ] || [ "$bord_hoogte" -lt $(( bord_tegel * 7 )) ]; then
+  echo "::error::het bord is maar ${bord_hoogte:-0} px hoog; het klapt in op dit toestel"
+  exit 1
+fi
+if [ -z "$sud_hoogte" ] || [ "$sud_hoogte" -lt 200 ]; then
+  echo "::error::het sudokubord is maar ${sud_hoogte:-0} px hoog; het klapt in op dit toestel"
+  exit 1
+fi
+if [ $(( sud_hoogte > sud_breedte ? sud_hoogte - sud_breedte : sud_breedte - sud_hoogte )) -gt 4 ]; then
+  echo "::error::het sudokubord is niet vierkant: ${sud_breedte}x${sud_hoogte}"
+  exit 1
+fi
+
 # De updatecontrole loopt op de achtergrond bij het starten van de app. Met netwerk
 # hoort hier de eigen versie en wat GitHub zegt te staan; zonder netwerk een regel
 # dat het niet lukte. Beide zijn goed — stilletjes niets doen is dat niet.
