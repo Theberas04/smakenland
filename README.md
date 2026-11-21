@@ -9,6 +9,10 @@ Speelt op de computer én op de telefoon, werkt offline (PWA), en bewaart je pot
 
 ## Spelen
 
+Direct online: **https://theberas04.github.io/smakenland/**
+
+Of lokaal:
+
 ```bash
 python3 -m http.server 8080        # in deze map
 # open http://localhost:8080
@@ -52,6 +56,7 @@ Magie ✨→🌟 en Munten 🪙→💎. Zes gebieden van Smakendorp tot de Sterr
 | `tests/engine.test.mjs` | 22 tests op de spellogica |
 | `tests/smoke.mjs` | 51 controles op de echte pagina in een headless DOM |
 | `scripts/shoot.py` | speelt het spel in Chromium en maakt de schermafbeeldingen hierboven |
+| `scripts/check-live.py` | laadt een uitgerolde kopie in een echte browser, speelt één zet en meldt JS-fouten |
 
 `engine.js` is bewust DOM-vrij en werkt zowel in de browser als in Node, zodat de tests exact dezelfde
 regels gebruiken als het spel. Dezelfde RNG (met de seed in de save) maakt potjes herhaalbaar.
@@ -64,6 +69,7 @@ python3 -m http.server 8231 &                     # de pagina moet geserveerd wo
 node tests/smoke.mjs 8231                         # de pagina zelf, in jsdom
 python3 tools/render_icons.py                     # iconen opnieuw tekenen
 python3 scripts/shoot.py 8231                     # schermafbeeldingen opnieuw maken
+python3 scripts/check-live.py <url>               # controleer een uitgerolde kopie echt in de browser
 ```
 
 ## Wat er nog niet is
