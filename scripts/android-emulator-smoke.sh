@@ -95,7 +95,7 @@ start_en_wacht "sudoku" "SmakenlandScherm=sudoku"
 adb exec-out screencap -p > scherm-sudoku.png 2>/dev/null || true
 
 # En het sudokubord: dat moet vierkant zijn, ook zonder `aspect-ratio`.
-sudoku_maat="$(adb logcat -d | grep -o 'SmakenlandSudoku breedte=[0-9]* hoogte=[0-9]* tegel=[0-9]* cijfers=[0-9]*' | tail -1 || true)"
+sudoku_maat="$(adb logcat -d | grep -o 'SmakenlandSudoku maat=9x9 breedte=[0-9]* hoogte=[0-9]* tegel=[0-9]* cijfers=[0-9]*' | tail -1 || true)"
 echo "sudoku: ${sudoku_maat:-niets gemeld}"
 sud_breedte="$(echo "$sudoku_maat" | sed -n 's/.*breedte=\([0-9]*\).*/\1/p')"
 sud_hoogte="$(echo "$sudoku_maat" | sed -n 's/.*hoogte=\([0-9]*\).*/\1/p')"
@@ -113,6 +113,29 @@ if [ -z "$sud_cijfers" ] || [ "$sud_cijfers" -lt 20 ]; then
   exit 1
 fi
 
+# En de grootste maat op het toestel: 16x16 met letters. Dat is het scherm waar
+# alles het krapst is (vakjes van nog geen 20 pixels), dus een eigen foto en een
+# eigen controle. De app opent die maat via de diepe link #sudoku16.
+start_en_wacht "sudoku16" "SmakenlandScherm=sudoku"
+adb exec-out screencap -p > scherm-sudoku16.png 2>/dev/null || true
+maat16="$(adb logcat -d | grep -o 'SmakenlandSudoku maat=16x16 breedte=[0-9]* hoogte=[0-9]* tegel=[0-9]* cijfers=[0-9]*' | tail -1 || true)"
+echo "sudoku16: ${maat16:-niets gemeld}"
+m16_hoogte="$(echo "$maat16" | sed -n 's/.*hoogte=\([0-9]*\).*/\1/p')"
+m16_tegel="$(echo "$maat16" | sed -n 's/.*tegel=\([0-9]*\).*/\1/p')"
+m16_cijfers="$(echo "$maat16" | sed -n 's/.*cijfers=\([0-9]*\).*/\1/p')"
+if [ -z "$m16_hoogte" ] || [ "$m16_hoogte" -lt 200 ]; then
+  echo "::error::het bord van 16x16 is maar ${m16_hoogte:-0} px hoog"
+  exit 1
+fi
+if [ -z "$m16_cijfers" ] || [ "$m16_cijfers" -lt 80 ]; then
+  echo "::error::het bord van 16x16 toont geen opgave (${m16_cijfers:-0} cijfers)"
+  exit 1
+fi
+if [ -z "$m16_tegel" ] || [ "$m16_tegel" -lt 14 ]; then
+  echo "::error::de vakjes van 16x16 zijn te klein om te tikken (${m16_tegel:-0} px)"
+  exit 1
+fi
+
 # De updatecontrole loopt op de achtergrond bij het starten van de app. Met netwerk
 # hoort hier de eigen versie en wat GitHub zegt te staan; zonder netwerk een regel
 # dat het niet lukte. Beide zijn goed — stilletjes niets doen is dat niet.
@@ -124,18 +147,18 @@ fi
 
 adb logcat -d > logcat-opstart.txt 2>/dev/null || true
 
-for foto in scherm-kaart.png scherm-level.png scherm-sudoku.png; do
+for foto in scherm-kaart.png scherm-level.png scherm-sudoku.png scherm-sudoku16.png; do
   test -s "$foto" || { echo "::error::$foto ontbreekt"; exit 1; }
 done
 
 python3 - <<'PY'
 import pathlib
 import struct
-for naam in ('scherm-kaart.png', 'scherm-level.png', 'scherm-sudoku.png'):
+for naam in ('scherm-kaart.png', 'scherm-level.png', 'scherm-sudoku.png', 'scherm-sudoku16.png'):
     data = pathlib.Path(naam).read_bytes()
     breedte, hoogte = struct.unpack('>II', data[16:24])
     assert breedte > 400 and hoogte > 600, (naam, breedte, hoogte)
     print(f'{naam}: {breedte}x{hoogte}')
 PY
 
-echo "smoketest klaar: de bundel laadt en alle drie de schermen openen"
+echo "smoketest klaar: de bundel laadt en alle vier de schermen openen"

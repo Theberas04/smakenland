@@ -53,6 +53,9 @@ jobs:
         run: |
           set -euo pipefail
           node --test "tests/*.test.mjs"
+          # De kant-en-klare 16x16-sudoku's nog eens narekenen: elke opgave moet
+          # precies één oplossing hebben (dat kost een paar seconden).
+          node tools/gen_sudokus.js --check
           # Het versierekenwerk van de updatecontrole is gewone Java: los te draaien.
           mkdir -p "$RUNNER_TEMP/javatest"
           javac -d "$RUNNER_TEMP/javatest" \
@@ -226,7 +229,7 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p docs/android
-          for foto in scherm-kaart.png scherm-level.png scherm-sudoku.png logcat-opstart.txt; do
+          for foto in scherm-kaart.png scherm-level.png scherm-sudoku.png scherm-sudoku16.png logcat-opstart.txt; do
             [ -f "$foto" ] && cp "$foto" docs/android/ || true
           done
           git config user.name "Smakenland-bouw"
@@ -244,6 +247,7 @@ jobs:
             scherm-kaart.png
             scherm-level.png
             scherm-sudoku.png
+            scherm-sudoku16.png
             logcat-opstart.txt
           retention-days: 7
           if-no-files-found: warn

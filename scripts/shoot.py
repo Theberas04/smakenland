@@ -192,6 +192,26 @@ def main():
         })()""")
         time.sleep(0.5)
         schiet(b, os.path.join(DOCS, "smakenland-sudoku.png"), 1440, inhoud_hoogte(b))
+
+        # 3b. Sudoku van 16 bij 16: laat zien dat de grote maat ook echt werkt,
+        #     met letters tot G en een bord dat vierkant blijft.
+        b.js("document.querySelector('#sudoku-maten button[data-maat=\"16\"]').click()")
+        time.sleep(1.0)
+        b.js("""(() => {
+          const leeg = [...document.querySelectorAll('.sudoku-cel')].filter(c => !c.classList.contains('geven'));
+          for (let i = 0; i < 4; i++) {
+            const vak = leeg[i * 7];
+            if (!vak) continue;
+            vak.click();
+            const goed = window.SmakenlandSudokuView.puzzel.oplossing[Number(vak.dataset.cel)];
+            document.querySelectorAll('.cijfers button')[goed - 1].click();
+          }
+          return 1;
+        })()""")
+        time.sleep(0.6)
+        schiet(b, os.path.join(DOCS, "smakenland-sudoku16.png"), 1440, inhoud_hoogte(b))
+        b.js("document.querySelector('#sudoku-maten button[data-maat=\"9\"]').click()")
+        time.sleep(0.8)
         b.call("Emulation.clearDeviceMetricsOverride")
 
         # 4. Telefoon: het level
@@ -202,6 +222,19 @@ def main():
         b.js(speel.replace("s.energie = s.energieMax;", "s.energie = Math.max(s.energie, s.energieMax);"))
         time.sleep(0.5)
         schiet(b, os.path.join(DOCS, "smakenland-telefoon-level.png"), 390, 844, dsf=2, mobiel=True)
+
+        # 4b. Telefoon: de sudoku in de kleinste en de grootste maat. Juist op een
+        #     telefoon zie je of 256 vakjes nog te tikken zijn.
+        b.js("document.querySelector('.tab[data-tab=sudoku]').click()")
+        time.sleep(0.5)
+        b.js("document.querySelector('#sudoku-maten button[data-maat=\"16\"]').click()")
+        time.sleep(1.0)
+        schiet(b, os.path.join(DOCS, "smakenland-telefoon-sudoku16.png"), 390, 844, dsf=2, mobiel=True)
+        b.js("document.querySelector('#sudoku-maten button[data-maat=\"4\"]').click()")
+        time.sleep(0.8)
+        schiet(b, os.path.join(DOCS, "smakenland-telefoon-sudoku4.png"), 390, 844, dsf=2, mobiel=True)
+        b.js("document.querySelector('#sudoku-maten button[data-maat=\"9\"]').click()")
+        time.sleep(0.6)
 
         # 5. Vrij spelen (met het geschilderde gebiedspaneel)
         b.call("Emulation.clearDeviceMetricsOverride")

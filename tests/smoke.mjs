@@ -191,6 +191,44 @@ w.document.getElementById('sudoku-hint').click();
 check('een hint herstelt het foute vak', tekst(foutVak), String(echtGoed));
 check('en dat vak is niet meer fout', foutVak.classList.contains('fout'), false);
 
+// --------------------------------------------------- sudoku in andere maten
+const maatKnop = (key) => w.document.querySelector(`#sudoku-maten button[data-maat="${key}"]`);
+maatKnop(4).click();
+check('4×4 geeft zestien vakken', w.document.querySelectorAll('.sudoku-cel').length, 16);
+check('4×4 heeft vier cijferknoppen', w.document.querySelectorAll('.cijfers button').length, 4);
+check('4×4 staat op het bord vermeld', w.document.getElementById('sudoku-bord').className.includes('maat-4'), true);
+check('4×4 heeft een opgave', w.document.querySelectorAll('.sudoku-cel.geven').length >= 4, true);
+
+maatKnop(6).click();
+check('6×6 geeft 36 vakken', w.document.querySelectorAll('.sudoku-cel').length, 36);
+check('6×6 heeft zes cijferknoppen', w.document.querySelectorAll('.cijfers button').length, 6);
+
+maatKnop(12).click();
+check('12×12 geeft 144 vakken', w.document.querySelectorAll('.sudoku-cel').length, 144);
+check('12×12 heeft twaalf knoppen', w.document.querySelectorAll('.cijfers button').length, 12);
+check('12×12 gebruikt letters vanaf A', tekst(w.document.querySelectorAll('.cijfers button')[9]), 'A');
+check('12×12 heeft een opgave', w.document.querySelectorAll('.sudoku-cel.geven').length >= 40, true);
+
+maatKnop(16).click();
+const bord16 = w.document.getElementById('sudoku-bord');
+check('16×16 geeft 256 vakken', w.document.querySelectorAll('.sudoku-cel').length, 256);
+check('16×16 heeft zestien knoppen', w.document.querySelectorAll('.cijfers button').length, 16);
+check('16×16 gebruikt letters tot G', tekst(w.document.querySelectorAll('.cijfers button')[15]), 'G');
+check('16×16 heeft een opgave', w.document.querySelectorAll('.sudoku-cel.geven').length >= 80, true);
+check('16×16 vermeldt de maat op het bord', bord16.className.includes('maat-16'), true);
+check('notities staan uit bij 16×16', w.document.getElementById('sudoku-notitie').hidden, true);
+check('de bloklijnen van 16×16 staan er', w.document.querySelectorAll('.sudoku-cel.blok-rechts').length > 0, true);
+
+// Een cijfer in een groot bord gebruiken: de letter-knop moet werken.
+const leeg16 = Array.from(w.document.querySelectorAll('.sudoku-cel')).find((c) => !c.classList.contains('geven'));
+leeg16.click();
+const goed16 = w.SmakenlandSudokuView.puzzel.oplossing[Number(leeg16.dataset.cel)];
+w.document.querySelectorAll('.cijfers button')[goed16 - 1].click();
+check('een cijfer invullen werkt ook op 16×16',
+  tekst(leeg16), w.SmakenlandSudokuView.puzzel.symbolen.charAt(goed16 - 1));
+maatKnop(9).click();
+check('terug naar 9×9 geeft weer 81 vakken', w.document.querySelectorAll('.sudoku-cel').length, 81);
+
 // ------------------------------------------------------------ vrij spelen
 w.document.querySelector('.tab[data-tab=vrij]').click();
 check('de vrij-tab opent', UI.scherm, 'vrij');

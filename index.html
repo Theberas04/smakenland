@@ -74,6 +74,13 @@
         <button type="button" data-niveau="midden">Midden</button>
         <button type="button" data-niveau="moeilijk">Moeilijk</button>
       </div>
+      <div class="niveaus maten" id="sudoku-maten">
+        <button type="button" data-maat="4" aria-pressed="false">4×4</button>
+        <button type="button" data-maat="6" aria-pressed="false">6×6</button>
+        <button type="button" data-maat="9" aria-pressed="true">9×9</button>
+        <button type="button" data-maat="12" aria-pressed="false">12×12</button>
+        <button type="button" data-maat="16" aria-pressed="false">16×16</button>
+      </div>
       <div class="sudoku-tijd">
         <b id="sudoku-klok">00:00</b>
         <small id="sudoku-beste">nog geen tijd</small>
@@ -152,6 +159,7 @@
 <script src="levels.js"></script>
 <script src="engine.js"></script>
 <script src="sudoku.js"></script>
+<script src="sudokus.js"></script>
 <script src="app.js"></script>
 <script src="sudoku-view.js"></script>
 </body>

@@ -245,7 +245,7 @@
   function pasHashToe() {
     const ruw = (window.location.hash || '').replace(/^#/, '');
     if (!ruw) return false;
-    if (ruw === 'sudoku') { zetTab('sudoku'); return true; }
+    if (ruw === 'sudoku' || /^sudoku(4|6|9|12|16)$/.test(ruw)) { zetTab('sudoku'); return true; }
     if (ruw === 'vrij') { zetTab('vrij'); return true; }
     if (ruw === 'levels' || ruw === 'kaart') { zetTab('levels'); return true; }
     const m = /^level(\d+)$/.exec(ruw);

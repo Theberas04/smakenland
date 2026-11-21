@@ -135,6 +135,39 @@ def main():
             print(f"FOUT: het sudokubord is maar {sud['hoogte']} px hoog")
         else:
             print(f"goed: sudokubord vierkant ({sud['breedte']}x{sud['hoogte']}, vakjes {sud['cel']} px)")
+
+        # En de andere maten: meer vakjes betekent meer cellen, letters vanaf 10 en
+        # vakjes die nog te tikken zijn. Juist daar gaat het mis op een telefoon.
+        for key in (4, 6, 12, 16):
+            b.js(f"document.querySelector('#sudoku-maten button[data-maat=\"{key}\"]').click()")
+            time.sleep(1.0)
+            m = b.js("""(() => {
+              const bord = document.getElementById('sudoku-bord');
+              const r = bord.getBoundingClientRect();
+              const vakken = [...bord.querySelectorAll('.sudoku-cel')];
+              const knoppen = [...document.querySelectorAll('.cijfers button')];
+              return {vakken: vakken.length, breedte: Math.round(r.width),
+                      hoogte: Math.round(r.height),
+                      cel: Math.round(vakken[0].getBoundingClientRect().width),
+                      metTekst: vakken.filter(v => (v.textContent || '').trim()).length,
+                      knoppen: knoppen.length,
+                      laatsteKnop: knoppen.length ? knoppen[knoppen.length - 1].textContent : ''};
+            })()""")
+            print(f"sudoku {key}x{key}: " + json.dumps(m))
+            verwacht = key * key
+            if m["vakken"] != verwacht:
+                print(f"FOUT: {key}x{key} heeft {m['vakken']} vakken in plaats van {verwacht}")
+            elif m["knoppen"] != key:
+                print(f"FOUT: {key}x{key} heeft {m['knoppen']} cijferknoppen in plaats van {key}")
+            elif abs(m["breedte"] - m["hoogte"]) > 4:
+                print(f"FOUT: het bord van {key}x{key} is niet vierkant: {m['breedte']}x{m['hoogte']}")
+            elif m["metTekst"] < verwacht // 4:
+                print(f"FOUT: het bord van {key}x{key} toont geen opgave ({m['metTekst']} tekens)")
+            elif m["cel"] < 14:
+                print(f"FOUT: de vakjes van {key}x{key} zijn te klein: {m['cel']} px")
+            else:
+                print(f"goed: {key}x{key} vierkant ({m['breedte']}x{m['hoogte']}), "
+                      f"{m['metTekst']} tekens, vakjes {m['cel']} px, laatste knop '{m['laatsteKnop']}'")
     finally:
         proc.kill()
 

@@ -1,5 +1,5 @@
 /* Smakenland offline-shell. Verhoog CACHE bij elke wijziging van de bestanden. */
-const CACHE = 'smakenland-1.2.3';
+const CACHE = 'smakenland-1.3.0';
 const BESTANDEN = [
   './',
   'index.html',
@@ -9,6 +9,7 @@ const BESTANDEN = [
   'levels.js',
   'engine.js',
   'sudoku.js',
+  'sudokus.js',
   'app.js',
   'sudoku-view.js',
   'manifest.webmanifest',

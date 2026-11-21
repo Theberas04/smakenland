@@ -18,7 +18,9 @@ kern, energie als tempo, kisten als generatoren, klanten als opdrachtgevers.
   een eigen energietegoed; wat je overhoudt bepaalt je sterren (3 bij ≥ 40 % over). De generator
   *berekent* dat tegoed uit de doelen — een item van tree 5 maken kost 3⁴ oogsten van een kist van
   niveau 1 — en `tools/gen_levels.py --check` rekent na dat alle 800 levels met dat tegoed te halen zijn.
-- **Sudoku** in drie moeilijkheden, met notities, hints, foutenteller, klok en je beste tijd per niveau.
+- **Sudoku** in vijf maten (4×4, 6×6, 9×9, 12×12 en 16×16) en drie moeilijkheden, met notities,
+hints, foutenteller, klok en je beste tijd per maat en niveau. Vanaf 12×12 komen er letters bij de
+cijfers (A t/m G), net als in een echte sudoku van die maat.
   Elke opgave heeft precies één oplossing (nagerekend met een bitmasker-oplosser).
 - **Versmelten**: sleep twee gelijke items op elkaar, de derde versmelt tot één item een tree hoger.
   Alleen door te slepen — een oogst legt nooit iets vanzelf op een stapel.
@@ -38,6 +40,8 @@ kern, energie als tempo, kisten als generatoren, klanten als opdrachtgevers.
 | Level spelen | Sudoku | Vrij spelen |
 | --- | --- | --- |
 | ![Level](docs/smakenland-level.png) | ![Sudoku](docs/smakenland-sudoku.png) | ![Vrij](docs/smakenland-vrij.png) |
+| Sudoku van 16×16 | Sudoku op de telefoon (16×16) | Sudoku op de telefoon (4×4) |
+| ![Sudoku 16](docs/smakenland-sudoku16.png) | ![Telefoon 16](docs/smakenland-telefoon-sudoku16.png) | ![Telefoon 4](docs/smakenland-telefoon-sudoku4.png) |
 
 | Telefoon · level | Telefoon · levelkaart |
 | --- | --- |
@@ -87,7 +91,9 @@ dezelfde brug die de app aan het venster hangt, want in een browser hoort die re
 | `art.js` | alle getekende kunst (gegenereerd, niet met de hand aanpassen) |
 | `levels.js` | de 800 levels (gegenereerd) |
 | `engine.js` | de spellogica: bord, versmelten, energie, doelen, levels, gebieden, opslag |
-| `sudoku.js` | sudokuregels: generator met unieke oplossing, oplosser, hints |
+| `sudoku.js` | sudokuregels voor alle maten: generator met unieke oplossing, oplosser, hints |
+| `sudokus.js` | kant-en-klare 16×16-opgaven uit `tools/gen_sudokus.js` (nagerekend: één oplossing) |
+| `tools/gen_sudokus.js` | maakt en narekent die 16×16-opgaven (`--check`) |
 | `app.js` | de schil: tabs, bord, slepen, effecten, geluid, bewaren |
 | `sudoku-view.js` | het sudokupaneel |
 | `styles.css` | huisstijl: papier en inkt, hout op het bord, geen schaduwen of neon |
@@ -110,7 +116,7 @@ herhaalbaar is en de tests niet gokken.
 ## Controles
 
 ```bash
-node --test "tests/*.test.mjs"                    # spellogica: bord, levels, sudoku (43 tests)
+node --test "tests/*.test.mjs"                    # spellogica: bord, levels, sudoku (50 tests)
 python3 -m http.server 8231 &                     # de pagina moet geserveerd worden
 node tests/smoke.mjs 8231                         # de pagina zelf in jsdom (65 controles)
 python3 scripts/check-live.py <url>               # een uitgerolde kopie in een echte browser
@@ -126,7 +132,12 @@ python3 scripts/record-demo.py 8231               # de demo opnieuw opnemen
 
 - Geen muziek, en op iOS blijft geluid stil tot je één keer tikt (dat eist de browser zo).
 - Geen app-store-versie: dit is een webspel/PWA plus een losse APK, geen Play-uitgave.
-- De sudoku bewaart één potje tegelijk; wisselen van moeilijkheid begint een nieuwe puzzel.
+- De sudoku bewaart één potje tegelijk; wisselen van moeilijkheid of maat begint een nieuwe puzzel.
+- De 16×16 met veel lege vakken komt kant-en-klaar uit `sudokus.js`: die in de app maken kost
+  seconden tot minuten, want bij zo'n groot bord wordt het narekenen van "precies één oplossing"
+  razendsnel veel werk. De generator in de app blijft voor alle andere maten, en kan door een
+  zoekbudget nooit blijven hangen.
+- Notities staan uit vanaf 12×12: zestien tekens in een vakje van twintig pixels is niet te lezen.
 - Klanten in vrij spelen hebben vaste wensen uit de ontgrendelde ketens, zonder eigen verhaallijn.
 
 ## Licentie
