@@ -9,9 +9,9 @@ const C = require('../content.js');
 
 const NU = 1_700_000_000_000;
 
-test('er zijn 300 levels in 12 hoofdstukken van 25', () => {
-  assert.equal(L.levels.length, 300);
-  assert.equal(L.hoofdstukken.length, 12);
+test('er zijn 800 levels in 32 hoofdstukken van 25', () => {
+  assert.equal(L.levels.length, 800);
+  assert.equal(L.hoofdstukken.length, 32);
   assert.equal(L.niveauPerHoofdstuk, 25);
   L.levels.forEach((lv, i) => {
     assert.equal(lv.nr, i + 1, 'de levels zijn op volgorde genummerd');
@@ -106,15 +106,32 @@ test('de sterren zakken als er weinig energie over is', () => {
   assert.equal(E.levelSterren(s), 3);
 });
 
-test('hulp geeft één keer per level tien energie', () => {
+test('hulp geeft tien energie, een paar keer per level en dan op', () => {
   const s = E.startLevel(5, NU);
   const voor = s.energie;
-  const r = E.hulp(s);
-  assert.equal(r.ok, true);
-  assert.equal(s.energie, voor + 10);
-  assert.equal(E.hulp(s).ok, false);
+  assert.equal(E.hulpOver(s), E.HULP_PER_LEVEL);
+  for (let i = 0; i < E.HULP_PER_LEVEL; i++) {
+    const r = E.hulp(s);
+    assert.equal(r.ok, true, 'beurt ' + (i + 1) + ' moet mogen');
+    assert.equal(r.over, E.HULP_PER_LEVEL - i - 1);
+    assert.equal(E.hulpOver(s), E.HULP_PER_LEVEL - i - 1);
+  }
+  assert.equal(s.energie, voor + E.HULP_PER_LEVEL * E.HULP_ENERGIE);
+  const teveel = E.hulp(s);
+  assert.equal(teveel.ok, false, 'daarna is het op');
+  assert.equal(teveel.over, 0);
+  // Het maximum groeit mee, anders zou de hulp de sterren opblazen.
+  assert.equal(E.levelSterren(s), 3);
   const vrij = E.createState({ nu: NU, seed: 3 });
   assert.equal(E.hulp(vrij).ok, false, 'in vrij spelen bestaat geen hulp');
+  assert.equal(E.hulpOver(vrij), 0);
+});
+
+test('een oud potje met hulpGebruikt als ja/nee blijft werken', () => {
+  const s = E.startLevel(5, NU);
+  s.hulpGebruikt = true;                       // zoals een eerder spel het bewaarde
+  assert.equal(E.hulpOver(s), E.HULP_PER_LEVEL - 1);
+  assert.equal(E.hulp(s).ok, true);
 });
 
 test('een level gaat pas open als het vorige gehaald is', () => {
@@ -129,9 +146,10 @@ test('een level gaat pas open als het vorige gehaald is', () => {
 
 test('een levelnummer buiten bereik bestaat niet', () => {
   assert.equal(E.levelVan(0), null);
-  assert.equal(E.levelVan(301), null);
+  assert.equal(E.levelVan(801), null);
   assert.equal(E.startLevel(0, NU), null);
-  assert.equal(E.levelVan(300).nr, 300);
+  assert.equal(E.levelVan(800).nr, 800);
+  assert.equal(E.levelVan(801), null, 'voorbij het laatste level is er niets');
 });
 
 test('vrij spelen blijft gewoon werken naast de levels', () => {

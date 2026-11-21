@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Maakt de 300 levels van Smakenland en schrijft ze naar levels.js.
+"""Maakt de 800 levels van Smakenland en schrijft ze naar levels.js.
 
 Elk level is een opdracht: lever zoveel items van die tree. Het energietegoed van
 een level wordt BEREKEND uit de doelen (niet gegokt): een item van tree T maken
@@ -7,7 +7,7 @@ kost 3^(T-kistniveau) oogsten van kistniveau `kistniveau`, elk één energie. Da
 komt een kwart speling bij, zodat een level haalbaar is maar niet gratis.
 
 Gebruik:  python3 tools/gen_levels.py [--check]
---check rekent alle 300 levels na tegen het bestaande levels.js zonder te schrijven.
+--check rekent alle 800 levels na tegen het bestaande levels.js zonder te schrijven.
 """
 import json
 import math
@@ -31,7 +31,9 @@ KIST_VAN = {
 
 MAX_TIER = {"tuin": 6, "bakkerij": 6, "bloemen": 6, "smidse": 6, "haven": 6, "magie": 6}
 
-# Twaalf hoofdstukken van 25 levels. Elk hoofdstuk opent andere ketens.
+# Tweeëndertig hoofdstukken van 25 levels: samen 800. Elk hoofdstuk opent zijn
+# eigen ketens, en de ketens worden gaandeweg rijker (één keten, dan twee, en in
+# de laatste hoofdstukken komen alle zes samen).
 HOOFDSTUKKEN = [
     {"naam": "Smakendorp", "ketens": ["tuin"], "e": "🏘️"},
     {"naam": "Bakkerslaan", "ketens": ["tuin", "bakkerij"], "e": "🥖"},
@@ -45,6 +47,26 @@ HOOFDSTUKKEN = [
     {"naam": "Toverkamer", "ketens": ["magie", "smidse"], "e": "🔮"},
     {"naam": "Wolkenmarkt", "ketens": ["magie", "haven"], "e": "☁️"},
     {"naam": "Gouden Tafel", "ketens": ["tuin", "bakkerij", "haven", "magie"], "e": "👑"},
+    {"naam": "Molenpad", "ketens": ["bakkerij", "bloemen"], "e": "🌾"},
+    {"naam": "Oogstfeest", "ketens": ["tuin", "bakkerij", "bloemen"], "e": "🎪"},
+    {"naam": "Zeekaravaan", "ketens": ["haven", "bakkerij", "tuin"], "e": "⚓"},
+    {"naam": "Klokkenhof", "ketens": ["smidse", "bloemen"], "e": "🔔"},
+    {"naam": "Amberhaven", "ketens": ["haven", "magie"], "e": "🧭"},
+    {"naam": "Distelveld", "ketens": ["tuin", "smidse", "bloemen"], "e": "🐝"},
+    {"naam": "Suikerpaleis", "ketens": ["bakkerij", "magie"], "e": "🍰"},
+    {"naam": "Zilvermijn", "ketens": ["smidse", "haven"], "e": "💎"},
+    {"naam": "Boterbloemweide", "ketens": ["bloemen", "tuin", "bakkerij"], "e": "🌼"},
+    {"naam": "Stormkust", "ketens": ["haven", "smidse", "magie"], "e": "🌊"},
+    {"naam": "Heksenkeuken", "ketens": ["magie", "bakkerij", "tuin"], "e": "🧪"},
+    {"naam": "Goudsmidse", "ketens": ["smidse", "magie", "haven"], "e": "🪙"},
+    {"naam": "Appelhof", "ketens": ["tuin", "bakkerij", "magie"], "e": "🍎"},
+    {"naam": "Parelbaai", "ketens": ["haven", "bloemen", "magie"], "e": "🐚"},
+    {"naam": "Drakenvuur", "ketens": ["smidse", "magie", "haven", "bakkerij"], "e": "🔥"},
+    {"naam": "Elfenmarkt", "ketens": ["bloemen", "magie", "tuin", "smidse"], "e": "🧝"},
+    {"naam": "Kristalvallei", "ketens": ["magie", "smidse", "haven", "tuin"], "e": "💠"},
+    {"naam": "Wereldkeuken", "ketens": ["tuin", "bakkerij", "haven", "magie", "bloemen"], "e": "🍽️"},
+    {"naam": "Sterrenslag", "ketens": ["tuin", "bakkerij", "bloemen", "smidse", "haven"], "e": "🌌"},
+    {"naam": "Het Laatste Feest", "ketens": ["tuin", "bakkerij", "bloemen", "smidse", "haven", "magie"], "e": "🎉"},
 ]
 
 LEVELS_PER_HFST = 25
@@ -254,7 +276,7 @@ def main():
         for p in problemen[:10]:
             print(" ", p)
         return 1
-    print("alle 300 levels zijn met het meegeleverde energietegoed te halen")
+    print(f"alle {TOTAAL} levels zijn met het meegeleverde energietegoed te halen")
 
     if "--check" in sys.argv:
         if not os.path.exists(DOEL):

@@ -183,7 +183,7 @@ def main():
                % json.dumps(json.dumps(voortgang)))
         b.call("Page.navigate", url=BASIS + "/index.html?debug=1")
         for _ in range(60):
-            if b.js("document.querySelectorAll('.level-knop').length") == 300:
+            if b.js("document.querySelectorAll('.level-knop').length") == 800:
                 break
             time.sleep(0.4)
         b.js(CURSOR)

@@ -72,10 +72,10 @@ check('de UI-laag is bereikbaar', !!UI, true);
 if (!UI) process.exit(1);
 
 // ------------------------------------------------------------ levelkaart
-check('er zijn 300 levelknoppen', w.document.querySelectorAll('.level-knop').length, 300);
-check('er zijn 12 hoofdstukken', w.document.querySelectorAll('.hoofdstuk').length, 12);
+check('er zijn 800 levelknoppen', w.document.querySelectorAll('.level-knop').length, 800);
+check('er zijn 32 hoofdstukken', w.document.querySelectorAll('.hoofdstuk').length, 32);
 check('alleen level 1 is open', w.document.querySelectorAll('.level-knop:not(.op-slot)').length, 1);
-check('de kaart telt 0 van 300', tekst(w.document.getElementById('kaart-gehaald')), '0 van 300 gehaald');
+check('de kaart telt 0 van 800', tekst(w.document.getElementById('kaart-gehaald')), '0 van 800 gehaald');
 check('de uitleg staat open bij een nieuw potje', w.document.getElementById('modal-uitleg').hidden, false);
 w.document.getElementById('uitleg-sluiten').click();
 
@@ -96,6 +96,25 @@ check('er ligt nu een item op het bord',
   UI.level.cells.filter((c) => c && c.kind === 'item').length >= 1, true);
 check('de kop volgt de energie', tekst(w.document.getElementById('stat-energie')),
   UI.level.energie + '/' + UI.level.energieMax);
+
+// ------------------------------------------------ energiehulp in een level
+const hulpKnop = () => w.document.getElementById('level-hulp');
+check('de energiehulp staat aan', hulpKnop() && hulpKnop().disabled, false);
+check('de knop zegt hoe vaak het nog mag', /over\)/.test(tekst(hulpKnop())), true);
+const energieVoorHulp = UI.level.energie;
+const maxVoorHulp = UI.level.energieMax;
+hulpKnop().click();
+check('de hulp geeft tien energie', UI.level.energie, energieVoorHulp + 10);
+check('het maximum krimpt niet en de energie blijft eronder, dus de sterren blijven eerlijk',
+  UI.level.energieMax >= maxVoorHulp && UI.level.energie <= UI.level.energieMax, true);
+check('en de knop telt af', /3× over/.test(tekst(hulpKnop())), true);
+for (let i = 0; i < 5; i++) {
+  const k = hulpKnop();
+  if (k && !k.disabled) k.click();
+}
+check('na vier keer is de hulp op', tekst(hulpKnop()).indexOf('(op)') >= 0, true);
+check('en staat de knop uit', hulpKnop().disabled, true);
+check('vier keer tien is er bijgekomen', UI.level.energie, energieVoorHulp + 40);
 
 // Doel inleveren via de echte knop in de DOM.
 function legDoel() {
@@ -202,8 +221,8 @@ const UI2 = tweede.w.SmakenlandUI;
 check('na herladen zijn de sterren er nog', UI2.voortgang.levelSterren['1'], 3);
 check('na herladen is level 2 open',
   tweede.w.document.querySelector('.level-knop[data-level="2"]').classList.contains('op-slot'), false);
-check('na herladen telt de kaart 1 van 300', tekst(tweede.w.document.getElementById('kaart-gehaald')),
-  '1 van 300 gehaald');
+check('na herladen telt de kaart 1 van 800', tekst(tweede.w.document.getElementById('kaart-gehaald')),
+  '1 van 800 gehaald');
 check('de uitleg blijft dicht bij een bestaand potje', tweede.w.document.getElementById('modal-uitleg').hidden, true);
 check('het vrije spel heeft de munten bewaard', UI2.vrij.munten, 40);
 check('tweede lading zonder JS-fouten', tweede.jsFouten.join(' | '), '');

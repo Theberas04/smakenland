@@ -73,7 +73,7 @@ def main():
 
         klaar = False
         for _ in range(60):
-            if b.js("document.querySelectorAll('.level-knop').length") == 300:
+            if b.js("document.querySelectorAll('.level-knop').length") == 800:
                 klaar = True
                 break
             time.sleep(0.5)
@@ -84,7 +84,7 @@ def main():
         print(f"titel      : {b.js('document.title')}")
         aantal_hfst = b.js("document.querySelectorAll('.hoofdstuk').length")
         aantal_open = b.js("document.querySelectorAll('.level-knop:not(.op-slot)').length")
-        alles_goed &= meld("levelkaart", b.js("document.querySelectorAll('.level-knop').length"), 300, klaar)
+        alles_goed &= meld("levelkaart", b.js("document.querySelectorAll('.level-knop').length"), 800, klaar)
         alles_goed &= meld("hoofdstukken", aantal_hfst, 12, aantal_hfst == 12)
         alles_goed &= meld("open levels", aantal_open, 1, aantal_open == 1)
 

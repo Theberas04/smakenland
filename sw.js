@@ -1,12 +1,16 @@
 /* Smakenland offline-shell. Verhoog CACHE bij elke wijziging van de bestanden. */
-const CACHE = 'smakenland-v1';
+const CACHE = 'smakenland-1.1.0';
 const BESTANDEN = [
   './',
   'index.html',
   'styles.css',
   'content.js',
+  'art.js',
+  'levels.js',
   'engine.js',
+  'sudoku.js',
   'app.js',
+  'sudoku-view.js',
   'manifest.webmanifest',
   'icons/icon-192.png',
   'icons/icon-512.png'

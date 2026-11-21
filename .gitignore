@@ -18,3 +18,6 @@ android/app/src/main/assets/www/
 # Tijdelijk materiaal van de schermafbeeldingen en de iconen
 docs/_icoon.html
 _icoon.html
+
+# De APK zelf staat op de release, niet in git.
+*.apk

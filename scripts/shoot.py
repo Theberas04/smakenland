@@ -123,13 +123,13 @@ def main():
             "try { localStorage.setItem('smakenland.voortgang.v1', %s); } catch (e) {}"
             % json.dumps(json.dumps(voortgang))))
         b.call("Page.navigate", url=BASIS + "/index.html?debug=1")
-        if not wacht_op(b, "!!(window.SmakenlandUI && document.querySelectorAll('.level-knop').length === 300)"):
+        if not wacht_op(b, "!!(window.SmakenlandUI && document.querySelectorAll('.level-knop').length === 800)"):
             sys.exit("De levelkaart kwam niet op gang")
         b.js("document.getElementById('uitleg-sluiten') && document.getElementById('uitleg-sluiten').click()")
         time.sleep(0.5)
 
         # 1. De levelkaart
-        # De kaart is met 300 levels veel te hoog voor één beeld: het eerste stuk is genoeg.
+        # De kaart is met 800 levels veel te hoog voor één beeld: het eerste stuk is genoeg.
         pad = schiet(b, os.path.join(DOCS, "smakenland-levelkaart.png"), 1440, 980)
 
         # 2. Een level spelen met echte acties

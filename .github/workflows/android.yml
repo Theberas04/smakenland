@@ -112,12 +112,12 @@ jobs:
                   grootte = pakket.getinfo(lid).file_size
                   assert grootte > 0, f'leeg in de APK: {lid}'
                   print(f'{lid}: {grootte} bytes')
-              # 300 levels en de kunst moeten er echt in zitten.
+              # 800 levels en de kunst moeten er echt in zitten.
               levels = pakket.read('assets/www/levels.js').decode('utf-8')
-              assert levels.count('"nr":') == 300, 'geen 300 levels in de bundel'
+              assert levels.count('"nr":') == 800, 'geen 800 levels in de bundel'
               kunst = pakket.read('assets/www/art.js').decode('utf-8')
               assert kunst.count('<svg') >= 52, 'de kunst ontbreekt in de bundel'
-              print('300 levels en 52 stuks kunst in de bundel')
+              print('800 levels en 52 stuks kunst in de bundel')
           PY
 
       - name: APK op de release zetten

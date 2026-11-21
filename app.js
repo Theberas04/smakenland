@@ -692,7 +692,10 @@
       '</div>' +
       '<div class="sterren-rij">' + sterrenBeeld(E.levelSterren(level)) + '</div>' +
       '<div class="knop-rij">' +
-        '<button type="button" id="level-hulp">⚡ +10 energie</button>' +
+        '<button type="button" id="level-hulp"' +
+          (E.hulpOver(level) ? '' : ' disabled') + '>⚡ +10 energie' +
+          (E.hulpOver(level) ? ' <small>(' + E.hulpOver(level) + '× over)</small>' : ' <small>(op)</small>') +
+        '</button>' +
         '<button type="button" id="level-opnieuw-2">🔄 Opnieuw</button>' +
         '<button type="button" id="level-kaart">🗺️ Kaart</button>' +
       '</div>';
@@ -703,9 +706,10 @@
         geluid.munt();
         zwevendeTekst(window.innerWidth / 2, 110, '⚡ +10 energie');
         renderAlles();
+        zwevendeTekst(window.innerWidth / 2, 150, r.over ? 'nog ' + r.over + '×' : 'dat was de laatste');
       } else {
         geluid.weg();
-        zwevendeTekst(window.innerWidth / 2, 110, 'Dat kan maar één keer per level');
+        zwevendeTekst(window.innerWidth / 2, 110, 'De hulp is voor dit level op — start het opnieuw');
       }
     });
     $('level-opnieuw-2').addEventListener('click', function () { startLevel(level.level); });

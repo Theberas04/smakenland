@@ -14,6 +14,8 @@
   const ENERGIE_MAX = 60;
   const ENERGIE_START = 40;
   const ENERGIE_MS = 12000; // 1 energie per 12 seconden
+  const HULP_PER_LEVEL = 4;   // zo vaak mag je per level energie bijvragen
+  const HULP_ENERGIE = 10;    // en dat is hoeveel er per keer bij komt
   const MAX_ORDERS = 3;
   const LEVELS = root.SmakenlandLevels ||
     (typeof require !== 'undefined' ? require('./levels.js') : null);
@@ -410,7 +412,7 @@
     state.munten = 0;
     state.sterren = 0;
     state.levelSterren = 0;
-    state.hulpGebruikt = false;
+    state.hulpGebruikt = 0;
 
     // Kisten bovenin, om en om verdeeld over de rij.
     lv.kisten.forEach(function (k, i) {
@@ -439,13 +441,35 @@
     return state;
   }
 
-  /** Eén keer per level een handje energie, zodat een level niet kan vastlopen. */
+  /**
+   * Een handje energie in een level. Dat mag een paar keer per level: één keer
+   * is te weinig als je een level verknoeit, en oneindig maakt de sterren
+   * waardeloos (elke beurt gaat zowel het tegoed als het maximum omhoog, dus
+   * de verhouding — en daarmee de sterren — blijft eerlijk).
+   */
   function hulp(state) {
-    if (state.modus !== 'level' || state.hulpGebruikt) return { ok: false, reden: 'geen-hulp' };
-    state.hulpGebruikt = true;
-    state.energie += 10;
+    if (state.modus !== 'level') return { ok: false, reden: 'geen-hulp' };
+    const gebruikt = hulpGebruikt(state);
+    if (gebruikt >= HULP_PER_LEVEL) return { ok: false, reden: 'geen-hulp', over: 0 };
+    state.hulpGebruikt = gebruikt + 1;
+    state.energie += HULP_ENERGIE;
     state.energieMax = Math.max(state.energieMax, state.energie);
-    return { ok: true, energie: state.energie, events: [{ type: 'energie', waarde: state.energie }] };
+    return {
+      ok: true, energie: state.energie, over: HULP_PER_LEVEL - state.hulpGebruikt,
+      events: [{ type: 'energie', waarde: state.energie }]
+    };
+  }
+
+  /** Hoe vaak de hulp al gebruikt is (oude potjes bewaarden een ja/nee). */
+  function hulpGebruikt(state) {
+    const n = Number(state.hulpGebruikt);
+    return Number.isFinite(n) ? n : 0;
+  }
+
+  /** Hoe vaak je in dit level nog om energie mag vragen. */
+  function hulpOver(state) {
+    if (state.modus !== 'level') return 0;
+    return Math.max(0, HULP_PER_LEVEL - hulpGebruikt(state));
   }
 
   /** Is dit level te openen? Level 1 altijd, daarna pas na het vorige. */
@@ -541,7 +565,8 @@
     ontgrendeldeKetenen: ontgrendeldeKetenen, maxOrderTier: maxOrderTier,
     checkGebied: checkGebied, volgendGebied: volgendGebied, koop: koop,
     levels: levels, levelVan: levelVan, startLevel: startLevel, levelSterren: levelSterren,
-    levelKlaar: levelKlaar, levelOpen: levelOpen, hulp: hulp,
+    levelKlaar: levelKlaar, levelOpen: levelOpen, hulp: hulp, hulpOver: hulpOver,
+    HULP_PER_LEVEL: HULP_PER_LEVEL, HULP_ENERGIE: HULP_ENERGIE,
     serialiseer: serialiseer, laad: laad,
     vrijeCell: vrijeCell
   };

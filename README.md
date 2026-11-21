@@ -1,6 +1,6 @@
 # Smakenland 🍲
 
-**Versmelt items in 300 levels, los sudoku's op en reis door een verhalenwereld.** Een spel voor de
+**Versmelt items in 800 levels, los sudoku's op en reis door een verhalenwereld.** Een spel voor de
 browser én als Android-app, in het genre van *Tasty Travels*, *EverMerge* en *Fable Town*: versmelten als
 kern, energie als tempo, kisten als generatoren, klanten als opdrachtgevers.
 
@@ -14,10 +14,10 @@ kern, energie als tempo, kisten als generatoren, klanten als opdrachtgevers.
 
 ## Wat er in zit
 
-- **300 levels** over 12 hoofdstukken, met een levelkaart en sterren. Elk level heeft vaste doelen en
+- **800 levels** over 32 hoofdstukken, met een levelkaart en sterren. Elk level heeft vaste doelen en
   een eigen energietegoed; wat je overhoudt bepaalt je sterren (3 bij ≥ 40 % over). De generator
   *berekent* dat tegoed uit de doelen — een item van tree 5 maken kost 3⁴ oogsten van een kist van
-  niveau 1 — en `tools/gen_levels.py --check` rekent na dat alle 300 levels met dat tegoed te halen zijn.
+  niveau 1 — en `tools/gen_levels.py --check` rekent na dat alle 800 levels met dat tegoed te halen zijn.
 - **Sudoku** in drie moeilijkheden, met notities, hints, foutenteller, klok en je beste tijd per niveau.
   Elke opgave heeft precies één oplossing (nagerekend met een bitmasker-oplosser).
 - **Versmelten**: sleep twee gelijke items op elkaar, de derde versmelt tot één item een tree hoger.
@@ -49,7 +49,9 @@ kern, energie als tempo, kisten als generatoren, klanten als opdrachtgevers.
 - **Sleep twee gelijke items op elkaar** — ze stapelen, de derde versmelt.
 - **Lever de doelen in** (of bij vrij spelen: de klanten): dat levert sterren op. Genoeg sterren opent
   in vrij spelen een nieuw gebied; in de levels gaat het level ermee op slot.
-- **Vastgelopen?** Elk level heeft één keer "⚡ +10 energie" en een "opnieuw"-knop.
+- **Vastgelopen?** Je mag per level **vier keer** om "⚡ +10 energie" vragen — de knop telt af
+  ("4× over") en gaat daarna op. Het tegoed én het maximum gaan samen omhoog, zodat je sterren niet
+  opgeblazen worden. Een "opnieuw"-knop begint het level vers.
 
 ## Android-app
 
@@ -71,7 +73,7 @@ zelfs niet in het manifest), alles zit in de bundel en je potje blijft op het to
 | --- | --- |
 | `content.js` | ketens, kisten, gebieden met verhaal, winkel |
 | `art.js` | alle getekende kunst (gegenereerd, niet met de hand aanpassen) |
-| `levels.js` | de 300 levels (gegenereerd) |
+| `levels.js` | de 800 levels (gegenereerd) |
 | `engine.js` | de spellogica: bord, versmelten, energie, doelen, levels, gebieden, opslag |
 | `sudoku.js` | sudokuregels: generator met unieke oplossing, oplosser, hints |
 | `app.js` | de schil: tabs, bord, slepen, effecten, geluid, bewaren |
@@ -79,7 +81,7 @@ zelfs niet in het manifest), alles zit in de bundel en je potje blijft op het to
 | `styles.css` | huisstijl: papier en inkt, hout op het bord, geen schaduwen of neon |
 | `android/` | de WebView-app en het icoon |
 | `tools/gen_art.py` | tekent alle kunst (`--check` vergelijkt met `art.js`) |
-| `tools/gen_levels.py` | maakt de 300 levels en rekent ze na (`--check`) |
+| `tools/gen_levels.py` | maakt de 800 levels en rekent ze na (`--check`) |
 | `tools/render_icons.py` | het app-icoon in alle maten (web + Android) |
 | `tools/contactsheet.py` | één overzichtsbeeld van alle kunst |
 | `scripts/sync-assets.sh` | zet de webapp in de bundel van de Android-app |
@@ -94,12 +96,12 @@ herhaalbaar is en de tests niet gokken.
 ## Controles
 
 ```bash
-node --test "tests/*.test.mjs"                    # spellogica: bord, levels, sudoku (42 tests)
+node --test "tests/*.test.mjs"                    # spellogica: bord, levels, sudoku (43 tests)
 python3 -m http.server 8231 &                     # de pagina moet geserveerd worden
-node tests/smoke.mjs 8231                         # de pagina zelf in jsdom (57 controles)
+node tests/smoke.mjs 8231                         # de pagina zelf in jsdom (65 controles)
 python3 scripts/check-live.py <url>               # een uitgerolde kopie in een echte browser
 python3 tools/gen_art.py --check                  # kunst loopt niet uit de pas met de generator
-python3 tools/gen_levels.py --check               # en alle 300 levels zijn nog haalbaar
+python3 tools/gen_levels.py --check               # en alle 800 levels zijn nog haalbaar
 python3 scripts/shoot.py 8231                     # schermafbeeldingen opnieuw
 python3 scripts/record-demo.py 8231               # de demo opnieuw opnemen
 ```
