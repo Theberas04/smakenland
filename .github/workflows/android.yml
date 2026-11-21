@@ -59,6 +59,20 @@ jobs:
             android/app/src/main/java/nl/werdens/smakenland/Updates.java \
             tests/java/UpdatesTest.java
           java -cp "$RUNNER_TEMP/javatest" UpdatesTest
+          # En meteen tegen een ECHT antwoord van de GitHub-API: laat de app-code zelf
+          # de nieuwste uitgave lezen. Lukt het ophalen niet (storing of geen netwerk),
+          # dan slaan we het over in plaats van de bouw te laten klappen.
+          if curl -sS --max-time 20 -H "Accept: application/vnd.github+json" \
+               -H "User-Agent: Smakenland-app" \
+               https://api.github.com/repos/Theberas04/smakenland/releases/latest \
+               -o "$RUNNER_TEMP/uitgave.json"; then
+            javac -d "$RUNNER_TEMP/javatest" \
+              android/app/src/main/java/nl/werdens/smakenland/Updates.java \
+              tests/java/EchteUitgave.java
+            java -cp "$RUNNER_TEMP/javatest" EchteUitgave "$RUNNER_TEMP/uitgave.json"
+          else
+            echo "let op: de GitHub-API was niet bereikbaar; de echtheidscontrole is overgeslagen"
+          fi
 
       - name: Ondertekeningssleutel klaarzetten
         env:
