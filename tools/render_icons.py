@@ -1,7 +1,12 @@
 #!/usr/bin/env python3
-"""Tekent het Smakenland-icoon (een pan) als PNG in de maten die de PWA nodig heeft.
+"""Tekent het Smakenland-icoon (een pan) in alle maten die nodig zijn.
 
 Geen Pillow nodig: een SVG wordt met de meegeleverde Chromium gerenderd.
+Uitvoer:
+  icons/icon-192.png, icons/icon-512.png, icons/icon-512-maskable.png   (webapp/PWA)
+  android/app/src/main/res/mipmap-*/ic_launcher(.round).png             (Android)
+  android/app/src/main/res/drawable-nodpi/ic_launcher_foreground.png    (adaptief)
+
 Gebruik:  python3 tools/render_icons.py
 """
 import os
@@ -11,9 +16,10 @@ import sys
 
 HIER = os.path.dirname(os.path.abspath(__file__))
 WORTEL = os.path.dirname(HIER)
-UIT = os.path.join(WORTEL, "icons")
+WEB_UIT = os.path.join(WORTEL, "icons")
+ANDROID_RES = os.path.join(WORTEL, "android", "app", "src", "main", "res")
 
-# De pan: deksel + twee oren + stoom, op het merk-groen.
+# De pan: deksel, twee oren en stoom, op het merk-groen.
 PAN = """
 <g fill="#ffffff">
   <rect x="52" y="92" width="88" height="60" rx="16"/>
@@ -31,17 +37,20 @@ PAN = """
 """
 
 
-def svg(marge: float) -> str:
-    """marge 1.0 = de pan vult het vlak; 0.62 houdt de veilige zone vrij (maskable)."""
+def svg(grootte, marge=0.86, achtergrond=True, rond=False, vierkant_achtergrond=True):
+    """marge 1.0 = de pan vult het vlak; 0.62 houdt de veilige zone vrij (adaptief)."""
+    bg = ('<rect width="192" height="192" rx="%d" fill="#3f7a4f"/>' % (42 if vierkant_achtergrond else 0)) if achtergrond else ""
+    clip = ('<defs><clipPath id="rond"><circle cx="96" cy="96" r="96"/></clipPath></defs>' if rond else "")
+    openen = '<g clip-path="url(#rond)">' if rond else "<g>"
     return (
-        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" width="192" height="192">'
-        '<rect width="192" height="192" fill="#3f7a4f"/>'
-        f'<g transform="translate(96 96) scale({marge}) translate(-96 -96)">{PAN}</g>'
-        "</svg>"
+        f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" width="{grootte}" height="{grootte}">'
+        + clip + openen + bg
+        + f'<g transform="translate(96 96) scale({marge}) translate(-96 -96)">{PAN}</g>'
+        "</g></svg>"
     )
 
 
-def chromium() -> str:
+def chromium():
     eigen = os.environ.get("CHROME")
     if eigen:
         return eigen
@@ -62,10 +71,13 @@ def chromium() -> str:
     return kandidaten[-1]
 
 
-def render(html: str, doel: str, grootte: int, chrome: str) -> None:
-    pagina = os.path.join(UIT, "_icoon.html")
+def render(svg_tekst, doel, grootte, chrome, transparant=False):
+    os.makedirs(os.path.dirname(doel), exist_ok=True)
+    pagina = os.path.join(WORTEL, "_icoon.html")
     with open(pagina, "w", encoding="utf-8") as f:
-        f.write(html)
+        f.write('<!doctype html><meta charset="utf-8">'
+                "<style>html,body{margin:0;padding:0;background:transparent}svg{display:block}</style>"
+                + svg_tekst)
     omgeving = dict(os.environ)
     omgeving["LD_LIBRARY_PATH"] = ":".join([
         os.path.expanduser("~/.local/lib"),
@@ -73,29 +85,51 @@ def render(html: str, doel: str, grootte: int, chrome: str) -> None:
         omgeving.get("LD_LIBRARY_PATH", ""),
     ])
     subprocess.run(
-        [
-            chrome, "--headless=new", "--no-sandbox", "--disable-gpu", "--hide-scrollbars",
-            f"--window-size={grootte},{grootte}", "--force-device-scale-factor=1",
-            "--default-background-color=00000000",
-            f"--screenshot={doel}", "file://" + pagina,
-        ],
-        check=True, env=omgeving, capture_output=True,
-    )
+        [chrome, "--headless=new", "--no-sandbox", "--disable-gpu", "--hide-scrollbars",
+         f"--window-size={grootte},{grootte}", "--force-device-scale-factor=1",
+         "--default-background-color=" + ("00000000" if transparant else "ffffffff"),
+         f"--screenshot={doel}", "file://" + pagina],
+        check=True, env=omgeving, capture_output=True)
     os.remove(pagina)
+    return os.path.getsize(doel)
 
 
-def main() -> None:
-    os.makedirs(UIT, exist_ok=True)
+MIPMAPS = [("mdpi", 48), ("hdpi", 72), ("xhdpi", 96), ("xxhdpi", 144), ("xxxhdpi", 192)]
+
+
+def main():
     chrome = chromium()
-    taken = [
-        (svg(0.86), "icon-192.png", 192),
-        (svg(0.86), "icon-512.png", 512),
-        (svg(0.62), "icon-512-maskable.png", 512),
-    ]
-    for html, naam, grootte in taken:
-        pad = os.path.join(UIT, naam)
-        render(html, pad, grootte, chrome)
-        print(f"{naam}: {grootte}x{grootte}, {os.path.getsize(pad)} bytes")
+    gedaan = []
+
+    for naam, grootte in [("icon-192.png", 192), ("icon-512.png", 512)]:
+        pad = os.path.join(WEB_UIT, naam)
+        gedaan.append((pad, render(svg(grootte), pad, grootte, chrome)))
+    pad = os.path.join(WEB_UIT, "icon-512-maskable.png")
+    gedaan.append((pad, render(svg(512, marge=0.62), pad, 512, chrome)))
+
+    for dichtheid, grootte in MIPMAPS:
+        for rond in (False, True):
+            naam = "ic_launcher_round.png" if rond else "ic_launcher.png"
+            pad = os.path.join(ANDROID_RES, "mipmap-" + dichtheid, naam)
+            gedaan.append((pad, render(svg(grootte, rond=rond, vierkant_achtergrond=not rond), pad, grootte, chrome,
+                                       transparant=rond)))
+
+    pad = os.path.join(ANDROID_RES, "drawable-nodpi", "ic_launcher_foreground.png")
+    gedaan.append((pad, render(svg(432, marge=0.62, achtergrond=False), pad, 432, chrome, transparant=True)))
+
+    for naam in ("ic_launcher.xml", "ic_launcher_round.xml"):
+        pad = os.path.join(ANDROID_RES, "mipmap-anydpi-v26", naam)
+        os.makedirs(os.path.dirname(pad), exist_ok=True)
+        with open(pad, "w", encoding="utf-8") as f:
+            f.write('<?xml version="1.0" encoding="utf-8"?>\n'
+                    '<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">\n'
+                    '  <background android:drawable="@color/ic_launcher_background"/>\n'
+                    '  <foreground android:drawable="@drawable/ic_launcher_foreground"/>\n'
+                    '</adaptive-icon>\n')
+        gedaan.append((pad, os.path.getsize(pad)))
+
+    for pad, grootte in gedaan:
+        print(f"{os.path.relpath(pad, WORTEL)}: {grootte} bytes")
 
 
 if __name__ == "__main__":

@@ -4,5 +4,17 @@ node_modules/
 .cache/
 __pycache__/
 
-# Tijdelijke profielen van de schermafbeeldingen
+# De ondertekeningssleutel hoort nooit in de repo; die staat in de GitHub-secrets
+# (en als reserve naast de repo op de eigen machine).
+.signing/
+
+# Wat de bouw zelf maakt
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+android/app/src/main/assets/www/
+
+# Tijdelijk materiaal van de schermafbeeldingen en de iconen
 docs/_icoon.html
+_icoon.html

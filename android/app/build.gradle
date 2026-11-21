@@ -1,0 +1,63 @@
+// De webapp zit als bundel in de app; er is geen internetverbinding nodig.
+plugins {
+  id 'com.android.application'
+}
+
+// De versie staat in version.txt in de map erboven; versionCode volgt dezelfde
+// formule als de controle in de bouwpijplijn (1.2.3 -> 10203), zodat een update
+// altijd boven een oudere versie installeert.
+def versieNaam = rootProject.file('../version.txt').text.trim()
+def delen = versieNaam.split('\\.')
+def versieCode = delen[0].toInteger() * 10000 + delen[1].toInteger() * 100 + delen[2].toInteger()
+
+android {
+  namespace 'nl.werdens.smakenland'
+  compileSdk 35
+
+  defaultConfig {
+    applicationId 'nl.werdens.smakenland'
+    minSdk 23
+    targetSdk 34
+    versionCode versieCode
+    versionName versieNaam
+  }
+
+  // De sleutel komt in de bouwpijplijn uit GitHub-secrets; staat hij er niet, dan
+  // bouwt Gradle een niet-ondertekende APK in plaats van te falen.
+  signingConfigs {
+    release {
+      if (System.getenv('ANDROID_KEYSTORE_PATH')) {
+        storeFile file(System.getenv('ANDROID_KEYSTORE_PATH'))
+        storePassword System.getenv('ANDROID_KEYSTORE_PASSWORD')
+        keyAlias System.getenv('ANDROID_KEY_ALIAS')
+        keyPassword System.getenv('ANDROID_KEY_PASSWORD')
+        storeType 'PKCS12'
+      }
+    }
+  }
+
+  buildTypes {
+    release {
+      minifyEnabled false
+      shrinkResources false
+      if (System.getenv('ANDROID_KEYSTORE_PATH')) {
+        signingConfig signingConfigs.release
+      }
+    }
+  }
+
+  compileOptions {
+    sourceCompatibility JavaVersion.VERSION_17
+    targetCompatibility JavaVersion.VERSION_17
+  }
+
+  packagingOptions {
+    resources.excludes += ['META-INF/*.kotlin_module']
+  }
+}
+
+dependencies {
+  implementation 'androidx.core:core:1.17.0'
+  implementation 'androidx.activity:activity:1.10.1'
+  implementation 'androidx.webkit:webkit:1.12.1'
+}

@@ -1,0 +1,203 @@
+name: Android build
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'android/**'
+      - 'index.html'
+      - 'styles.css'
+      - 'content.js'
+      - 'art.js'
+      - 'levels.js'
+      - 'engine.js'
+      - 'sudoku.js'
+      - 'app.js'
+      - 'sudoku-view.js'
+      - 'sw.js'
+      - 'manifest.webmanifest'
+      - 'icons/**'
+      - 'version.txt'
+      - 'scripts/sync-assets.sh'
+      - 'scripts/android-emulator-smoke.sh'
+      - '.github/workflows/android.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: android-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  apk:
+    name: Ondertekende release-APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.11.1'
+
+      - name: Webapp in de app bundelen
+        run: bash scripts/sync-assets.sh
+
+      - name: Ondertekeningssleutel klaarzetten
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          set -euo pipefail
+          if [ -z "${KEYSTORE_BASE64}" ]; then
+            echo "::error::ANDROID_KEYSTORE_BASE64 ontbreekt; de APK kan niet ondertekend worden."
+            exit 1
+          fi
+          printf '%s' "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/smakenland-release.p12"
+          test -s "$RUNNER_TEMP/smakenland-release.p12"
+          echo "ANDROID_KEYSTORE_PATH=$RUNNER_TEMP/smakenland-release.p12" >> "$GITHUB_ENV"
+
+      - name: APK bouwen
+        working-directory: android
+        env:
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: gradle --no-daemon --stacktrace assembleRelease
+
+      - name: Ondertekening en pakket controleren
+        working-directory: android
+        run: |
+          set -euo pipefail
+          APK=app/build/outputs/apk/release/app-release.apk
+          test -s "$APK"
+          BT="$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)"
+          "$BT/apksigner" verify --verbose --print-certs "$APK" > /tmp/apksigner.txt
+          grep -q "Verified using v2 scheme" /tmp/apksigner.txt
+          grep -qi "CN=Smakenland" /tmp/apksigner.txt
+          echo "--- ondertekend door ---"
+          grep -i "certificate DN" /tmp/apksigner.txt
+          VERSIE="$(cat ../version.txt)"
+          CODE="$(( ${VERSIE%%.*} * 10000 + $(echo "$VERSIE" | cut -d. -f2) * 100 + $(echo "$VERSIE" | cut -d. -f3) ))"
+          if [ -x "$BT/aapt" ]; then AAPT="$BT/aapt"; else AAPT="$BT/aapt2"; fi
+          "$AAPT" dump badging "$APK" > /tmp/badging.txt
+          head -3 /tmp/badging.txt
+          grep -q "package: name='nl.werdens.smakenland'" /tmp/badging.txt
+          grep -q "application-label:'Smakenland'" /tmp/badging.txt
+          grep -q "versionName='$VERSIE'" /tmp/badging.txt
+          grep -q "versionCode='$CODE'" /tmp/badging.txt
+          echo "APK: $(stat -c%s "$APK") bytes, versie $VERSIE (code $CODE)"
+
+      - name: Bundel in het pakket controleren
+        working-directory: android
+        run: |
+          python3 - <<'PY'
+          import zipfile
+          apk = 'app/build/outputs/apk/release/app-release.apk'
+          nodig = [
+              'assets/www/index.html', 'assets/www/app.js', 'assets/www/styles.css',
+              'assets/www/engine.js', 'assets/www/levels.js', 'assets/www/art.js',
+              'assets/www/sudoku.js', 'assets/www/sudoku-view.js', 'assets/www/content.js',
+              'assets/www/icons/icon-192.png',
+          ]
+          with zipfile.ZipFile(apk) as pakket:
+              namen = set(pakket.namelist())
+              for lid in nodig:
+                  assert lid in namen, f'ontbreekt in de APK: {lid}'
+                  grootte = pakket.getinfo(lid).file_size
+                  assert grootte > 0, f'leeg in de APK: {lid}'
+                  print(f'{lid}: {grootte} bytes')
+              # 300 levels en de kunst moeten er echt in zitten.
+              levels = pakket.read('assets/www/levels.js').decode('utf-8')
+              assert levels.count('"nr":') == 300, 'geen 300 levels in de bundel'
+              kunst = pakket.read('assets/www/art.js').decode('utf-8')
+              assert kunst.count('<svg') >= 52, 'de kunst ontbreekt in de bundel'
+              print('300 levels en 52 stuks kunst in de bundel')
+          PY
+
+      - name: APK op de release zetten
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          TAG="$(gh release list --limit 1 --json tagName -q '.[0].tagName' 2>/dev/null || true)"
+          if [ -z "$TAG" ]; then
+            echo "geen release gevonden; de APK blijft in de workflow staan"
+            exit 0
+          fi
+          cp android/app/build/outputs/apk/release/app-release.apk "Smakenland-Android-$(cat version.txt).apk"
+          gh release upload "$TAG" "Smakenland-Android-$(cat version.txt).apk" --clobber
+          echo "APK op release $TAG gezet"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: smakenland-release-apk
+          path: android/app/build/outputs/apk/release/app-release.apk
+          retention-days: 7
+
+  emulator:
+    name: Emulator-smoketest
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.11.1'
+
+      - name: Webapp bundelen en een debug-APK bouwen
+        run: |
+          set -euo pipefail
+          bash scripts/sync-assets.sh
+          cd android && gradle --no-daemon assembleDebug
+
+      - name: App installeren en de echte app controleren
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 30
+          arch: x86_64
+          target: default
+          profile: pixel_2
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          script: bash scripts/android-emulator-smoke.sh android/app/build/outputs/apk/debug/app-debug.apk
+
+      - name: Schermafbeeldingen in de repo zetten
+        if: always()
+        run: |
+          set -euo pipefail
+          mkdir -p docs/android
+          for foto in scherm-kaart.png scherm-level.png scherm-sudoku.png logcat-opstart.txt; do
+            [ -f "$foto" ] && cp "$foto" docs/android/ || true
+          done
+          git config user.name "Smakenland-bouw"
+          git config user.email "bouw@localhost"
+          git pull --rebase --autostash origin main || true
+          git add docs/android
+          git diff --cached --quiet || git commit -m "Schermafbeeldingen uit de emulator bijwerken"
+          git push || echo "kon de schermafbeeldingen niet terugzetten"
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: smakenland-emulator-schermen
+          path: |
+            scherm-kaart.png
+            scherm-level.png
+            scherm-sudoku.png
+            logcat-opstart.txt
+          retention-days: 7
+          if-no-files-found: warn

@@ -15,6 +15,8 @@
   const ENERGIE_START = 40;
   const ENERGIE_MS = 12000; // 1 energie per 12 seconden
   const MAX_ORDERS = 3;
+  const LEVELS = root.SmakenlandLevels ||
+    (typeof require !== 'undefined' ? require('./levels.js') : null);
 
   // ---------------------------------------------------------------- hulpjes
 
@@ -118,6 +120,9 @@
 
   function tickEnergie(state, nu) {
     nu = nu === undefined ? Date.now() : nu;
+    // In een level is het energietegoed vast: het level moet met dat tegoed
+    // gespeeld worden, anders zeggen de sterren niets.
+    if (state.modus === 'level') return 0;
     let hersteld = 0;
     if (state.energie < state.energieMax) {
       const verstreken = nu - state.laatsteEnergie;
@@ -355,11 +360,99 @@
       type: 'levering', keten: order.keten, tier: order.tier, aantal: order.aantal,
       munten: order.munten, sterren: order.sterren, muntenTotaal: state.munten, sterrenTotaal: state.sterren
     });
-    nieuweOrder(state);
-    while (state.orders.length < MAX_ORDERS) nieuweOrder(state);
-    const gebied = checkGebied(state);
-    if (gebied) events.push(gebied);
+    if (state.modus === 'level') {
+      // Een level heeft vaste doelen: geen nieuwe opdracht erbij. Zodra alles
+      // geleverd is, is het level klaar en verdient de speler sterren.
+      if (state.orders.length === 0) {
+        state.levelSterren = levelSterren(state);
+        events.push({ type: 'level-klaar', level: state.level, sterren: state.levelSterren, energie: state.energie });
+      }
+    } else {
+      nieuweOrder(state);
+      while (state.orders.length < MAX_ORDERS) nieuweOrder(state);
+      const gebied = checkGebied(state);
+      if (gebied) events.push(gebied);
+    }
     return { ok: true, events: events };
+  }
+
+  // ---------------------------------------------------------------- levels
+
+  function levels() { return LEVELS; }
+
+  function levelVan(nr) {
+    if (!LEVELS || nr < 1 || nr > LEVELS.levels.length) return null;
+    return LEVELS.levels[nr - 1];
+  }
+
+  /** Stars voor een gehaald level: hoe meer energie er over is, hoe beter. */
+  function levelSterren(state) {
+    const deel = state.energieMax > 0 ? state.energie / state.energieMax : 0;
+    if (deel >= 0.4) return 3;
+    if (deel >= 0.15) return 2;
+    return 1;
+  }
+
+  function levelKlaar(state) {
+    return state.modus === 'level' && state.orders.length === 0;
+  }
+
+  /** Een verse stand voor één level: vast bord, vast energietegoed. */
+  function startLevel(nr, nu) {
+    const lv = levelVan(nr);
+    if (!lv) return null;
+    const state = createState({ leeg: true, nu: nu, seed: (1000003 * nr) >>> 0 });
+    state.modus = 'level';
+    state.level = nr;
+    state.energie = lv.energie;
+    state.energieMax = lv.energie;
+    state.laatsteEnergie = nu === undefined ? Date.now() : nu;
+    state.munten = 0;
+    state.sterren = 0;
+    state.levelSterren = 0;
+    state.hulpGebruikt = false;
+
+    // Kisten bovenin, om en om verdeeld over de rij.
+    lv.kisten.forEach(function (k, i) {
+      const kolom = 2 + (i * 2) % 5;
+      let cel = idx(0, Math.min(COLS - 1, kolom));
+      if (state.cells[cel]) cel = vrijeCell(state, cel);
+      if (cel >= 0) state.cells[cel] = maakGen(k.gen, k.level);
+    });
+    // Startstukken eronder, per keten bij elkaar.
+    lv.start.forEach(function (stuk, i) {
+      let cel = vrijeCell(state, idx(2 + (i % 3), 1 + (i % 5)));
+      if (cel >= 0) state.cells[cel] = maakItem(stuk.keten, stuk.tier, stuk.aantal);
+    });
+    // De doelen van dit level.
+    lv.doelen.forEach(function (d, i) {
+      state.orders.push({
+        id: 'doel' + i,
+        keten: d.keten,
+        tier: d.tier,
+        aantal: d.aantal,
+        munten: 0,
+        sterren: 0,
+        klant: KLANTEN[(nr + i * 3) % KLANTEN.length]
+      });
+    });
+    return state;
+  }
+
+  /** Eén keer per level een handje energie, zodat een level niet kan vastlopen. */
+  function hulp(state) {
+    if (state.modus !== 'level' || state.hulpGebruikt) return { ok: false, reden: 'geen-hulp' };
+    state.hulpGebruikt = true;
+    state.energie += 10;
+    state.energieMax = Math.max(state.energieMax, state.energie);
+    return { ok: true, energie: state.energie, events: [{ type: 'energie', waarde: state.energie }] };
+  }
+
+  /** Is dit level te openen? Level 1 altijd, daarna pas na het vorige. */
+  function levelOpen(voortgang, nr) {
+    if (nr <= 1) return true;
+    const vorige = voortgang && voortgang[nr - 1];
+    return !!vorige;
   }
 
   // --------------------------------------------------------------- gebied
@@ -447,6 +540,8 @@
     nieuweOrder: nieuweOrder, klantVoor: klantVoor, telItems: telItems, kanLeveren: kanLeveren, lever: lever,
     ontgrendeldeKetenen: ontgrendeldeKetenen, maxOrderTier: maxOrderTier,
     checkGebied: checkGebied, volgendGebied: volgendGebied, koop: koop,
+    levels: levels, levelVan: levelVan, startLevel: startLevel, levelSterren: levelSterren,
+    levelKlaar: levelKlaar, levelOpen: levelOpen, hulp: hulp,
     serialiseer: serialiseer, laad: laad,
     vrijeCell: vrijeCell
   };

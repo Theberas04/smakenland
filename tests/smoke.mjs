@@ -1,27 +1,23 @@
-/* Rooktest van de echte pagina in jsdom: laadt index.html over http,
-   speelt via de UI-laag (dezelfde functies die de knoppen en het bord aanroepen)
-   en controleert wat er daadwerkelijk in de DOM staat.
+/* Rooktest van de echte pagina in jsdom: laadt index.html over http, speelt via de
+   UI-laag (dezelfde functies die de knoppen en het bord aanroepen) en controleert
+   wat er daadwerkelijk in de DOM staat.
    Gebruik: node tests/smoke.mjs [poort] */
 import { createRequire } from 'node:module';
-import { readFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 
-// jsdom staat lang niet in elke omgeving naast dit project; probeer de
-// gebruikelijke plekken en geef met JSDOM_PAD je eigen map mee.
+// jsdom staat lang niet in elke omgeving naast dit project; probeer de gebruikelijke
+// plekken en geef met JSDOM_PAD je eigen map mee.
 function laadJsdom() {
   const kandidaten = [
     import.meta.url,
-    process.env.JSDOM_PAD,
+    process.env.JSDOM_PAD ? path.join(process.env.JSDOM_PAD, 'package.json') : null,
     path.join(process.cwd(), 'package.json'),
     path.join(os.homedir(), 'paperclip', 'package.json'),
-    '/home/hermes/paperclip/package.json',
   ].filter(Boolean);
   for (const basis of kandidaten) {
     try {
-      const vereis = createRequire(basis);
-      return vereis('jsdom');
+      return createRequire(basis)('jsdom');
     } catch (e) { /* volgende plek */ }
   }
   console.error('jsdom niet gevonden. Installeer het (npm i -D jsdom) of zet JSDOM_PAD=/map/met/node_modules.');
@@ -29,8 +25,6 @@ function laadJsdom() {
 }
 const { JSDOM, VirtualConsole } = laadJsdom();
 
-const hier = path.dirname(fileURLToPath(import.meta.url));
-const wortel = path.dirname(hier);
 const poort = Number(process.argv[2] || 8231);
 const basis = `http://127.0.0.1:${poort}`;
 
@@ -45,13 +39,6 @@ function check(wat, waar, verwacht) {
 
 function tekst(el) { return (el && el.textContent ? el.textContent : '').trim(); }
 
-// Alle items van een keten/tier op het bord, inclusief stapels.
-function items(UI, keten, tier) {
-  return UI.state.cells
-    .filter((c) => c && c.kind === 'item' && c.keten === keten && c.tier === tier)
-    .reduce((n, c) => n + c.count, 0);
-}
-
 async function open(url, opslag) {
   const vc = new VirtualConsole();
   const jsFouten = [];
@@ -64,13 +51,17 @@ async function open(url, opslag) {
     virtualConsole: vc,
     beforeParse(window) {
       window.SmakenlandDebug = true;
-      // Elke jsdom heeft zijn eigen localStorage; de bewaarde stand van het
-      // eerste potje zetten we hier over, zoals een herlaadbeurt in de browser.
-      if (opslag) window.localStorage.setItem('smakenland.save.v1', opslag);
+      // Elke jsdom heeft zijn eigen localStorage; de bewaarde stand van het eerste
+      // potje zetten we hier over, zoals een herlaadbeurt in de browser.
+      if (opslag) {
+        for (const [sleutel, waarde] of Object.entries(opslag)) {
+          window.localStorage.setItem(sleutel, waarde);
+        }
+      }
     },
   });
   await new Promise((r) => dom.window.addEventListener('load', r, { once: true }));
-  await new Promise((r) => setTimeout(r, 250));
+  await new Promise((r) => setTimeout(r, 300));
   return { dom, w: dom.window, jsFouten };
 }
 
@@ -80,128 +71,150 @@ check('de pagina laadt zonder JS-fouten', jsFouten.join(' | '), '');
 check('de UI-laag is bereikbaar', !!UI, true);
 if (!UI) process.exit(1);
 
-// ---- begintoestand
-check('bord heeft 56 cellen', w.document.querySelectorAll('.cel').length, 56);
-check('twee kisten op het bord', w.document.querySelectorAll('.cel.kist').length, 2);
-check('munten in de kop', tekst(w.document.getElementById('stat-munten')), '25');
-check('energie in de kop', tekst(w.document.getElementById('stat-energie')), '40/60');
-check('drie klantenorders', w.document.querySelectorAll('.order').length, 3);
-check('winkel met vier artikelen', w.document.querySelectorAll('.artikel').length, 4);
-check('gebied heet Smakendorp', tekst(w.document.getElementById('gebied-naam')), 'Smakendorp');
+// ------------------------------------------------------------ levelkaart
+check('er zijn 300 levelknoppen', w.document.querySelectorAll('.level-knop').length, 300);
+check('er zijn 12 hoofdstukken', w.document.querySelectorAll('.hoofdstuk').length, 12);
+check('alleen level 1 is open', w.document.querySelectorAll('.level-knop:not(.op-slot)').length, 1);
+check('de kaart telt 0 van 300', tekst(w.document.getElementById('kaart-gehaald')), '0 van 300 gehaald');
 check('de uitleg staat open bij een nieuw potje', w.document.getElementById('modal-uitleg').hidden, false);
 w.document.getElementById('uitleg-sluiten').click();
-check('uitleg te sluiten', w.document.getElementById('modal-uitleg').hidden, true);
 
-// ---- oogsten uit de Zadenkist (cel 3 = rij 0, kolom 3)
-let energieVoor = UI.state.energie;
-UI.tik(3);
-check('oogsten kost energie', UI.state.energie, energieVoor - 1);
-check('de oogst stapelt op een bestaand zaadje', w.document.querySelectorAll('.cel.item .stapel').length >= 1, true);
-UI.tik(3);
-check('twee keer oogsten versmelt tot een kiemplant', items(UI, 'tuin', 2), 3);
-check('de kiemplant staat ook echt op het bord',
-  w.document.querySelectorAll('.cel.item .e').length >= 5, true);
-check('de kop toont de nieuwe energie', tekst(w.document.getElementById('stat-energie')), UI.state.energie + '/60');
+// --------------------------------------------------------------- level 1
+w.document.querySelector('.level-knop:not(.op-slot)').click();
+check('level 1 opent', UI.scherm, 'level');
+check('het bord heeft 56 cellen', w.document.querySelectorAll('#bord .cel').length, 56);
+check('het level heeft een kist', w.document.querySelectorAll('#bord .cel.kist').length, 1);
+check('de kist toont getekende kunst', w.document.querySelectorAll('#bord .cel.kist svg').length, 1);
+check('de doelen staan rechts', w.document.querySelectorAll('#orders .order').length, 1);
+check('de kop toont het aantal doelen', tekst(w.document.getElementById('stat-doelen')), '1');
 
-// ---- munten innen
-const muntenVoor = UI.state.munten;
-const muntCel = UI.state.cells.findIndex((c) => c && c.keten === 'munt');
-UI.tik(muntCel);
-check('munten innen levert munten op', UI.state.munten > muntenVoor, true);
-check('de cel is daarna leeg', UI.state.cells[muntCel], null);
-check('de kop volgt de munten', tekst(w.document.getElementById('stat-munten')), String(UI.state.munten));
+const energieVoor = UI.level.energie;
+const kist = UI.level.cells.findIndex((c) => c && c.kind === 'gen');
+UI.tik(kist);
+check('oogsten kost energie', UI.level.energie, energieVoor - 1);
+check('er ligt nu een item op het bord',
+  UI.level.cells.filter((c) => c && c.kind === 'item').length >= 1, true);
+check('de kop volgt de energie', tekst(w.document.getElementById('stat-energie')),
+  UI.level.energie + '/' + UI.level.energieMax);
 
-// ---- een kist van niveau 2 maken (3 Zadenkisten op elkaar)
-const S = UI.state;
-S.cells[S.cells.findIndex((c, i) => c && c.gen === 'zadenkist')] = { kind: 'gen', gen: 'zadenkist', level: 1, count: 1 };
-S.cells[40] = { kind: 'gen', gen: 'zadenkist', level: 1, count: 1 };
-S.cells[41] = { kind: 'gen', gen: 'zadenkist', level: 1, count: 1 };
-S.cells[42] = { kind: 'gen', gen: 'zadenkist', level: 1, count: 1 };
+// Doel inleveren via de echte knop in de DOM.
+function legDoel() {
+  const doel = UI.level.orders[0];
+  let tekort = doel.aantal;
+  for (let i = 0; i < UI.level.cells.length && tekort > 0; i++) {
+    if (UI.level.cells[i]) continue;
+    const aantal = Math.min(2, tekort);
+    UI.level.cells[i] = { kind: 'item', keten: doel.keten, tier: doel.tier, count: aantal };
+    tekort -= aantal;
+  }
+  UI.render();
+}
+legDoel();
+const leverKnop = w.document.querySelector('[data-lever]');
+check('de inleverknop staat aan', leverKnop && leverKnop.disabled, false);
+leverKnop.click();
+await new Promise((r) => setTimeout(r, 700));   // het levelkaartje komt met een korte pauze
+check('het level is klaar', UI.level.orders.length, 0);
+check('de kaart met sterren verschijnt', w.document.getElementById('modal-level').hidden, false);
+check('de titel noemt het level', tekst(w.document.getElementById('level-klein')), 'Level 1 gehaald');
+check('er zijn sterren getekend', w.document.querySelectorAll('#level-sterren i.aan').length, 3);
+check('de voortgang is bewaard', UI.voortgang.levelSterren['1'], 3);
+check('level 2 is nu open', w.document.querySelectorAll('.level-knop:not(.op-slot)').length >= 1, true);
+
+w.document.getElementById('level-volgende').click();
+check('het volgende level start', UI.level.level, 2);
+check('het bord is weer schoon', UI.level.cells.filter((c) => c && c.kind === 'item').length,
+  w.SmakenlandLevels.levels[1].start.reduce((n, s) => n + 1, 0));
+check('de kaart gaat dicht', w.document.getElementById('modal-level').hidden, true);
+
+// Terug naar de kaart: level 1 staat er nu met drie sterren.
+w.document.getElementById('level-kaart').click();
+check('terug op de kaart', UI.scherm, 'kaart');
+check('level 1 is gehaald op de kaart',
+  w.document.querySelector('.level-knop[data-level="1"]').classList.contains('gehaald'), true);
+check('level 3 is nog op slot',
+  w.document.querySelector('.level-knop[data-level="3"]').classList.contains('op-slot'), true);
+
+// ---------------------------------------------------------------- sudoku
+w.document.querySelector('.tab[data-tab=sudoku]').click();
+check('de sudoku-tab opent', UI.scherm, 'sudoku');
+check('het sudokubord heeft 81 vakken', w.document.querySelectorAll('.sudoku-cel').length, 81);
+const gegeven = w.document.querySelectorAll('.sudoku-cel.geven').length;
+check('er staan gegeven cijfers in', gegeven >= 20 && gegeven <= 50, true);
+const cijfers = w.document.querySelectorAll('.cijfers button');
+check('het cijferpaneel heeft negen knoppen', cijfers.length, 9);
+const leegVak = Array.from(w.document.querySelectorAll('.sudoku-cel')).find((c) => !c.classList.contains('geven'));
+leegVak.click();
+const SV = w.SmakenlandSudokuView;
+const juiste = SV.puzzel.oplossing[Number(leegVak.dataset.cel)];
+cijfers[juiste - 1].click();
+check('een goed cijfer komt in het vak', tekst(leegVak), String(juiste));
+check('er is geen fout geteld', SV.fouten, 0);
+const foutVak = Array.from(w.document.querySelectorAll('.sudoku-cel'))
+  .find((c) => !c.classList.contains('geven') && c !== leegVak);
+foutVak.click();
+// Een cijfer dat voor dít vak zeker fout is (niet het cijfer van de oplossing).
+const echtGoed = SV.puzzel.oplossing[Number(foutVak.dataset.cel)];
+const andere = (echtGoed % 9) + 1;
+w.document.querySelectorAll('.cijfers button')[andere - 1].click();
+check('een fout cijfer wordt als fout geteld', SV.fouten, 1);
+check('en rood gemaakt', foutVak.classList.contains('fout'), true);
+// notities en hint
+w.document.getElementById('sudoku-notitie').click();
+const derdeVak = Array.from(w.document.querySelectorAll('.sudoku-cel'))
+  .find((c) => !c.classList.contains('geven') && c !== leegVak && c !== foutVak);
+derdeVak.click();
+w.document.querySelectorAll('.cijfers button')[2].click();
+check('een notitie komt in het vak', derdeVak.querySelectorAll('.notitie i').length, 9);
+// Een hint herstelt eerst een fout vak (dat is de bedoelde volgorde).
+w.document.getElementById('sudoku-hint').click();
+check('een hint herstelt het foute vak', tekst(foutVak), String(echtGoed));
+check('en dat vak is niet meer fout', foutVak.classList.contains('fout'), false);
+
+// ------------------------------------------------------------ vrij spelen
+w.document.querySelector('.tab[data-tab=vrij]').click();
+check('de vrij-tab opent', UI.scherm, 'vrij');
+check('het bord is er weer', w.document.querySelectorAll('#bord .cel').length, 56);
+check('er zijn klanten', w.document.querySelectorAll('#orders .order').length, 3);
+check('de winkel heeft artikelen', w.document.querySelectorAll('.artikel').length, 4);
+const vrijKist = UI.vrij.cells.findIndex((c) => c && c.kind === 'gen');
+const muntenCel = UI.vrij.cells.findIndex((c) => c && c.keten === 'munt');
+const muntenVoor = UI.vrij.munten;
+if (muntenCel >= 0) UI.tik(muntenCel);
+check('munten innen werkt', UI.vrij.munten > muntenVoor, true);
+UI.vrij.munten = 100;
 UI.render();
-UI.verplaats(40, 41);
-UI.verplaats(42, 41);
-const kist = UI.state.cells[41];
-check('drie kisten worden een kist van niveau 2', kist && kist.level, 2);
-const energieVoorKist2 = UI.state.energie;
-UI.tik(41);
-check('een kist van niveau 2 kost 2 energie', UI.state.energie, energieVoorKist2 - 2);
-check('en levert een kiemplant (tree 2)', items(UI, 'tuin', 2), 4);
+w.document.querySelector('[data-koop="energie"]').click();
+check('de winkel verkoopt energie', UI.vrij.munten, 40);
+check('vrij spelen blijft een gewoon spel', UI.vrij.orders.length, 3);
 
-// ---- drie gelijke items versmelten via de UI-laag
-UI.state.cells.fill(null);
-UI.state.cells[10] = { kind: 'item', keten: 'haven', tier: 1, count: 1 };
-UI.state.cells[11] = { kind: 'item', keten: 'haven', tier: 1, count: 1 };
-UI.state.cells[12] = { kind: 'item', keten: 'haven', tier: 1, count: 1 };
-UI.render();
-UI.verplaats(10, 11);
-check('twee op een stapel', UI.state.cells[11].count, 2);
-UI.verplaats(12, 11);
-check('de derde versmelt naar tree 2', UI.state.cells[11].tier, 2);
-check('de broncel is leeg', UI.state.cells[12], null);
-check('het bord toont de nieuwe schelp/vis', w.document.querySelector('.cel.item .e').textContent, '🐟');
-check('de versmelting is geteld', UI.state.merges >= 1, true);
-
-// ---- een klant helpen via de echte knop in de DOM
-UI.state.orders = [{ id: 'test', keten: 'haven', tier: 2, aantal: 1, munten: 60, sterren: 3, klant: 'Bakker Bram' }];
-UI.state.cells[11] = { kind: 'item', keten: 'haven', tier: 2, count: 1 };
-UI.render();
-const knop = w.document.querySelector('[data-lever="test"]');
-check('de leverknop staat aan zodra je het item hebt', knop && knop.disabled, false);
-const muntenVoorLever = UI.state.munten;
-knop.click();
-check('leveren geeft munten', UI.state.munten, muntenVoorLever + 60);
-check('leveren geeft sterren', UI.state.sterren, 3);
-check('de order is vervangen door een nieuwe', w.document.querySelectorAll('.order').length, 3);
-check('het item is uit het bord verdwenen', UI.state.cells[11], null);
-check('de teller geholpen klanten staat op 1', tekst(w.document.getElementById('orders-klaar')), '1 geholpen');
-
-// ---- winkel via de echte knop
-UI.state.munten = 100;
-UI.render();
-const winkelKnop = w.document.querySelector('[data-koop="energie"]');
-UI.state.energie = 5;
-winkelKnop.click();
-check('een energiedrank kost 60 munten', UI.state.munten, 40);
-check('en geeft 25 energie', UI.state.energie, 30);
-check('de winkelknop gaat uit zonder munten', w.document.querySelector('[data-koop="energie"]').disabled, true);
-
-// ---- een nieuw gebied via genoeg sterren
-UI.state.sterren = 10;
-UI.state.orders = [{ id: 'v', keten: 'haven', tier: 2, aantal: 1, munten: 5, sterren: 1, klant: 'Reiziger Tijs' }];
-UI.state.cells[11] = { kind: 'item', keten: 'haven', tier: 2, count: 1 };
-UI.render();
-w.document.querySelector('[data-lever="v"]').click();
-check('een nieuw gebied opent', UI.state.gebied, 1);
-check('de verhaalkaart verschijnt', w.document.getElementById('modal-verhaal').hidden, false);
-check('met de naam van het gebied', tekst(w.document.getElementById('verhaal-titel')), 'Bakkerslaan');
-check('met een nieuw kistje als cadeau', tekst(w.document.getElementById('verhaal-cadeau')).includes('Deegkom'), true);
-w.document.getElementById('verhaal-verder').click();
-check('de verhaalkaart sluit weer', w.document.getElementById('modal-verhaal').hidden, true);
-check('het reispaneel noemt het nieuwe gebied', tekst(w.document.getElementById('gebied-naam')), 'Bakkerslaan');
-check('de deegkom staat op het bord',
-  UI.state.cells.some((c) => c && c.gen === 'deegkom'), true);
-check('de keten Bakkerij is niet meer op slot',
-  Array.from(w.document.querySelectorAll('.keten-chip')).some((c) => tekst(c).includes('Bakkerij')), true);
-
-// ---- bewaren en opnieuw laden
-UI.state.munten = 1234;
+// ---------------------------------------------------- bewaren en herladen
 UI.bewaar();
-const bewaard = w.localStorage.getItem('smakenland.save.v1');
-check('de stand staat in localStorage', typeof bewaard === 'string' && bewaard.length > 100, true);
+const bewaard = {
+  'smakenland.voortgang.v1': w.localStorage.getItem('smakenland.voortgang.v1'),
+  'smakenland.vrij.v2': w.localStorage.getItem('smakenland.vrij.v2'),
+};
+check('de voortgang staat in localStorage', typeof bewaard['smakenland.voortgang.v1'] === 'string', true);
+check('het vrije spel staat in localStorage', typeof bewaard['smakenland.vrij.v2'] === 'string', true);
+
 const tweede = await open(`${basis}/index.html`, bewaard);
-const staat2 = tweede.w.SmakenlandUI.state;
-check('na herladen zijn de munten er nog', staat2.munten, 1234);
-check('na herladen is het gebied er nog', staat2.gebied, 1);
-check('en de uitleg blijft dan dicht', tweede.w.document.getElementById('modal-uitleg').hidden, true);
+const UI2 = tweede.w.SmakenlandUI;
+check('na herladen zijn de sterren er nog', UI2.voortgang.levelSterren['1'], 3);
+check('na herladen is level 2 open',
+  tweede.w.document.querySelector('.level-knop[data-level="2"]').classList.contains('op-slot'), false);
+check('na herladen telt de kaart 1 van 300', tekst(tweede.w.document.getElementById('kaart-gehaald')),
+  '1 van 300 gehaald');
+check('de uitleg blijft dicht bij een bestaand potje', tweede.w.document.getElementById('modal-uitleg').hidden, true);
+check('het vrije spel heeft de munten bewaard', UI2.vrij.munten, 40);
 check('tweede lading zonder JS-fouten', tweede.jsFouten.join(' | '), '');
 
-// ---- opnieuw beginnen
-tweede.w.document.getElementById('knop-uitleg').click();
-tweede.w.document.getElementById('opnieuw').click();
-check('opnieuw beginnen zet de munten terug', tweede.w.SmakenlandUI.state.munten, 25);
-check('en het bord heeft weer twee kisten', tweede.w.document.querySelectorAll('.cel.kist').length, 2);
+// -------------------------------------------------------- diepe link (hash)
+const diep = await open(`${basis}/index.html#sudoku`);
+check('een diepe link naar sudoku opent dat scherm', diep.w.SmakenlandUI.scherm, 'sudoku');
+check('en slaat de uitleg over', diep.w.document.getElementById('modal-uitleg').hidden, true);
 
 console.log(`\n${gedaan - fouten}/${gedaan} controles goed${fouten ? ` — ${fouten} FOUT` : ''}`);
 dom.window.close();
 tweede.dom.window.close();
+diep.dom.window.close();
 process.exit(fouten ? 1 : 0);

@@ -3,11 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Smakenland — versmelt je eigen wereld</title>
-<meta name="description" content="Versmelt speelgoed, gerechten en verhalen: oogst uit kisten, versmelt drie gelijke items en reis door Smakenland.">
+<title>Smakenland — versmelten, sudoku en reizen</title>
+<meta name="description" content="Versmelt items in 300 levels, los sudoku's op in drie moeilijkheden en reis door Smakenland.">
 <meta name="theme-color" content="#f6f1e7">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="icon" href="icons/icon-192.png">
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -17,57 +18,41 @@
     <span class="teken" aria-hidden="true">🍲</span>
     <span class="merk-tekst">
       <strong>Smakenland</strong>
-      <small>versmelt je eigen wereld</small>
+      <small id="merk-klein">versmelt je eigen wereld</small>
     </span>
   </div>
-
-  <div class="statistieken">
-    <div class="stat" title="Munten">
-      <span class="e" aria-hidden="true">🪙</span>
-      <b id="stat-munten">0</b>
-    </div>
-    <div class="stat stat-energie" title="Energie">
-      <span class="e" aria-hidden="true">⚡</span>
-      <span class="energie-houder">
-        <b id="stat-energie">0</b>
-        <span class="balk"><i id="energie-vulling"></i></span>
-      </span>
-      <small id="energie-timer"></small>
-    </div>
-    <div class="stat" title="Sterren">
-      <span class="e" aria-hidden="true">⭐</span>
-      <b id="stat-sterren">0</b>
-    </div>
-  </div>
-
+  <div class="statistieken" id="statistieken"></div>
   <div class="balk-knoppen">
     <button id="knop-geluid" class="rond" type="button" aria-pressed="true" title="Geluid aan of uit">🔊</button>
     <button id="knop-uitleg" class="rond" type="button" title="Uitleg en instellingen">?</button>
   </div>
 </header>
 
+<nav class="tabs" id="tabs" aria-label="Spelkeuze">
+  <button class="tab" type="button" data-tab="levels">Levels</button>
+  <button class="tab" type="button" data-tab="sudoku">Sudoku</button>
+  <button class="tab" type="button" data-tab="vrij">Vrij</button>
+</nav>
+
 <main>
-  <section class="paneel reis-paneel" id="reis-paneel" aria-label="Je reis">
-    <div class="gebied-kaart" id="gebied-kaart">
-      <span class="gebied-e" id="gebied-e">🏘️</span>
-      <div>
-        <small>Gebied <span id="gebied-nummer">1</span> van 6</small>
-        <h2 id="gebied-naam">Smakendorp</h2>
+  <!-- ------------------------------------------------------- levelkaart -->
+  <section class="scherm breed paneel" id="scherm-kaart" aria-label="Levelkaart">
+    <div class="kaart-kop">
+      <span class="kaart-e" id="kaart-e">🗺️</span>
+      <div class="kaart-titel">
+        <small>Reis door Smakenland</small>
+        <h1>300 levels</h1>
+      </div>
+      <div class="kaart-teller">
+        <b id="kaart-sterren">0 ⭐</b>
+        <small id="kaart-gehaald">0 van 300 gehaald</small>
       </div>
     </div>
-    <p class="verhaal" id="gebied-verhaal"></p>
-    <div class="voortgang">
-      <div class="voortgang-kop">
-        <span id="voortgang-tekst">nog 10 ⭐ tot Bakkerslaan</span>
-        <span id="voortgang-aantal">0/10</span>
-      </div>
-      <div class="balk groot"><i id="voortgang-vulling"></i></div>
-    </div>
-    <h3>Jouw ketens</h3>
-    <div class="ketens" id="ketens"></div>
+    <div id="hoofdstukken"></div>
   </section>
 
-  <section class="paneel bord-paneel" aria-label="Versmelter">
+  <!-- --------------------------------------------------- bord + panelen -->
+  <section class="scherm bord-paneel" id="bord-paneel" aria-label="Speelveld">
     <div class="bord-kop">
       <span id="bord-hint">Tik op een kist om te oogsten</span>
       <button id="knop-kiezen" class="rond klein" type="button" hidden>Wis keuze</button>
@@ -78,12 +63,36 @@
     </p>
   </section>
 
-  <aside class="paneel zijkant" aria-label="Klanten en winkel">
-    <h2>Klanten <small id="orders-klaar">0 geholpen</small></h2>
-    <div class="orders" id="orders"></div>
-    <h2>Winkel</h2>
-    <div class="winkel" id="winkel"></div>
-  </aside>
+  <section class="scherm kolom" id="links-paneel" aria-label="Linkerpaneel"></section>
+  <aside class="scherm kolom" id="rechts-paneel" aria-label="Rechterpaneel"></aside>
+
+  <!-- ------------------------------------------------------------ sudoku -->
+  <section class="scherm breed paneel" id="scherm-sudoku" aria-label="Sudoku">
+    <div class="sudoku-kop">
+      <div class="niveaus" id="sudoku-niveaus">
+        <button type="button" data-niveau="makkelijk">Makkelijk</button>
+        <button type="button" data-niveau="midden">Midden</button>
+        <button type="button" data-niveau="moeilijk">Moeilijk</button>
+      </div>
+      <div class="sudoku-tijd">
+        <b id="sudoku-klok">00:00</b>
+        <small id="sudoku-beste">nog geen tijd</small>
+      </div>
+    </div>
+    <div class="sudoku-houder">
+      <div class="sudoku-bord" id="sudoku-bord" role="grid" aria-label="Sudoku van 9 bij 9"></div>
+      <div class="sudoku-zij">
+        <div class="cijfers" id="sudoku-cijfers"></div>
+        <div class="sudoku-knoppen">
+          <button type="button" id="sudoku-notitie" aria-pressed="false">✏️ Notities</button>
+          <button type="button" id="sudoku-wis">🧽 Wissen</button>
+          <button type="button" id="sudoku-hint">💡 Hint</button>
+          <button type="button" id="sudoku-nieuw">🔄 Nieuw spel</button>
+        </div>
+        <p class="sudoku-status" id="sudoku-status">Kies een vak en tik daarna een cijfer.</p>
+      </div>
+    </div>
+  </section>
 </main>
 
 <div class="zwevend" id="zwevend" aria-hidden="true"></div>
@@ -95,7 +104,22 @@
     <h2 id="verhaal-titel">Smakendorp</h2>
     <p id="verhaal-tekst"></p>
     <p class="cadeau" id="verhaal-cadeau"></p>
-    <button class="primair" id="verhaal-verder" type="button">Verder reizen</button>
+    <button class="primair" id="verhaal-verder" type="button">Verder</button>
+  </div>
+</div>
+
+<div class="modal" id="modal-level" hidden>
+  <div class="kaart verhaal-kaart" role="dialog" aria-modal="true" aria-labelledby="level-titel">
+    <span class="kaart-e" id="level-e">⭐</span>
+    <small id="level-klein">Level gehaald</small>
+    <h2 id="level-titel">Level 1</h2>
+    <div class="sterren-groot" id="level-sterren"></div>
+    <p id="level-tekst"></p>
+    <div class="modal-knoppen">
+      <button class="primair" id="level-volgende" type="button">Volgende level</button>
+      <button id="level-opnieuw" type="button">Nog een keer</button>
+      <button id="level-terug" type="button">Naar de kaart</button>
+    </div>
   </div>
 </div>
 
@@ -104,24 +128,30 @@
     <small>Zo speel je</small>
     <h2 id="uitleg-titel">Smakenland</h2>
     <ul class="uitleg-lijst">
-      <li><b>Tik op een kist</b> 🧺 💰 — die oogst een item en kost energie (⚡). Energie groeit vanzelf aan.</li>
-      <li><b>Sleep twee gelijke items op elkaar</b> — ze stapelen. De derde die erbij komt versmelt tot één item een tree hoger.</li>
-      <li><b>4 gelijk</b> geeft 1 hoger + 1 over, <b>5 gelijk</b> geeft er 2. Slim stapelen loont.</li>
-      <li><b>Drie dezelfde kisten</b> op elkaar geven een kist van niveau 2, die meteen een tree hoger oogst.</li>
-      <li><b>Tik op munten</b> 🪙 om ze te innen; in de winkel koop je energie en extra kisten.</li>
-      <li><b>Lever klantenorders</b> in het rechterpaneel: dat levert munten en ⭐ sterren.</li>
-      <li><b>Genoeg sterren</b> opent een nieuw gebied met een eigen verhaal en een nieuwe kist.</li>
+      <li><b>Levels</b> — 300 levels over 12 hoofdstukken. Elk level heeft vaste doelen en een eigen
+        energietegoed. Haal de doelen: meer energie over betekent meer ⭐.</li>
+      <li><b>Tik op een kist</b> 🧺 💰 — die oogst een item en kost energie. Een kist van niveau 2 of 3
+        oogst meteen een hogere tree.</li>
+      <li><b>Sleep twee gelijke items op elkaar</b> — ze stapelen; de derde die erbij komt versmelt tot
+        één item een tree hoger. <b>4 gelijk</b> geeft 1 hoger + 1 over, <b>5 gelijk</b> geeft er 2.</li>
+      <li><b>Drie dezelfde kisten</b> op elkaar geven een kist van niveau 2.</li>
+      <li><b>Sudoku</b> — drie moeilijkheden, met notities, hints, foutenteller en je beste tijd per niveau.</li>
+      <li><b>Vrij</b> — onbeperkt spelen met klanten, munten, de winkel en de reis langs de gebieden.</li>
     </ul>
     <p class="bewaard" id="bewaard"></p>
     <div class="modal-knoppen">
       <button class="primair" id="uitleg-sluiten" type="button">Spelen</button>
-      <button class="gevaar" id="opnieuw" type="button">Opnieuw beginnen</button>
+      <button class="gevaar" id="opnieuw" type="button">Alles opnieuw beginnen</button>
     </div>
   </div>
 </div>
 
 <script src="content.js"></script>
+<script src="art.js"></script>
+<script src="levels.js"></script>
 <script src="engine.js"></script>
+<script src="sudoku.js"></script>
 <script src="app.js"></script>
+<script src="sudoku-view.js"></script>
 </body>
 </html>

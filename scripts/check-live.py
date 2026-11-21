@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Controleert een draaiende kopie van Smakenland in een echte browser.
 
-Laadt de opgegeven URL in Chromium, speelt één zet (oogsten uit de eerste kist),
-leest de bordtoestand uit en kijkt of er JS-fouten waren. Zo weet je dat een
-uitgerolde kopie werkt en niet alleen dat de bestanden bestaan.
+Kijkt of de levelkaart er is, opent level 1, speelt één tik op een kist,
+controleert de sudoku-tab en meldt JS-fouten. Zo weet je dat een uitgerolde
+kopie werkt en niet alleen dat de bestanden bestaan.
 
 Gebruik:  python3 scripts/check-live.py [url]
 """
@@ -33,6 +33,11 @@ def chromium():
     return kandidaten[-1]
 
 
+def meld(naam, waar, verwacht, goed):
+    print(f"{'ok  ' if goed else 'FOUT'} {naam}: {waar} (verwacht {verwacht})")
+    return goed
+
+
 def main():
     shutil.rmtree(PROFIEL, ignore_errors=True)
     os.makedirs(PROFIEL, exist_ok=True)
@@ -58,6 +63,7 @@ def main():
     with open(actief) as f:
         poort = int(f.readline().strip())
 
+    alles_goed = True
     try:
         verzoek = urllib.request.Request(f"http://127.0.0.1:{poort}/json/new?{URL}", method="PUT")
         with urllib.request.urlopen(verzoek, timeout=10) as antwoord:
@@ -67,41 +73,61 @@ def main():
 
         klaar = False
         for _ in range(60):
-            if b.js("document.querySelectorAll('.cel').length") == 56:
+            if b.js("document.querySelectorAll('.level-knop').length") == 300:
                 klaar = True
                 break
             time.sleep(0.5)
-        # De foutenhark pas ophangen als de pagina staat: een evaluate tijdens de
-        # navigatie belandt in het oude document en verdwijnt daarna.
         b.js("window.__fouten = [];"
              " window.addEventListener('error', e => window.__fouten.push(String(e.message)));"
              " window.addEventListener('unhandledrejection', e => window.__fouten.push('belofte: ' + e.reason));")
-        titel = b.js("document.title")
-        cellen = b.js("document.querySelectorAll('.cel').length")
-        kisten = b.js("document.querySelectorAll('.cel.kist').length")
-        # Eén echte zet: de knoppen/het bord aanroepen zoals een speler dat doet.
+        print(f"url        : {URL}")
+        print(f"titel      : {b.js('document.title')}")
+        aantal_hfst = b.js("document.querySelectorAll('.hoofdstuk').length")
+        aantal_open = b.js("document.querySelectorAll('.level-knop:not(.op-slot)').length")
+        alles_goed &= meld("levelkaart", b.js("document.querySelectorAll('.level-knop').length"), 300, klaar)
+        alles_goed &= meld("hoofdstukken", aantal_hfst, 12, aantal_hfst == 12)
+        alles_goed &= meld("open levels", aantal_open, 1, aantal_open == 1)
+
+        # Level 1 openen en één keer oogsten met een echte tik op het bord.
         b.js("document.getElementById('uitleg-sluiten').click()")
+        b.js("document.querySelector('.level-knop:not(.op-slot)').click()")
+        time.sleep(0.8)
+        cellen = b.js("document.querySelectorAll('#bord .cel').length")
+        kisten = b.js("document.querySelectorAll('#bord .cel.kist').length")
+        kunst = b.js("document.querySelectorAll('#bord .cel svg').length")
+        doelen = b.js("document.querySelectorAll('#orders .order').length")
+        alles_goed &= meld("bordcellen", cellen, 56, cellen == 56)
+        alles_goed &= meld("kisten", kisten, "minstens 1", kisten >= 1)
+        alles_goed &= meld("kunst in de tegels", kunst, "minstens 1", kunst >= 1)
+        alles_goed &= meld("doelen van het level", doelen, "minstens 1", doelen >= 1)
         voor = b.js("Number(document.getElementById('stat-energie').textContent.split('/')[0])")
-        b.js("(() => { const el = document.querySelectorAll('.cel.kist')[0];"
+        b.js("(() => { const el = document.querySelectorAll('#bord .cel.kist')[0];"
              " el.dispatchEvent(new PointerEvent('pointerdown', {bubbles: true, clientX: 100, clientY: 200}));"
              " window.dispatchEvent(new PointerEvent('pointerup', {bubbles: true, clientX: 100, clientY: 200}));"
              " return 1; })()")
         time.sleep(0.5)
         na = b.js("Number(document.getElementById('stat-energie').textContent.split('/')[0])")
-        bezet = b.js("document.querySelectorAll('.cel.bezet').length")
-        fouten = b.js("JSON.stringify(window.__fouten)")
+        alles_goed &= meld("oogsten", f"{voor} -> {na}", "één minder", na == voor - 1)
 
-        goed = (cellen == 56 and kisten == 2 and na == voor - 1 and bezet >= 3 and fouten == "[]")
-        print(f"url        : {URL}")
-        print(f"titel      : {titel}")
-        print(f"cellen     : {cellen} (verwacht 56)")
-        print(f"kisten     : {kisten} (verwacht 2)")
-        print(f"energie    : {voor} -> {na} (verwacht één minder na een tik op de kist)")
-        print(f"bezette cel: {bezet}")
-        print(f"JS-fouten  : {fouten}")
-        print("OORDEEL    : " + ("werkt" if goed else "NIET GOED"))
+        # Sudoku-tab
+        b.js("document.querySelector('.tab[data-tab=sudoku]').click()")
+        time.sleep(0.6)
+        vakken = b.js("document.querySelectorAll('.sudoku-cel').length")
+        gegeven = b.js("document.querySelectorAll('.sudoku-cel.geven').length") or 0
+        alles_goed &= meld("sudokuvakken", vakken, 81, vakken == 81)
+        alles_goed &= meld("gegeven cijfers", gegeven, "tussen 20 en 50", 20 <= gegeven <= 50)
+        b.js("(() => { const leeg = [...document.querySelectorAll('.sudoku-cel')]"
+             ".find(c => !c.classList.contains('geven')); leeg.click(); return 1; })()")
+        b.js("document.querySelector('.cijfers button').click()")
+        alles_goed &= meld("een vak gekozen en een cijfer getikt",
+                           b.js("!!document.querySelector('.sudoku-cel.gekozen')"), True,
+                           b.js("!!document.querySelector('.sudoku-cel.gekozen')"))
+
+        fouten = b.js("JSON.stringify(window.__fouten)")
+        alles_goed &= meld("JS-fouten", fouten, "[]", fouten == "[]")
+        print("OORDEEL    : " + ("werkt" if alles_goed else "NIET GOED"))
         proc.terminate()
-        sys.exit(0 if goed else 1)
+        sys.exit(0 if alles_goed else 1)
     finally:
         proc.terminate()
         try:
