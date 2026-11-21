@@ -82,10 +82,10 @@ def main():
              " window.addEventListener('unhandledrejection', e => window.__fouten.push('belofte: ' + e.reason));")
         print(f"url        : {URL}")
         print(f"titel      : {b.js('document.title')}")
-        aantal_hfst = b.js("document.querySelectorAll('.hoofdstuk').length")
+        aantal_hfst = b.js("document.querySelectorAll('.hoofdstuk').length")   # 32 hoofdstukken van 25
         aantal_open = b.js("document.querySelectorAll('.level-knop:not(.op-slot)').length")
         alles_goed &= meld("levelkaart", b.js("document.querySelectorAll('.level-knop').length"), 800, klaar)
-        alles_goed &= meld("hoofdstukken", aantal_hfst, 12, aantal_hfst == 12)
+        alles_goed &= meld("hoofdstukken", aantal_hfst, 32, aantal_hfst == 32)
         alles_goed &= meld("open levels", aantal_open, 1, aantal_open == 1)
 
         # Level 1 openen en één keer oogsten met een echte tik op het bord.
