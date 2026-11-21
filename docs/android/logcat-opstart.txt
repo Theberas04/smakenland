@@ -1,0 +1,198 @@
+--------- beginning of main
+11-21 14:21:58.600  2451  2473 I OpenGLRenderer: Davey! duration=2171ms; Flags=0, IntendedVsync=41177743326, Vsync=41177743326, OldestInputEvent=9223372036854775807, NewestInputEvent=0, HandleInputStart=41177973730, AnimationStart=41177974862, PerformTraversalsStart=41178219579, DrawStart=41178305579, SyncQueued=41178607543, SyncStart=45885623592, IssueDrawCommandsStart=45885708722, SwapBuffers=48051791730, FrameCompleted=48056720924, DequeueBufferDuration=45485, QueueBufferDuration=314988, GpuCompleted=0, 
+11-21 14:21:58.600  2451  2451 I Choreographer: Skipped 128 frames!  The application may be doing too much work on its main thread.
+11-21 14:21:58.675  2451  2473 I OpenGLRenderer: Davey! duration=2191ms; Flags=0, IntendedVsync=45911101061, Vsync=48044434309, OldestInputEvent=9223372036854775807, NewestInputEvent=0, HandleInputStart=48057488730, AnimationStart=48057490173, PerformTraversalsStart=48057849664, DrawStart=48058040050, SyncQueued=48058520006, SyncStart=48087985266, IssueDrawCommandsStart=48088011895, SwapBuffers=48119567250, FrameCompleted=48131790598, DequeueBufferDuration=283059, QueueBufferDuration=441274, GpuCompleted=0, 
+11-21 14:21:58.768   509   659 E WifiHealthMonitor:  Hit PackageManager exception
+11-21 14:21:58.768   509   659 E WifiHealthMonitor: android.content.pm.PackageManager$NameNotFoundException: com.google.android.wifi
+11-21 14:21:58.768   509   659 E WifiHealthMonitor: 	at android.app.ApplicationPackageManager.getPackageInfoAsUser(ApplicationPackageManager.java:206)
+11-21 14:21:58.768   509   659 E WifiHealthMonitor: 	at android.app.ApplicationPackageManager.getPackageInfo(ApplicationPackageManager.java:178)
+11-21 14:21:58.768   509   659 E WifiHealthMonitor: 	at com.android.server.wifi.WifiHealthMonitor.extractCurrentSoftwareBuildInfo(WifiHealthMonitor.java:545)
+11-21 14:21:58.768   509   659 E WifiHealthMonitor: 	at com.android.server.wifi.WifiHealthMonitor.postBootSwBuildCheck(WifiHealthMonitor.java:477)
+11-21 14:21:58.768   509   659 E WifiHealthMonitor: 	at com.android.server.wifi.WifiHealthMonitor.postBootDetectionHandler(WifiHealthMonitor.java:468)
+11-21 14:21:58.768   509   659 E WifiHealthMonitor: 	at com.android.server.wifi.WifiHealthMonitor.access$200(WifiHealthMonitor.java:70)
+11-21 14:21:58.768   509   659 E WifiHealthMonitor: 	at com.android.server.wifi.WifiHealthMonitor$2.onAlarm(WifiHealthMonitor.java:163)
+11-21 14:21:58.768   509   659 E WifiHealthMonitor: 	at android.app.AlarmManager$ListenerWrapper.run(AlarmManager.java:239)
+11-21 14:21:58.768   509   659 E WifiHealthMonitor: 	at android.os.Handler.handleCallback(Handler.java:938)
+11-21 14:21:58.768   509   659 E WifiHealthMonitor: 	at android.os.Handler.dispatchMessage(Handler.java:99)
+11-21 14:21:58.768   509   659 E WifiHealthMonitor: 	at android.os.Looper.loop(Looper.java:223)
+11-21 14:21:58.768   509   659 E WifiHealthMonitor: 	at android.os.HandlerThread.run(HandlerThread.java:67)
+11-21 14:21:58.805   509   536 D WifiNl80211Manager: Scan result ready event
+11-21 14:21:58.805   509   536 D WifiNative: Scan result ready event
+11-21 14:22:00.001   724   724 D KeyguardClockSwitch: Updating clock: 222
+11-21 14:22:00.015   298  1245 D goldfish-address-space: claimShared: Ask to claim region [0x3f87f7000 0x3f8fe0000]
+11-21 14:22:00.022   159   159 I hwservicemanager: getTransport: Cannot find entry android.hardware.graphics.mapper@4.0::IMapper/default in either framework or device manifest.
+11-21 14:22:00.022  2550  2550 I Gralloc4: mapper 4.x is not supported
+11-21 14:22:00.053  2550  2550 D HostConnection: createUnique: call
+11-21 14:22:00.053  2550  2550 D HostConnection: HostConnection::get() New Host Connection established 0x7162d7e13050, tid 2550
+11-21 14:22:00.053  2550  2550 D goldfish-address-space: allocate: Ask for block of size 0x100
+11-21 14:22:00.054  2550  2550 D goldfish-address-space: allocate: ioctl allocate returned offset 0x3f7ffe000 size 0x2000
+11-21 14:22:00.066  2550  2550 D HostConnection: HostComposition ext ANDROID_EMU_CHECKSUM_HELPER_v1 ANDROID_EMU_native_sync_v2 ANDROID_EMU_dma_v1 ANDROID_EMU_direct_mem ANDROID_EMU_host_composition_v1 ANDROID_EMU_host_composition_v2 ANDROID_EMU_vulkan ANDROID_EMU_deferred_vulkan_commands ANDROID_EMU_vulkan_null_optional_strings ANDROID_EMU_vulkan_create_resources_with_requirements ANDROID_EMU_YUV_Cache ANDROID_EMU_vulkan_ignored_handles ANDROID_EMU_has_shared_slots_host_memory_allocator ANDROID_EMU_vulkan_free_memory_sync ANDROID_EMU_vulkan_shader_float16_int8 ANDROID_EMU_vulkan_async_queue_submit ANDROID_EMU_sync_buffer_data ANDROID_EMU_vulkan_async_qsri ANDROID_EMU_read_color_buffer_dma ANDROID_EMU_hwc_color_transform ANDROID_EMU_hwc_display_power_mode GL_OES_EGL_image_external_essl3 GL_OES_vertex_array_object GL_KHR_texture_compression_astc_ldr ANDROID_EMU_host_side_tracing ANDROID_EMU_gles_max_version_3_0 
+--------- beginning of system
+11-21 14:22:00.309   509   536 I ActivityManager: Force stopping nl.werdens.smakenland appid=10130 user=0: from pid 2554
+11-21 14:22:00.309   509   536 I ActivityManager: Killing 2451:nl.werdens.smakenland/u0a130 (adj 0): stop nl.werdens.smakenland due to from pid 2554
+11-21 14:22:00.311  2481  2481 I cr_ChildProcessService: Destroying ChildProcessService pid=2481
+11-21 14:22:00.316   509   536 W ActivityTaskManager: Force removing ActivityRecord{8f2ffed u0 nl.werdens.smakenland/.MainActivity t10 f}}: app died, no saved state
+11-21 14:22:00.316   509   605 W InputDispatcher: channel '2b51fe4 nl.werdens.smakenland/nl.werdens.smakenland.MainActivity (server)' ~ Consumer closed input channel or an error occurred.  events=0x9
+11-21 14:22:00.316   509   605 E InputDispatcher: channel '2b51fe4 nl.werdens.smakenland/nl.werdens.smakenland.MainActivity (server)' ~ Channel is unrecoverably broken and will be disposed!
+11-21 14:22:00.318   278   278 I Zygote  : Process 2451 exited due to signal 9 (Killed)
+11-21 14:22:00.325   509   536 W InputDispatcher: Attempted to unregister already unregistered input channel '2b51fe4 nl.werdens.smakenland/nl.werdens.smakenland.MainActivity (server)'
+11-21 14:22:00.326   898   898 I Zygote  : Process 2481 exited cleanly (0)
+11-21 14:22:00.327   509   536 W InputReader: Device virtio_input_multi_touch_10 is associated with display ADISPLAY_ID_NONE.
+11-21 14:22:00.327   509   536 W InputReader: Device virtio_input_multi_touch_7 is associated with display ADISPLAY_ID_NONE.
+11-21 14:22:00.327   509   536 W InputReader: Device virtio_input_multi_touch_4 is associated with display ADISPLAY_ID_NONE.
+11-21 14:22:00.327   509   536 W InputReader: Device virtio_input_multi_touch_5 is associated with display ADISPLAY_ID_NONE.
+11-21 14:22:00.327   509   536 W InputReader: Device virtio_input_multi_touch_2 is associated with display ADISPLAY_ID_NONE.
+11-21 14:22:00.327   509   536 W InputReader: Device virtio_input_multi_touch_6 is associated with display ADISPLAY_ID_NONE.
+11-21 14:22:00.327   509   536 W InputReader: Device virtio_input_multi_touch_3 is associated with display ADISPLAY_ID_NONE.
+11-21 14:22:00.327   509   536 W InputReader: Device virtio_input_multi_touch_8 is associated with display ADISPLAY_ID_NONE.
+11-21 14:22:00.327   509   536 W InputReader: Device virtio_input_multi_touch_9 is associated with display ADISPLAY_ID_NONE.
+11-21 14:22:00.327   509   536 W InputReader: Device virtio_input_multi_touch_11 is associated with display ADISPLAY_ID_NONE.
+11-21 14:22:00.327   509   536 W InputReader: Device virtio_input_multi_touch_10 is associated with display ADISPLAY_ID_NONE.
+11-21 14:22:00.327   509   536 W InputReader: Device virtio_input_multi_touch_7 is associated with display ADISPLAY_ID_NONE.
+11-21 14:22:00.327   509   536 W InputReader: Device virtio_input_multi_touch_4 is associated with display ADISPLAY_ID_NONE.
+11-21 14:22:00.327   509   536 W InputReader: Device virtio_input_multi_touch_5 is associated with display ADISPLAY_ID_NONE.
+11-21 14:22:00.327   509   536 W InputReader: Device virtio_input_multi_touch_2 is associated with display ADISPLAY_ID_NONE.
+11-21 14:22:00.327   509   536 W InputReader: Device virtio_input_multi_touch_6 is associated with display ADISPLAY_ID_NONE.
+11-21 14:22:00.327   509   536 W InputReader: Device virtio_input_multi_touch_3 is associated with display ADISPLAY_ID_NONE.
+11-21 14:22:00.327   509   536 W InputReader: Device virtio_input_multi_touch_8 is associated with display ADISPLAY_ID_NONE.
+11-21 14:22:00.327   509   536 W InputReader: Device virtio_input_multi_touch_9 is associated with display ADISPLAY_ID_NONE.
+11-21 14:22:00.327   509   536 W InputReader: Device virtio_input_multi_touch_11 is associated with display ADISPLAY_ID_NONE.
+11-21 14:22:00.328   509   980 W WindowManager: Failed looking up window session=Session{690b838 2451:u0a10130} callers=com.android.server.wm.WindowManagerService.windowForClientLocked:5425 com.android.server.wm.WindowState$DeathRecipient.binderDied:2810 android.os.IBinder$DeathRecipient.binderDied:305 
+11-21 14:22:00.328   509   980 I WindowManager: WIN DEATH: null
+11-21 14:22:00.329   509   536 I ActivityManager: Killing 2481:com.android.webview:sandboxed_process0:org.chromium.content.app.SandboxedProcessService0:0/u0a130i1 (adj 0): isolated not needed
+11-21 14:22:00.330  2554  2556 I cmd     : oneway function results will be dropped but finished with status OK and parcel size 4
+11-21 14:22:00.335   200  1204 E android.system.suspend@1.0-service: Error opening kernel wakelock stats for: wakeup32: Permission denied
+11-21 14:22:00.336   200  1204 E android.system.suspend@1.0-service: Error opening kernel wakelock stats for: wakeup33: Permission denied
+11-21 14:22:00.337   509   542 W ActivityManager: setHasOverlayUi called on unknown pid: 2451
+11-21 14:22:00.346  1059  1059 D CarrierSvcBindHelper: No carrier app for: 0
+11-21 14:22:00.332   200   200 W Binder:200_3: type=1400 audit(0.0:33): avc: denied { read } for name="wakeup32" dev="sysfs" ino=18830 scontext=u:r:system_suspend:s0 tcontext=u:object_r:sysfs:s0 tclass=dir permissive=0
+11-21 14:22:00.354   509   550 I libprocessgroup: Successfully killed process cgroup uid 10130 pid 2451 in 44ms
+11-21 14:22:00.360   298  1245 D goldfish-address-space: claimShared: Ask to claim region [0x3f8000000 0x3f87e9000]
+11-21 14:22:00.369   298  1245 D goldfish-address-space: claimShared: Ask to claim region [0x3f87f7000 0x3f8fe0000]
+11-21 14:22:00.371   509   550 I libprocessgroup: Successfully killed process cgroup uid 99001 pid 2481 in 0ms
+11-21 14:22:00.378   298  1245 D goldfish-address-space: claimShared: Ask to claim region [0x3f9081000 0x3f986a000]
+11-21 14:22:00.332   200   200 W Binder:200_3: type=1400 audit(0.0:34): avc: denied { read } for name="wakeup33" dev="sysfs" ino=18893 scontext=u:r:system_suspend:s0 tcontext=u:object_r:sysfs:s0 tclass=dir permissive=0
+11-21 14:22:00.419   509   542 D EventSequenceValidator: Transition from ACTIVITY_FINISHED to INTENT_STARTED
+11-21 14:22:00.419   509   980 I ActivityTaskManager: START u0 {flg=0x10000000 cmp=nl.werdens.smakenland/.MainActivity (has extras)} from uid 2000
+11-21 14:22:00.422   509   542 D CompatibilityChangeReporter: Compat change id reported: 135634846; UID 10130; state: DISABLED
+11-21 14:22:00.422   509   542 D EventSequenceValidator: Transition from INTENT_STARTED to ACTIVITY_LAUNCHED
+11-21 14:22:00.425   509   549 D CompatibilityChangeReporter: Compat change id reported: 143937733; UID 10130; state: ENABLED
+11-21 14:22:00.440   278   278 D Zygote  : Forked child process 2570
+11-21 14:22:00.442   509   549 I ActivityManager: Start proc 2570:nl.werdens.smakenland/u0a130 for pre-top-activity {nl.werdens.smakenland/nl.werdens.smakenland.MainActivity}
+11-21 14:22:00.443   411   411 I perfetto: ing_service_impl.cc:758 Configured tracing session 7, #sources:1, duration:5000 ms, #buffers:1, total buffer size:4096 KB, total sessions:1, uid:1071 session name: ""
+11-21 14:22:00.443   406   406 I perfetto: probes_producer.cc:230  Ftrace setup (target_buf=7)
+11-21 14:22:00.463   298  1245 D goldfish-address-space: claimShared: Ask to claim region [0x3fa796000 0x3faf7f000]
+11-21 14:22:00.482   406   406 I perfetto: ftrace_procfs.cc:176    enabled ftrace
+--------- beginning of kernel
+11-21 14:22:00.698     0     0 W perfetto: enabled ftrace
+11-21 14:22:00.531  2570  2570 I dens.smakenlan: Late-enabling -Xcheck:jni
+11-21 14:22:00.541  2570  2570 I dens.smakenlan: Unquickening 12 vdex files!
+11-21 14:22:00.542  2570  2570 W dens.smakenlan: Unexpected CPU variant for X86 using defaults: x86_64
+11-21 14:22:00.761     0     0 D logd    : logdr: UID=2000 GID=2000 PID=2580 n tail=0 logMask=99 pid=0 start=0ns timeout=0ns
+11-21 14:22:00.549   509   537 W InputReader: Device virtio_input_multi_touch_10 is associated with display ADISPLAY_ID_NONE.
+11-21 14:22:00.549   509   537 W InputReader: Device virtio_input_multi_touch_7 is associated with display ADISPLAY_ID_NONE.
+11-21 14:22:00.549   509   537 W InputReader: Device virtio_input_multi_touch_4 is associated with display ADISPLAY_ID_NONE.
+11-21 14:22:00.549   509   537 W InputReader: Device virtio_input_multi_touch_5 is associated with display ADISPLAY_ID_NONE.
+11-21 14:22:00.549   509   537 W InputReader: Device virtio_input_multi_touch_2 is associated with display ADISPLAY_ID_NONE.
+11-21 14:22:00.549   509   537 W InputReader: Device virtio_input_multi_touch_6 is associated with display ADISPLAY_ID_NONE.
+11-21 14:22:00.549   509   537 W InputReader: Device virtio_input_multi_touch_3 is associated with display ADISPLAY_ID_NONE.
+11-21 14:22:00.549   509   537 W InputReader: Device virtio_input_multi_touch_8 is associated with display ADISPLAY_ID_NONE.
+11-21 14:22:00.549   509   537 W InputReader: Device virtio_input_multi_touch_9 is associated with display ADISPLAY_ID_NONE.
+11-21 14:22:00.549   509   537 W InputReader: Device virtio_input_multi_touch_11 is associated with display ADISPLAY_ID_NONE.
+11-21 14:22:00.549   509   537 W InputReader: Device virtio_input_multi_touch_10 is associated with display ADISPLAY_ID_NONE.
+11-21 14:22:00.549   509   537 W InputReader: Device virtio_input_multi_touch_7 is associated with display ADISPLAY_ID_NONE.
+11-21 14:22:00.549   509   537 W InputReader: Device virtio_input_multi_touch_4 is associated with display ADISPLAY_ID_NONE.
+11-21 14:22:00.549   509   537 W InputReader: Device virtio_input_multi_touch_5 is associated with display ADISPLAY_ID_NONE.
+11-21 14:22:00.549   509   537 W InputReader: Device virtio_input_multi_touch_2 is associated with display ADISPLAY_ID_NONE.
+11-21 14:22:00.549   509   537 W InputReader: Device virtio_input_multi_touch_6 is associated with display ADISPLAY_ID_NONE.
+11-21 14:22:00.549   509   537 W InputReader: Device virtio_input_multi_touch_3 is associated with display ADISPLAY_ID_NONE.
+11-21 14:22:00.549   509   537 W InputReader: Device virtio_input_multi_touch_8 is associated with display ADISPLAY_ID_NONE.
+11-21 14:22:00.549   509   537 W InputReader: Device virtio_input_multi_touch_9 is associated with display ADISPLAY_ID_NONE.
+11-21 14:22:00.549   509   537 W InputReader: Device virtio_input_multi_touch_11 is associated with display ADISPLAY_ID_NONE.
+11-21 14:22:00.553   393   404 I adbd    : jdwp connection from 2570
+11-21 14:22:00.635  2570  2570 D NetworkSecurityConfig: No Network Security Config specified, using platform default
+11-21 14:22:00.635  2570  2570 D NetworkSecurityConfig: No Network Security Config specified, using platform default
+11-21 14:22:00.645  2570  2600 D libEGL  : loaded /vendor/lib64/egl/libEGL_emulation.so
+11-21 14:22:00.646  2570  2600 D libEGL  : loaded /vendor/lib64/egl/libGLESv1_CM_emulation.so
+11-21 14:22:00.647  2570  2600 D libEGL  : loaded /vendor/lib64/egl/libGLESv2_emulation.so
+11-21 14:22:00.675  2570  2570 I WebViewFactory: Loading com.android.webview version 83.0.4103.120 (code 410412056)
+11-21 14:22:00.684  2570  2570 I dens.smakenlan: The ClassLoaderContext is a special shared library.
+11-21 14:22:00.685  2570  2570 D nativeloader: classloader namespace configured for unbundled product apk. library_path=/product/app/webview/lib/x86_64:/product/app/webview/webview.apk!/lib/x86_64:/product/lib64:/system/product/lib64
+11-21 14:22:00.703  2570  2570 I cr_LibraryLoader: Loaded native library version number "83.0.4103.120"
+11-21 14:22:00.703  2570  2570 I cr_CachingUmaRecorder: Flushed 3 samples from 3 histograms.
+11-21 14:22:00.707   509   652 D CompatibilityChangeReporter: Compat change id reported: 135634846; UID 10130; state: DISABLED
+11-21 14:22:00.707   509   549 D CompatibilityChangeReporter: Compat change id reported: 143937733; UID 10130; state: ENABLED
+11-21 14:22:00.709   898   898 D Zygote  : Forked child process 2606
+11-21 14:22:00.709   509   549 I ActivityManager: Start proc 2606:com.android.webview:sandboxed_process0:org.chromium.content.app.SandboxedProcessService0:0/u0i2 for  {nl.werdens.smakenland/org.chromium.content.app.SandboxedProcessService0:0}
+11-21 14:22:00.712  2606  2606 W ocessService0:: Unexpected CPU variant for X86 using defaults: x86_64
+11-21 14:22:00.713   393   404 I adbd    : jdwp connection from 2606
+11-21 14:22:00.715   509   980 D CompatibilityChangeReporter: Compat change id reported: 136274596; UID 10130; state: ENABLED
+11-21 14:22:00.719  2606  2606 D NetworkSecurityConfig: No Network Security Config specified, using platform default
+11-21 14:22:00.719  2606  2606 D NetworkSecurityConfig: No Network Security Config specified, using platform default
+11-21 14:22:00.720  2606  2606 I cr_ChildProcessService: Creating new ChildProcessService pid=2606
+11-21 14:22:00.738  2570  2570 I TetheringManager: registerTetheringEventCallback:nl.werdens.smakenland
+11-21 14:22:00.740  2570  2625 W chromium: [WARNING:dns_config_service_posix.cc(341)] Failed to read DnsConfig.
+11-21 14:22:00.767  2570  2630 W dens.smakenlan: Accessing hidden method Landroid/media/AudioManager;->getOutputLatency(I)I (greylist, reflection, allowed)
+11-21 14:22:00.773  2570  2641 D HostConnection: HostConnection::get() New Host Connection established 0x7853719b9450, tid 2641
+11-21 14:22:00.775  2570  2641 D HostConnection: HostComposition ext ANDROID_EMU_CHECKSUM_HELPER_v1 ANDROID_EMU_native_sync_v2 ANDROID_EMU_dma_v1 ANDROID_EMU_direct_mem ANDROID_EMU_host_composition_v1 ANDROID_EMU_host_composition_v2 ANDROID_EMU_vulkan ANDROID_EMU_deferred_vulkan_commands ANDROID_EMU_vulkan_null_optional_strings ANDROID_EMU_vulkan_create_resources_with_requirements ANDROID_EMU_YUV_Cache ANDROID_EMU_vulkan_ignored_handles ANDROID_EMU_has_shared_slots_host_memory_allocator ANDROID_EMU_vulkan_free_memory_sync ANDROID_EMU_vulkan_shader_float16_int8 ANDROID_EMU_vulkan_async_queue_submit ANDROID_EMU_sync_buffer_data ANDROID_EMU_vulkan_async_qsri ANDROID_EMU_read_color_buffer_dma ANDROID_EMU_hwc_color_transform ANDROID_EMU_hwc_display_power_mode GL_OES_EGL_image_external_essl3 GL_OES_vertex_array_object GL_KHR_texture_compression_astc_ldr ANDROID_EMU_host_side_tracing ANDROID_EMU_gles_max_version_3_0 
+11-21 14:22:00.775   159   159 I hwservicemanager: getTransport: Cannot find entry android.hardware.configstore@1.0::ISurfaceFlingerConfigs/default in either framework or device manifest.
+11-21 14:22:00.778  2570  2641 D EGL_emulation: eglCreateContext: 0x785361a06ed0: maj 3 min 0 rcv 3
+11-21 14:22:00.779  2570  2641 D EGL_emulation: eglMakeCurrent: 0x785361a06ed0: ver 3 0 (tinfo 0x785301a17150) (first time)
+11-21 14:22:00.783  2570  2630 W cr_media: Requires BLUETOOTH permission
+11-21 14:22:00.786  2606  2623 I cr_LibraryLoader: Loaded native library version number "83.0.4103.120"
+11-21 14:22:00.786  2606  2623 I cr_CachingUmaRecorder: Flushed 1 samples from 1 histograms.
+11-21 14:22:00.810  2570  2598 D HostConnection: HostConnection::get() New Host Connection established 0x7853719bcb10, tid 2598
+11-21 14:22:00.812  2570  2598 D HostConnection: HostComposition ext ANDROID_EMU_CHECKSUM_HELPER_v1 ANDROID_EMU_native_sync_v2 ANDROID_EMU_dma_v1 ANDROID_EMU_direct_mem ANDROID_EMU_host_composition_v1 ANDROID_EMU_host_composition_v2 ANDROID_EMU_vulkan ANDROID_EMU_deferred_vulkan_commands ANDROID_EMU_vulkan_null_optional_strings ANDROID_EMU_vulkan_create_resources_with_requirements ANDROID_EMU_YUV_Cache ANDROID_EMU_vulkan_ignored_handles ANDROID_EMU_has_shared_slots_host_memory_allocator ANDROID_EMU_vulkan_free_memory_sync ANDROID_EMU_vulkan_shader_float16_int8 ANDROID_EMU_vulkan_async_queue_submit ANDROID_EMU_sync_buffer_data ANDROID_EMU_vulkan_async_qsri ANDROID_EMU_read_color_buffer_dma ANDROID_EMU_hwc_color_transform ANDROID_EMU_hwc_display_power_mode GL_OES_EGL_image_external_essl3 GL_OES_vertex_array_object GL_KHR_texture_compression_astc_ldr ANDROID_EMU_host_side_tracing ANDROID_EMU_gles_max_version_3_0 
+11-21 14:22:00.816  2570  2598 D EGL_emulation: eglCreateContext: 0x785361a0fa60: maj 3 min 0 rcv 3
+11-21 14:22:00.820  2570  2598 D EGL_emulation: eglMakeCurrent: 0x785361a0fa60: ver 3 0 (tinfo 0x785301a1b3b0) (first time)
+11-21 14:22:00.869   298  1245 D goldfish-address-space: claimShared: Ask to claim region [0x3f8000000 0x3f87e9000]
+11-21 14:22:00.870   159   159 I hwservicemanager: getTransport: Cannot find entry android.hardware.graphics.mapper@4.0::IMapper/default in either framework or device manifest.
+11-21 14:22:00.870  2570  2598 I Gralloc4: mapper 4.x is not supported
+11-21 14:22:00.871  2570  2598 D HostConnection: createUnique: call
+11-21 14:22:00.871  2570  2598 D HostConnection: HostConnection::get() New Host Connection established 0x7853719badd0, tid 2598
+11-21 14:22:00.871  2570  2598 D goldfish-address-space: allocate: Ask for block of size 0x100
+11-21 14:22:00.871  2570  2598 D goldfish-address-space: allocate: ioctl allocate returned offset 0x3f7ffe000 size 0x2000
+11-21 14:22:00.878  2570  2598 D HostConnection: HostComposition ext ANDROID_EMU_CHECKSUM_HELPER_v1 ANDROID_EMU_native_sync_v2 ANDROID_EMU_dma_v1 ANDROID_EMU_direct_mem ANDROID_EMU_host_composition_v1 ANDROID_EMU_host_composition_v2 ANDROID_EMU_vulkan ANDROID_EMU_deferred_vulkan_commands ANDROID_EMU_vulkan_null_optional_strings ANDROID_EMU_vulkan_create_resources_with_requirements ANDROID_EMU_YUV_Cache ANDROID_EMU_vulkan_ignored_handles ANDROID_EMU_has_shared_slots_host_memory_allocator ANDROID_EMU_vulkan_free_memory_sync ANDROID_EMU_vulkan_shader_float16_int8 ANDROID_EMU_vulkan_async_queue_submit ANDROID_EMU_sync_buffer_data ANDROID_EMU_vulkan_async_qsri ANDROID_EMU_read_color_buffer_dma ANDROID_EMU_hwc_color_transform ANDROID_EMU_hwc_display_power_mode GL_OES_EGL_image_external_essl3 GL_OES_vertex_array_object GL_KHR_texture_compression_astc_ldr ANDROID_EMU_host_side_tracing ANDROID_EMU_gles_max_version_3_0 
+11-21 14:22:00.885   298  1245 D goldfish-address-space: claimShared: Ask to claim region [0x3faf7f000 0x3fb768000]
+11-21 14:22:00.886   298  1245 D goldfish-address-space: claimShared: Ask to claim region [0x3fb768000 0x3fbf51000]
+11-21 14:22:00.904  2570  2641 I VideoCapabilities: Unsupported profile 4 for video/mp4v-es
+11-21 14:22:00.906  2570  2641 W cr_MediaCodecUtil: HW encoder for video/avc is not available on this device.
+11-21 14:22:00.907  2570  2641 D EGL_emulation: eglCreateContext: 0x785361a06ab0: maj 3 min 0 rcv 3
+11-21 14:22:01.072  2570  2643 I Smakenland: SmakenlandUpdate eigen=1.2.0 (10200) gevonden=v1.2.0 (10200) nieuwer=false
+11-21 14:22:01.089   509   547 D ArtManagerInternalImpl: /data/misc/iorapd/nl.werdens.smakenland/10200/nl.werdens.smakenland.MainActivity/compiled_traces/compiled_trace.pb doesn't exist
+11-21 14:22:01.089   509   547 I ActivityTaskManager: Displayed nl.werdens.smakenland/.MainActivity: +670ms
+11-21 14:22:01.091   509   542 D EventSequenceValidator: Transition from ACTIVITY_LAUNCHED to ACTIVITY_FINISHED
+11-21 14:22:01.093   509   542 I ActivityManager: Killing 2035:com.android.camera2/u0a108 (adj 985): empty #17
+11-21 14:22:01.096   509   542 I ActivityManager: Killing 2003:com.android.calendar/u0a110 (adj 985): empty #18
+11-21 14:22:01.100   278   278 I Zygote  : Process 2035 exited due to signal 9 (Killed)
+11-21 14:22:01.141   509   550 I libprocessgroup: Successfully killed process cgroup uid 10108 pid 2035 in 44ms
+11-21 14:22:01.261   278   278 I Zygote  : Process 2003 exited due to signal 9 (Killed)
+11-21 14:22:01.281   509   550 I libprocessgroup: Successfully killed process cgroup uid 10110 pid 2003 in 139ms
+11-21 14:22:01.287  2570  2570 I Smakenland: SmakenlandPagina https://appassets.androidplatform.net/assets/www/index.html#sudoku
+11-21 14:22:01.288  2570  2570 I Smakenland: SmakenlandScherm=sudoku tab=sudoku levels=800
+11-21 14:22:01.295  2570  2570 I Smakenland: SmakenlandPagina https://appassets.androidplatform.net/assets/www/index.html#sudoku
+11-21 14:22:04.445   509  1486 E TaskPersister: File error accessing recents directory (directory doesn't exist?).
+11-21 14:22:05.443   406   406 I perfetto: probes_producer.cc:329  Producer stop (id=7)
+11-21 14:22:05.446   411   411 I perfetto: ng_service_impl.cc:1948 Tracing session 7 ended, total sessions:0
+11-21 14:22:05.446   406   406 I perfetto: ftrace_procfs.cc:183    disabled ftrace
+11-21 14:22:05.663     0     0 W perfetto: disabled ftrace
+11-21 14:22:05.570  2570  2598 I OpenGLRenderer: Davey! duration=4266ms; Flags=0, IntendedVsync=50761033886, Vsync=50761033886, OldestInputEvent=9223372036854775807, NewestInputEvent=0, HandleInputStart=50761462797, AnimationStart=50761464250, PerformTraversalsStart=50761841915, DrawStart=50761927284, SyncQueued=50762702262, SyncStart=50762886684, IssueDrawCommandsStart=50762910017, SwapBuffers=55020705050, FrameCompleted=55027435037, DequeueBufferDuration=56195, QueueBufferDuration=3271680, GpuCompleted=206158430240, 
+11-21 14:22:05.571  2570  2570 I Choreographer: Skipped 189 frames!  The application may be doing too much work on its main thread.
+11-21 14:22:05.808     0     0 D logd    : logdr: UID=2000 GID=2000 PID=2660 n tail=0 logMask=99 pid=0 start=0ns timeout=0ns
+11-21 14:22:05.629  2570  2598 I OpenGLRenderer: Davey! duration=3184ms; Flags=0, IntendedVsync=51877719992, Vsync=55027719866, OldestInputEvent=9223372036854775807, NewestInputEvent=0, HandleInputStart=55028181931, AnimationStart=55028183274, PerformTraversalsStart=55029599378, DrawStart=55029761321, SyncQueued=55030125181, SyncStart=55054930020, IssueDrawCommandsStart=55056268419, SwapBuffers=55068537209, FrameCompleted=55086568609, DequeueBufferDuration=38252, QueueBufferDuration=3243787, GpuCompleted=7888105825026532969, 
+11-21 14:22:05.853     0     0 D logd    : logdr: UID=2000 GID=2000 PID=2663 n tail=0 logMask=99 pid=0 start=0ns timeout=0ns
+11-21 14:22:05.822  2570  2669 D ProfileInstaller: Installing profile for nl.werdens.smakenland
+11-21 14:22:07.043   509   537 I ActivityManager: Killing 2064:com.android.contacts/u0a98 (adj 975): empty #17
+11-21 14:22:07.083   278   278 I Zygote  : Process 2064 exited due to signal 9 (Killed)
+11-21 14:22:07.087   509   550 I libprocessgroup: Successfully killed process cgroup uid 10098 pid 2064 in 43ms
+11-21 14:22:08.330   509   663 D ConnectivityService: handleLingerComplete for [100 CELLULAR]
+11-21 14:22:09.732   298  1245 D goldfish-address-space: claimShared: Ask to claim region [0x3f87f7000 0x3f8fe0000]
+11-21 14:22:09.742   159   159 I hwservicemanager: getTransport: Cannot find entry android.hardware.graphics.mapper@4.0::IMapper/default in either framework or device manifest.
+11-21 14:22:09.742  2672  2672 I Gralloc4: mapper 4.x is not supported
+11-21 14:22:09.746  2672  2672 D HostConnection: createUnique: call
+11-21 14:22:09.747  2672  2672 D HostConnection: HostConnection::get() New Host Connection established 0x75ecb7d69d50, tid 2672
+11-21 14:22:09.747  2672  2672 D goldfish-address-space: allocate: Ask for block of size 0x100
+11-21 14:22:09.747  2672  2672 D goldfish-address-space: allocate: ioctl allocate returned offset 0x3f7ffe000 size 0x2000
+11-21 14:22:09.753  2672  2672 D HostConnection: HostComposition ext ANDROID_EMU_CHECKSUM_HELPER_v1 ANDROID_EMU_native_sync_v2 ANDROID_EMU_dma_v1 ANDROID_EMU_direct_mem ANDROID_EMU_host_composition_v1 ANDROID_EMU_host_composition_v2 ANDROID_EMU_vulkan ANDROID_EMU_deferred_vulkan_commands ANDROID_EMU_vulkan_null_optional_strings ANDROID_EMU_vulkan_create_resources_with_requirements ANDROID_EMU_YUV_Cache ANDROID_EMU_vulkan_ignored_handles ANDROID_EMU_has_shared_slots_host_memory_allocator ANDROID_EMU_vulkan_free_memory_sync ANDROID_EMU_vulkan_shader_float16_int8 ANDROID_EMU_vulkan_async_queue_submit ANDROID_EMU_sync_buffer_data ANDROID_EMU_vulkan_async_qsri ANDROID_EMU_read_color_buffer_dma ANDROID_EMU_hwc_color_transform ANDROID_EMU_hwc_display_power_mode GL_OES_EGL_image_external_essl3 GL_OES_vertex_array_object GL_KHR_texture_compression_astc_ldr ANDROID_EMU_host_side_tracing ANDROID_EMU_gles_max_version_3_0 
+11-21 14:22:10.311     0     0 D logd    : logdr: UID=2000 GID=2000 PID=2674 n tail=0 logMask=99 pid=0 start=0ns timeout=0ns
+11-21 14:22:10.323     0     0 D logd    : logdr: UID=2000 GID=2000 PID=2677 n tail=0 logMask=99 pid=0 start=0ns timeout=0ns
