@@ -1,85 +1,116 @@
 # Smakenland 🍲
 
-Een merge-spel voor de browser: **oogst uit kisten, versmelt drie gelijke items en reis door
-Smakenland.** Geïnspireerd op het genre van *Tasty Travels*, *EverMerge* en *Fable Town* — versmelten
-als kern, energie als tempo, kisten als generatoren, klanten als opdrachtgevers en een verhaalwereld die
-zich per gebied ontvouwt.
+**Versmelt items in 300 levels, los sudoku's op en reis door een verhalenwereld.** Een spel voor de
+browser én als Android-app, in het genre van *Tasty Travels*, *EverMerge* en *Fable Town*: versmelten als
+kern, energie als tempo, kisten als generatoren, klanten als opdrachtgevers.
 
-Speelt op de computer én op de telefoon, werkt offline (PWA), en bewaart je potje in de browser.
+[**Speel direct in de browser**](https://theberas04.github.io/smakenland/) ·
+[**Download de Android-app**](https://github.com/Theberas04/smakenland/releases/latest) ·
+[**Bekijk de demo (41 s)**](docs/smakenland-demo.mp4)
 
-## Spelen
+![Levelkaart](docs/smakenland-levelkaart.png)
 
-Direct online: **https://theberas04.github.io/smakenland/**
+[![Bekijk de demo](docs/smakenland-level.png)](docs/smakenland-demo.mp4)
 
-Of lokaal:
+## Wat er in zit
 
-```bash
-python3 -m http.server 8080        # in deze map
-# open http://localhost:8080
-```
+- **300 levels** over 12 hoofdstukken, met een levelkaart en sterren. Elk level heeft vaste doelen en
+  een eigen energietegoed; wat je overhoudt bepaalt je sterren (3 bij ≥ 40 % over). De generator
+  *berekent* dat tegoed uit de doelen — een item van tree 5 maken kost 3⁴ oogsten van een kist van
+  niveau 1 — en `tools/gen_levels.py --check` rekent na dat alle 300 levels met dat tegoed te halen zijn.
+- **Sudoku** in drie moeilijkheden, met notities, hints, foutenteller, klok en je beste tijd per niveau.
+  Elke opgave heeft precies één oplossing (nagerekend met een bitmasker-oplosser).
+- **Versmelten**: sleep twee gelijke items op elkaar, de derde versmelt tot één item een tree hoger.
+  4 gelijk geeft 1 hoger + 1 over, 5 gelijk geeft er 2. Drie dezelfde kisten op elkaar geven een kist
+  van niveau 2, die meteen een hogere tree oogst.
+- **Zeven ketens** van zes treden: Tuin 🌰→🍛, Bakkerij 🌾→👑, Bloemen 🍀→🌸, Smidse ⛏️→🏆,
+  Haven 🐚→🐉, Magie ✨→🌟 en Munten 🪙→💎.
+- **Vrij spelen** naast de levels: klanten met wensen, munten, een winkel en een reis langs zes
+  gebieden met eigen verhaal.
+- **Alles getekend, geen pictogrammen-lettertype**: 39 items, 7 kisten en 6 geschilderde
+  gebiedsachtergronden, allemaal SVG uit één bron (`tools/gen_art.py`).
 
-Op een telefoon: open het adres en kies **Zet op beginscherm** — daarna start het spel als een app en
-werkt het zonder internet.
-
-## Hoe het speelt
-
-- **Tik op een kist** (🧺 zadenkist, 💰 geldkist, 🥣 deegkom …) — die oogst een item en kost energie ⚡.
-  Energie groeit vanzelf weer aan.
-- **Sleep twee gelijke items op elkaar** — ze stapelen. De derde die erbij komt versmelt tot één item een
-  tree hoger. Twee gelijke items op een cel is dus de tussenstand, geen einddoel.
-- **Slim stapelen loont**: 3 gelijk wordt 1 hoger, **4 gelijk wordt 1 hoger + 1 over**, 5 gelijk wordt 2 hoger.
-- **Drie dezelfde kisten** op elkaar geven een kist van niveau 2 — die oogst meteen een tree hoger (en
-  kost 2 energie in plaats van 1).
-- **Munten** tap je aan om ze te innen; in de winkel koop je energie en extra kisten.
-- **Klantenorders** leveren munten en ⭐ sterren. Genoeg sterren opent een nieuw gebied, met een eigen
-  verhaal, een nieuwe keten en een nieuwe kist.
-
-Zeven ketens van zes treden: Tuin 🌰→🍛, Bakkerij 🌾→👑, Bloemen 🍀→🌸, Smidse ⛏️→🏆, Haven 🐚→🐉,
-Magie ✨→🌟 en Munten 🪙→💎. Zes gebieden van Smakendorp tot de Sterrenkeuken.
+![Alle kunst in één beeld](docs/kunst-overzicht.png)
 
 ## Beeld
 
-![Bureaublad](docs/smakenland-bureaublad.png)
+| Level spelen | Sudoku | Vrij spelen |
+| --- | --- | --- |
+| ![Level](docs/smakenland-level.png) | ![Sudoku](docs/smakenland-sudoku.png) | ![Vrij](docs/smakenland-vrij.png) |
 
-![Telefoon](docs/smakenland-telefoon.png)
+| Telefoon · level | Telefoon · levelkaart |
+| --- | --- |
+| ![Telefoon level](docs/smakenland-telefoon-level.png) | ![Telefoon kaart](docs/smakenland-telefoon-kaart.png) |
+
+## Zo speel je
+
+- **Tik op een kist** — die oogst een item en kost energie ⚡ (1 tot 3, naar het niveau van de kist).
+  In een level is het tegoed vast; in vrij spelen groeit energie vanzelf aan.
+- **Sleep twee gelijke items op elkaar** — ze stapelen, de derde versmelt.
+- **Lever de doelen in** (of bij vrij spelen: de klanten): dat levert sterren op. Genoeg sterren opent
+  in vrij spelen een nieuw gebied; in de levels gaat het level ermee op slot.
+- **Vastgelopen?** Elk level heeft één keer "⚡ +10 energie" en een "opnieuw"-knop.
+
+## Android-app
+
+De app is een dunne WebView-schil om dezelfde bestanden: geen internetverbinding nodig (het recht staat
+zelfs niet in het manifest), alles zit in de bundel en je potje blijft op het toestel bewaard.
+
+- APK: [releases](https://github.com/Theberas04/smakenland/releases/latest) — ondertekend met de vaste
+  Smakenland-sleutel, dus elke volgende versie installeert over de vorige heen.
+- Bouwen gaat via GitHub Actions (`.github/workflows/android.yml`): één job maakt de ondertekende
+  release-APK en controleert de handtekening, het versienummer en de inhoud van de bundel; een tweede
+  job bouwt een debug-APK, speelt hem op een emulator en zet foto's van de drie schermen in
+  `docs/android/`.
+- Op je eigen netwerk zetten kan ook: de map is statische bestanden, dus een `python3 -m http.server`
+  in een LXC volstaat.
 
 ## Zo is het gebouwd
 
 | bestand | wat het doet |
 | --- | --- |
-| `content.js` | alle inhoud: ketens, kisten, gebieden met verhaal, winkelartikelen |
-| `engine.js` | de spellogica, puur en zonder DOM: bord, versmelten, energie, orders, gebied, opslag |
-| `app.js` | de pagina: bord tekenen, slepen, effecten, geluid, bewaren |
-| `styles.css` | huisstijl: papier en inkt, licht thema, geen schaduwen of neon |
-| `sw.js`, `manifest.webmanifest` | offline werken en "zet op beginscherm" |
-| `tools/render_icons.py` | tekent het app-icoon (een pan) met Chromium, zonder Pillow |
-| `tests/engine.test.mjs` | 22 tests op de spellogica |
-| `tests/smoke.mjs` | 51 controles op de echte pagina in een headless DOM |
-| `scripts/shoot.py` | speelt het spel in Chromium en maakt de schermafbeeldingen hierboven |
-| `scripts/check-live.py` | laadt een uitgerolde kopie in een echte browser, speelt één zet en meldt JS-fouten |
+| `content.js` | ketens, kisten, gebieden met verhaal, winkel |
+| `art.js` | alle getekende kunst (gegenereerd, niet met de hand aanpassen) |
+| `levels.js` | de 300 levels (gegenereerd) |
+| `engine.js` | de spellogica: bord, versmelten, energie, doelen, levels, gebieden, opslag |
+| `sudoku.js` | sudokuregels: generator met unieke oplossing, oplosser, hints |
+| `app.js` | de schil: tabs, bord, slepen, effecten, geluid, bewaren |
+| `sudoku-view.js` | het sudokupaneel |
+| `styles.css` | huisstijl: papier en inkt, hout op het bord, geen schaduwen of neon |
+| `android/` | de WebView-app en het icoon |
+| `tools/gen_art.py` | tekent alle kunst (`--check` vergelijkt met `art.js`) |
+| `tools/gen_levels.py` | maakt de 300 levels en rekent ze na (`--check`) |
+| `tools/render_icons.py` | het app-icoon in alle maten (web + Android) |
+| `tools/contactsheet.py` | één overzichtsbeeld van alle kunst |
+| `scripts/sync-assets.sh` | zet de webapp in de bundel van de Android-app |
+| `scripts/shoot.py` | speelt het spel in Chromium en maakt de schermafbeeldingen |
+| `scripts/record-demo.py` | neemt de demo op (echte tikken en slepen, daarna ffmpeg) |
+| `scripts/check-live.py` | laadt een uitgerolde kopie in een echte browser en meldt JS-fouten |
 
-`engine.js` is bewust DOM-vrij en werkt zowel in de browser als in Node, zodat de tests exact dezelfde
-regels gebruiken als het spel. Dezelfde RNG (met de seed in de save) maakt potjes herhaalbaar.
+De spellogica is DOM-vrij en werkt in de browser én in Node, zodat de tests precies dezelfde regels
+gebruiken als het spel. De generator van de levels en de sudoku gebruiken een seed, zodat een potje
+herhaalbaar is en de tests niet gokken.
 
 ## Controles
 
 ```bash
-node --test "tests/*.test.mjs"                    # spellogica
+node --test "tests/*.test.mjs"                    # spellogica: bord, levels, sudoku (42 tests)
 python3 -m http.server 8231 &                     # de pagina moet geserveerd worden
-node tests/smoke.mjs 8231                         # de pagina zelf, in jsdom
-python3 tools/render_icons.py                     # iconen opnieuw tekenen
-python3 scripts/shoot.py 8231                     # schermafbeeldingen opnieuw maken
-python3 scripts/check-live.py <url>               # controleer een uitgerolde kopie echt in de browser
+node tests/smoke.mjs 8231                         # de pagina zelf in jsdom (57 controles)
+python3 scripts/check-live.py <url>               # een uitgerolde kopie in een echte browser
+python3 tools/gen_art.py --check                  # kunst loopt niet uit de pas met de generator
+python3 tools/gen_levels.py --check               # en alle 300 levels zijn nog haalbaar
+python3 scripts/shoot.py 8231                     # schermafbeeldingen opnieuw
+python3 scripts/record-demo.py 8231               # de demo opnieuw opnemen
 ```
 
 ## Wat er nog niet is
 
-- Geen geluid op iOS zonder tik vooraf (dat eist de browser zo), en geen muziek.
-- Geen app-store-versie: dit is een webspel/PWA. Een Android-app (WebView + APK) kan er in dezelfde
-  WebView-route omheen gebouwd worden.
-- De klanten zijn vaste wensen uit de ontgrendelde ketens; er zit nog geen verhaallijn per klant achter.
+- Geen muziek, en op iOS blijft geluid stil tot je één keer tikt (dat eist de browser zo).
+- Geen app-store-versie: dit is een webspel/PWA plus een losse APK, geen Play-uitgave.
+- De sudoku bewaart één potje tegelijk; wisselen van moeilijkheid begint een nieuwe puzzel.
+- Klanten in vrij spelen hebben vaste wensen uit de ontgrendelde ketens, zonder eigen verhaallijn.
 
 ## Licentie
 
-Alle rechten voorbehouden. De gebruikte emoji komen van het besturingssysteem van de speler, niet uit
-dit project.
+Alle rechten voorbehouden.

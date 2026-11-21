@@ -57,7 +57,10 @@ android {
 }
 
 dependencies {
-  implementation 'androidx.core:core:1.17.0'
-  implementation 'androidx.activity:activity:1.10.1'
-  implementation 'androidx.webkit:webkit:1.12.1'
+  // Deze versies passen bij compileSdk 35. Nieuwere androidx.core (1.17) eist
+  // compileSdk 36 en dan moet ook de Android Gradle Plugin omhoog; dat is voor
+  // deze dunne WebView-schil niet nodig.
+  implementation 'androidx.core:core:1.13.1'
+  implementation 'androidx.activity:activity:1.9.3'
+  implementation 'androidx.webkit:webkit:1.11.0'
 }
