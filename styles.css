@@ -360,6 +360,13 @@ button.lever:disabled { background: #ded6c6; border-color: #ded6c6; color: #9c93
 .uitleg-lijst { padding-left: 1.1rem; font-size: .89rem; }
 .uitleg-lijst li { margin-bottom: .45rem; }
 .bewaard { font-size: .78rem; color: var(--muted); }
+/* In de Android-app: de versie plus een knop om zelf op updates te controleren. */
+.update-rij { font-size: .8rem; color: var(--muted); display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; }
+.update-rij button {
+  font: inherit; font-size: .78rem; padding: .3rem .7rem; cursor: pointer;
+  border: 1px solid var(--lijn); border-radius: 999px; background: var(--kaart); color: var(--inkt);
+}
+.update-rij button:hover { border-color: var(--accent); color: var(--accent); }
 .modal-knoppen { display: flex; gap: .6rem; flex-wrap: wrap; margin-top: .7rem; }
 button.primair {
   padding: .5rem 1rem; border-radius: 9px;

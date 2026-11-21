@@ -49,6 +49,17 @@ jobs:
       - name: Webapp in de app bundelen
         run: bash scripts/sync-assets.sh
 
+      - name: Spellogica en versierekenwerk testen
+        run: |
+          set -euo pipefail
+          node --test "tests/*.test.mjs"
+          # Het versierekenwerk van de updatecontrole is gewone Java: los te draaien.
+          mkdir -p "$RUNNER_TEMP/javatest"
+          javac -d "$RUNNER_TEMP/javatest" \
+            android/app/src/main/java/nl/werdens/smakenland/Updates.java \
+            tests/java/UpdatesTest.java
+          java -cp "$RUNNER_TEMP/javatest" UpdatesTest
+
       - name: Ondertekeningssleutel klaarzetten
         env:
           KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
@@ -118,6 +129,11 @@ jobs:
               kunst = pakket.read('assets/www/art.js').decode('utf-8')
               assert kunst.count('<svg') >= 52, 'de kunst ontbreekt in de bundel'
               print('800 levels en 52 stuks kunst in de bundel')
+              # De updatecontrole hoort in de code te zitten, niet alleen in de repo.
+              dex = b''.join(pakket.read(n) for n in namen
+                             if n.startswith('classes') and n.endswith('.dex'))
+              assert b'Lnl/werdens/smakenland/Updates;' in dex, 'updatecontrole ontbreekt in de app'
+              print('de updatecontrole zit in de app')
           PY
 
       - name: APK op de release zetten

@@ -81,6 +81,15 @@ adb exec-out screencap -p > scherm-level.png 2>/dev/null || true
 start_en_wacht "sudoku" "SmakenlandScherm=sudoku"
 adb exec-out screencap -p > scherm-sudoku.png 2>/dev/null || true
 
+# De updatecontrole loopt op de achtergrond bij het starten van de app. Met netwerk
+# hoort hier de eigen versie en wat GitHub zegt te staan; zonder netwerk een regel
+# dat het niet lukte. Beide zijn goed — stilletjes niets doen is dat niet.
+if adb logcat -d | grep -q "SmakenlandUpdate"; then
+  adb logcat -d | grep -m3 "SmakenlandUpdate" | sed 's/^/update: /'
+else
+  echo "let op: de updatecontrole heeft niets gemeld (geen netwerk in de emulator?)"
+fi
+
 adb logcat -d > logcat-opstart.txt 2>/dev/null || true
 
 for foto in scherm-kaart.png scherm-level.png scherm-sudoku.png; do

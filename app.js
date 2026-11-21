@@ -962,11 +962,34 @@
 
   // ------------------------------------------------------------------ op
 
+  /**
+   * In de Android-app laat de uitleg de versie zien en kun je zelf op updates
+   * controleren. In de browser bestaat de brug niet en blijft dit weg, zodat er
+   * niets staat dat daar niets doet.
+   */
+  function toonAppVersie() {
+    const brug = window.SmakenlandApp;
+    if (!brug || typeof brug.controleerOpUpdates !== 'function') return;
+    const bewaard = $('bewaard');
+    if (!bewaard || !bewaard.parentNode) return;
+    const rij = document.createElement('p');
+    rij.className = 'update-rij';
+    rij.appendChild(document.createTextNode('App-versie ' + brug.versie() + ' · '));
+    const knop = document.createElement('button');
+    knop.type = 'button';
+    knop.id = 'controleer-updates';
+    knop.textContent = 'Controleren op updates';
+    knop.addEventListener('click', function () { brug.controleerOpUpdates(); });
+    rij.appendChild(knop);
+    bewaard.parentNode.insertBefore(rij, bewaard);
+  }
+
   function start() {
     bouwBord();
     bindBord();
     bindModals();
     bindLevelModal();
+    toonAppVersie();
     voortgang = laadVoortgang();
     const hadOpslag = laadVrij();
     E.tickEnergie(vrij);

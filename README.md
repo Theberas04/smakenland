@@ -66,6 +66,11 @@ zelfs niet in het manifest), alles zit in de bundel en je potje blijft op het to
   release-APK en controleert de handtekening, het versienummer en de inhoud van de bundel; een tweede
   job bouwt een debug-APK, speelt hem op een emulator en zet foto's van de drie schermen in
   `docs/android/`.
+- **De app kijkt zelf of er een nieuwe versie is.** Bij het starten vraagt hij één keer bij GitHub
+  naar de nieuwste uitgave (`api.github.com/repos/Theberas04/smakenland/releases/latest`), vergelijkt
+  het versienummer met wat er op het toestel staat en biedt aan om bij te werken. In de uitleg staat
+  "App-versie 1.2.0" met een knop om het zelf te controleren. Zonder internet mislukt die controle
+  stil: het spel werkt gewoon door.
 - Op je eigen netwerk zetten kan ook: de map is statische bestanden, dus een `python3 -m http.server`
   in een LXC volstaat.
 
@@ -90,6 +95,7 @@ zelfs niet in het manifest), alles zit in de bundel en je potje blijft op het to
 | `scripts/shoot.py` | speelt het spel in Chromium en maakt de schermafbeeldingen |
 | `scripts/record-demo.py` | neemt de demo op (echte tikken en slepen, daarna ffmpeg) |
 | `scripts/check-live.py` | laadt een uitgerolde kopie in een echte browser en meldt JS-fouten |
+| `android/.../Updates.java` | het versierekenwerk van de updatecontrole (gewone Java, te testen) |
 
 De spellogica is DOM-vrij en werkt in de browser én in Node, zodat de tests precies dezelfde regels
 gebruiken als het spel. De generator van de levels en de sudoku gebruiken een seed, zodat een potje
@@ -102,6 +108,8 @@ node --test "tests/*.test.mjs"                    # spellogica: bord, levels, su
 python3 -m http.server 8231 &                     # de pagina moet geserveerd worden
 node tests/smoke.mjs 8231                         # de pagina zelf in jsdom (65 controles)
 python3 scripts/check-live.py <url>               # een uitgerolde kopie in een echte browser
+javac -d /tmp/ut android/app/src/main/java/nl/werdens/smakenland/Updates.java \
+      tests/java/UpdatesTest.java && java -cp /tmp/ut UpdatesTest   # versierekenwerk (28 controles)
 python3 tools/gen_art.py --check                  # kunst loopt niet uit de pas met de generator
 python3 tools/gen_levels.py --check               # en alle 800 levels zijn nog haalbaar
 python3 scripts/shoot.py 8231                     # schermafbeeldingen opnieuw

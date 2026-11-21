@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Welke bestanden de installateur van de app mag lezen: alleen de map waarin
+     een gedownloade update ligt, niet de rest van het toestel. -->
+<paths>
+  <cache-path
+      name="update"
+      path="update/" />
+</paths>

@@ -39,7 +39,7 @@ function check(wat, waar, verwacht) {
 
 function tekst(el) { return (el && el.textContent ? el.textContent : '').trim(); }
 
-async function open(url, opslag) {
+async function open(url, opslag, extra) {
   const vc = new VirtualConsole();
   const jsFouten = [];
   vc.on('jsdomError', (e) => jsFouten.push(String(e && e.message)));
@@ -51,6 +51,7 @@ async function open(url, opslag) {
     virtualConsole: vc,
     beforeParse(window) {
       window.SmakenlandDebug = true;
+      if (extra) extra(window);
       // Elke jsdom heeft zijn eigen localStorage; de bewaarde stand van het eerste
       // potje zetten we hier over, zoals een herlaadbeurt in de browser.
       if (opslag) {
@@ -232,8 +233,29 @@ const diep = await open(`${basis}/index.html#sudoku`);
 check('een diepe link naar sudoku opent dat scherm', diep.w.SmakenlandUI.scherm, 'sudoku');
 check('en slaat de uitleg over', diep.w.document.getElementById('modal-uitleg').hidden, true);
 
+// ------------------------------------------- de app-vorm (Android-brug)
+// In de browser hoort er geen updateregel te staan; in de Android-app wel.
+check('zonder app-brug staat er geen updateregel', w.document.querySelectorAll('.update-rij').length, 0);
+
+let gecontroleerd = 0;
+const metBrug = await open(`${basis}/index.html`, null, (win) => {
+  // De echte app hangt dit aan het venster: versie() plus een verzoek om te kijken.
+  win.SmakenlandApp = {
+    versie: () => '1.1.1',
+    controleerOpUpdates: () => { gecontroleerd++; },
+  };
+});
+const updateKnop = metBrug.w.document.getElementById('controleer-updates');
+check('in de app-vorm staat er wel een updateregel', !!updateKnop, true);
+check('en staat de versie van het toestel erbij',
+  /App-versie 1\.1\.1/.test(tekst(metBrug.w.document.querySelector('.update-rij'))), true);
+if (updateKnop) updateKnop.click();
+check('de knop vraagt de app om te controleren', gecontroleerd, 1);
+check('de app-vorm laadt zonder JS-fouten', metBrug.jsFouten.join(' | '), '');
+
 console.log(`\n${gedaan - fouten}/${gedaan} controles goed${fouten ? ` — ${fouten} FOUT` : ''}`);
 dom.window.close();
 tweede.dom.window.close();
 diep.dom.window.close();
+metBrug.dom.window.close();
 process.exit(fouten ? 1 : 0);

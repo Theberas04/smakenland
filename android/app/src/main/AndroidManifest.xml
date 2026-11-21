@@ -1,7 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
-  <!-- Geen internetrecht: het spel zit volledig in de app. -->
+  <!--
+    Internet alleen voor de updatecontrole: het spel zelf zit volledig in de app
+    en werkt zonder verbinding. Zonder netwerk mislukt de controle stil.
+  -->
+  <uses-permission android:name="android.permission.INTERNET" />
+  <!-- Nodig om een gedownloade APK aan Android aan te bieden. Android vraagt de
+       speler daarna zelf nog om toestemming voor installatie. -->
+  <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
 
   <application
       android:allowBackup="true"
@@ -24,5 +31,17 @@
         <category android:name="android.intent.category.LAUNCHER" />
       </intent-filter>
     </activity>
+
+    <!-- De gedownloade APK gaat via deze provider naar de installateur; zonder
+         provider weigert Android sinds versie 7 om een bestand te openen. -->
+    <provider
+        android:name="androidx.core.content.FileProvider"
+        android:authorities="${applicationId}.bestanden"
+        android:exported="false"
+        android:grantUriPermissions="true">
+      <meta-data
+          android:name="android.support.FILE_PROVIDER_PATHS"
+          android:resource="@xml/bestanden" />
+    </provider>
   </application>
 </manifest>
