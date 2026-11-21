@@ -54,18 +54,39 @@ test('zonder energie wordt er niets geoogst', () => {
   assert.equal(s.cells.filter(Boolean).length, 1);
 });
 
-test('oogsten stapelt op een bestaand gelijk item en versmelt bij drie', () => {
+test('oogsten stapelt niet vanzelf: elk item komt op een eigen vrij vak', () => {
   const s = leeg();
   s.cells[E.idx(0, 0)] = E.maakGen('zadenkist', 1);
   s.cells[E.idx(1, 1)] = E.maakItem('tuin', 1);
   s.energie = 10;
-  E.oogst(s, E.idx(0, 0)); // -> stapel van 2
-  assert.equal(E.telItems(s, 'tuin', 1), 2);
-  const r = E.oogst(s, E.idx(0, 0)); // -> derde: versmelt naar tier 2
-  assert.ok(r.events.some((e) => e.type === 'merge'));
-  assert.equal(E.telItems(s, 'tuin', 1), 0);
-  assert.equal(E.telItems(s, 'tuin', 2), 1);
+  E.oogst(s, E.idx(0, 0));
+  assert.equal(E.telItems(s, 'tuin', 1), 2, 'twee losse items, geen stapel');
+  assert.equal(s.cells.some((c) => c && c.count === 2), false, 'niets op elkaar gestapeld');
+  const r = E.oogst(s, E.idx(0, 0));
+  assert.equal(E.telItems(s, 'tuin', 1), 3, 'drie losse items');
+  assert.equal(r.events.some((e) => e.type === 'merge'), false, 'er is niet vanzelf versmolten');
+  assert.equal(s.merges, 0);
+  // Zelf slepen mag wél versmelten: dat is de keuze van de speler.
+  const los = s.cells.map((c, i) => [c, i])
+    .filter(([c, i]) => c && c.kind === 'item' && c.tier === 1 && i !== E.idx(1, 1)).map(([, i]) => i);
+  const eerste = E.verplaats(s, los[0], E.idx(1, 1));
+  assert.equal(eerste.ok, true);
+  assert.equal(s.cells[E.idx(1, 1)].count, 2, 'slepen op een gelijk item geeft een stapel van twee');
+  const tweede = E.verplaats(s, los[1], E.idx(1, 1));
+  assert.ok(tweede.events.some((e) => e.type === 'merge'), 'de derde erbij versmelt');
+  assert.equal(E.telItems(s, 'tuin', 2), 1, 'nu wel een tier hoger');
   assert.equal(s.merges, 1);
+});
+
+test('een vol bord weigert de oogst', () => {
+  const s = leeg();
+  for (let i = 0; i < s.cells.length; i++) s.cells[i] = E.maakItem('tuin', 1);
+  s.cells[E.idx(0, 0)] = E.maakGen('zadenkist', 1);
+  s.energie = 10;
+  const r = E.oogst(s, E.idx(0, 0));
+  assert.equal(r.ok, false);
+  assert.equal(r.reden, 'vol');
+  assert.equal(s.energie, 10, 'en er is geen energie afgegaan');
 });
 
 test('3 gelijke items versmelten tot 1 item een tier hoger', () => {

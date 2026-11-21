@@ -21,6 +21,7 @@ kern, energie als tempo, kisten als generatoren, klanten als opdrachtgevers.
 - **Sudoku** in drie moeilijkheden, met notities, hints, foutenteller, klok en je beste tijd per niveau.
   Elke opgave heeft precies één oplossing (nagerekend met een bitmasker-oplosser).
 - **Versmelten**: sleep twee gelijke items op elkaar, de derde versmelt tot één item een tree hoger.
+  Alleen door te slepen — een oogst legt nooit iets vanzelf op een stapel.
   4 gelijk geeft 1 hoger + 1 over, 5 gelijk geeft er 2. Drie dezelfde kisten op elkaar geven een kist
   van niveau 2, die meteen een hogere tree oogst.
 - **Zeven ketens** van zes treden: Tuin 🌰→🍛, Bakkerij 🌾→👑, Bloemen 🍀→🌸, Smidse ⛏️→🏆,
@@ -45,7 +46,8 @@ kern, energie als tempo, kisten als generatoren, klanten als opdrachtgevers.
 ## Zo speel je
 
 - **Tik op een kist** — die oogst een item en kost energie ⚡ (1 tot 3, naar het niveau van de kist).
-  In een level is het tegoed vast; in vrij spelen groeit energie vanzelf aan.
+  Het item komt altijd op een **vrij vak**: er wordt niets vanzelf op elkaar gelegd, dus je bepaalt zelf
+  of en wanneer er iets versmelt. In een level is het tegoed vast; in vrij spelen groeit energie vanzelf aan.
 - **Sleep twee gelijke items op elkaar** — ze stapelen, de derde versmelt.
 - **Lever de doelen in** (of bij vrij spelen: de klanten): dat levert sterren op. Genoeg sterren opent
   in vrij spelen een nieuw gebied; in de levels gaat het level ermee op slot.

@@ -157,7 +157,9 @@ def main():
             const naar = leeg.splice((n * 5) % leeg.length, 1)[0];
             UI.verplaats(van, naar);
           });
-          // Een paar stapels van twee maken zodat de badges zichtbaar zijn.
+          // Slepen zoals een speler: eerst een paar stapels van twee (dat laat de
+          // badges zien), en waar er drie liggen ook echt versmelten naar een tree
+          // hoger. De oogst zelf legt nooit iets op een stapel.
           const plek = {};
           s.cells.forEach((c, i) => { if (!c || c.kind !== 'item') return;
             const k = c.keten + '-' + c.tier; (plek[k] = plek[k] || []).push(i); });
@@ -166,6 +168,8 @@ def main():
             for (let n = 0; n + 1 < p.length; n += 2) {
               if (s.cells[p[n]] && s.cells[p[n + 1]] && s.cells[p[n]].count === 1) UI.verplaats(p[n + 1], p[n]);
             }
+            // De derde erbij versmelt tot een tree hoger.
+            if (p.length >= 3 && s.cells[p[0]] && s.cells[p[2]] && s.cells[p[0]].count === 2) UI.verplaats(p[2], p[0]);
           }
           return {level: s.level, energie: s.energie, merges: s.merges, bezet: s.cells.filter(Boolean).length};
         })()"""

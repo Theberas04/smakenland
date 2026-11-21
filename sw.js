@@ -1,5 +1,5 @@
 /* Smakenland offline-shell. Verhoog CACHE bij elke wijziging van de bestanden. */
-const CACHE = 'smakenland-1.1.0';
+const CACHE = 'smakenland-1.1.1';
 const BESTANDEN = [
   './',
   'index.html',

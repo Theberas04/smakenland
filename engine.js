@@ -206,28 +206,18 @@
     const keten = C.GENERATORS[bron.gen].keten;
     const tier = Math.min(bron.level, maxTier(keten));
 
-    // Past het op een bestaande gelijke stapel? Dan daar (scheelt ruimte), en
-    // een stapel van twee eerst, zodat de oogst meteen versmelt.
-    let doel = -1;
-    for (const gewenst of [2, 1]) {
-      for (let i = 0; i < state.cells.length && doel < 0; i++) {
-        const c = state.cells[i];
-        if (c && c.kind === 'item' && c.keten === keten && c.tier === tier && c.count === gewenst) doel = i;
-      }
-      if (doel >= 0) break;
-    }
-    if (doel < 0) doel = vrijeCell(state, celIdx);
+    // Het item komt ALTIJD op een vrij vak. De speler bepaalt zelf of en wanneer
+    // er iets op elkaar gaat: dat is het spel. Automatisch stapelen (en dus
+    // automatisch versmelten) haalt die keuze weg en dan versmelt een doelstuk
+    // weg zonder dat je het wilde.
+    const doel = vrijeCell(state, celIdx);
     if (doel < 0) return { ok: false, reden: 'vol', events: events };
 
     state.energie -= kosten;
     if (state.energie >= state.energieMax) state.laatsteEnergie = Date.now();
 
-    if (state.cells[doel]) {
-      combineer(state, doel, maakItem(keten, tier, 1), null, events);
-    } else {
-      state.cells[doel] = maakItem(keten, tier, 1);
-      events.push({ type: 'oogst', cel: doel, keten: keten, tier: tier });
-    }
+    state.cells[doel] = maakItem(keten, tier, 1);
+    events.push({ type: 'oogst', cel: doel, keten: keten, tier: tier });
     events.unshift({ type: 'energie', waarde: state.energie });
     return { ok: true, cel: doel, events: events };
   }

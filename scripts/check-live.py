@@ -65,7 +65,10 @@ def main():
 
     alles_goed = True
     try:
-        verzoek = urllib.request.Request(f"http://127.0.0.1:{poort}/json/new?{URL}", method="PUT")
+        # Met ?debug=1 hangt de pagina zijn controle-API aan het venster; dat is
+        # dezelfde pagina die een speler krijgt, alleen met de sleutel erbij.
+        met_debug = URL + ("&" if "?" in URL else "?") + "debug=1"
+        verzoek = urllib.request.Request(f"http://127.0.0.1:{poort}/json/new?{met_debug}", method="PUT")
         with urllib.request.urlopen(verzoek, timeout=10) as antwoord:
             doel = json.load(antwoord)
         b = CDP(doel["webSocketDebuggerUrl"])
@@ -108,6 +111,20 @@ def main():
         time.sleep(0.5)
         na = b.js("Number(document.getElementById('stat-energie').textContent.split('/')[0])")
         alles_goed &= meld("oogsten", f"{voor} -> {na}", "één minder", na == voor - 1)
+
+        # Een tweede oogst met een echte tik: het item hoort op een eigen vrij vak
+        # te komen en niet vanzelf op de eerste stapel (dat is het spel).
+        b.js("(() => { const el = document.querySelectorAll('#bord .cel.kist')[0];"
+             " el.dispatchEvent(new PointerEvent('pointerdown', {bubbles: true, clientX: 100, clientY: 200}));"
+             " window.dispatchEvent(new PointerEvent('pointerup', {bubbles: true, clientX: 100, clientY: 200}));"
+             " return 1; })()")
+        time.sleep(0.5)
+        losse = b.js("(() => { const l = window.SmakenlandUI.level;"
+                     " return l.cells.filter(c => c && c.kind === 'item').length; })()")
+        stapels = b.js("(() => { const l = window.SmakenlandUI.level;"
+                       " return l.cells.filter(c => c && c.kind === 'item' && c.count > 1).length; })()")
+        alles_goed &= meld("losse items na twee oogsten", losse, 2, losse == 2)
+        alles_goed &= meld("gestapeld zonder te slepen", stapels, 0, stapels == 0)
 
         # Sudoku-tab
         b.js("document.querySelector('.tab[data-tab=sudoku]').click()")
