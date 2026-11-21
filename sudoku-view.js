@@ -58,7 +58,17 @@
     // De buitenmaat (met randen) is de maat die vierkant moet worden: met
     // border-box is dat precies de hoogte die we moeten zetten.
     const breedte = Math.round(houder.getBoundingClientRect().width);
-    if (!breedte) return;                       // scherm staat nog verborgen
+    if (!breedte) {
+      // Het paneel is nog niet zichtbaar (breedte nul). Op een echt toestel komt er
+      // daarna geen resize-event, dus blijven we het een aantal beelden opnieuw
+      // proberen; anders bleef het bord ingeklapt tot de speler iets aanraakte.
+      if (pogingen < 30) {
+        pogingen += 1;
+        window.requestAnimationFrame(pasMaat);
+      }
+      return;
+    }
+    pogingen = 0;
     houder.style.height = breedte + 'px';
     window.requestAnimationFrame(function () {
       const r = houder.getBoundingClientRect();
@@ -70,6 +80,8 @@
       }
     });
   }
+
+  let pogingen = 0;
 
   let laatsteMaat = '';
 
@@ -364,6 +376,10 @@
     bouw();
     bind();
     window.addEventListener('resize', pasMaat);
+    // Zodra het bord een maat krijgt (paneel wordt zichtbaar) meteen vierkant maken.
+    if (typeof ResizeObserver === 'function') {
+      new ResizeObserver(pasMaat).observe($('sudoku-bord') || document.body);
+    }
     window.SmakenlandSudokuView = {
       toon: toon, opnieuw: opnieuw, kop: kop, statistiek: statistiek,
       nieuw: nieuwSpel,

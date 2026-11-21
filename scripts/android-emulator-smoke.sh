@@ -78,24 +78,27 @@ adb exec-out screencap -p > scherm-kaart.png 2>/dev/null || true
 start_en_wacht "level1" "SmakenlandScherm=level"
 adb exec-out screencap -p > scherm-level.png 2>/dev/null || true
 
-start_en_wacht "sudoku" "SmakenlandScherm=sudoku"
-adb exec-out screencap -p > scherm-sudoku.png 2>/dev/null || true
-
-# De maten die de pagina zelf meldt. Op een oude WebView (Android 11) kende CSS
-# `aspect-ratio` nog niet en klapten het bord en het sudokubord in tot niets; deze
-# twee regels zijn de controle dat dat niet meer gebeurt.
+# De maat van het bord die de pagina zelf meldt. Op een oude WebView (Android 11)
+# kende CSS `aspect-ratio` nog niet en klapte het bord in tot één rij. De meting
+# gebeurt hier, met het levelscherm in beeld: op een verborgen tab is de hoogte nul
+# en dan meet je niets.
 bord_maat="$(adb logcat -d | grep -o 'SmakenlandBord=7x8 hoogte=[0-9]* tegel=[0-9]*' | tail -1 || true)"
-sudoku_maat="$(adb logcat -d | grep -o 'SmakenlandSudoku breedte=[0-9]* hoogte=[0-9]* tegel=[0-9]*' | tail -1 || true)"
 echo "bord:   ${bord_maat:-niets gemeld}"
-echo "sudoku: ${sudoku_maat:-niets gemeld}"
 bord_hoogte="$(echo "$bord_maat" | sed -n 's/.*hoogte=\([0-9]*\).*/\1/p')"
 bord_tegel="$(echo "$bord_maat" | sed -n 's/.*tegel=\([0-9]*\).*/\1/p')"
-sud_breedte="$(echo "$sudoku_maat" | sed -n 's/.*breedte=\([0-9]*\).*/\1/p')"
-sud_hoogte="$(echo "$sudoku_maat" | sed -n 's/.*hoogte=\([0-9]*\).*/\1/p')"
 if [ -z "$bord_hoogte" ] || [ "$bord_hoogte" -lt $(( bord_tegel * 7 )) ]; then
   echo "::error::het bord is maar ${bord_hoogte:-0} px hoog; het klapt in op dit toestel"
   exit 1
 fi
+
+start_en_wacht "sudoku" "SmakenlandScherm=sudoku"
+adb exec-out screencap -p > scherm-sudoku.png 2>/dev/null || true
+
+# En het sudokubord: dat moet vierkant zijn, ook zonder `aspect-ratio`.
+sudoku_maat="$(adb logcat -d | grep -o 'SmakenlandSudoku breedte=[0-9]* hoogte=[0-9]* tegel=[0-9]*' | tail -1 || true)"
+echo "sudoku: ${sudoku_maat:-niets gemeld}"
+sud_breedte="$(echo "$sudoku_maat" | sed -n 's/.*breedte=\([0-9]*\).*/\1/p')"
+sud_hoogte="$(echo "$sudoku_maat" | sed -n 's/.*hoogte=\([0-9]*\).*/\1/p')"
 if [ -z "$sud_hoogte" ] || [ "$sud_hoogte" -lt 200 ]; then
   echo "::error::het sudokubord is maar ${sud_hoogte:-0} px hoog; het klapt in op dit toestel"
   exit 1

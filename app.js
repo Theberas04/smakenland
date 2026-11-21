@@ -597,6 +597,7 @@
     // hoog is. Op de WebView van Android 11 klapte het bord in doordat `aspect-ratio`
     // daar niet bestaat — met deze regel valt dat meteen op.
     window.requestAnimationFrame(function () {
+      if (bord.offsetParent === null) return;    // bord staat op een verborgen tab
       const hoogte = Math.round(bord.getBoundingClientRect().height);
       const maat = E.COLS + 'x' + E.ROWS + ' hoogte=' + hoogte + ' tegel=' + Math.round(tegel);
       if (maat !== laatsteBordMaat) {

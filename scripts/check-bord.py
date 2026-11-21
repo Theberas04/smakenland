@@ -31,6 +31,7 @@ def chromium():
 
 def main():
     poort = int(sys.argv[1]) if len(sys.argv) > 1 else 8231
+    direct_sudoku = "direct" in sys.argv
     breedte = int(sys.argv[2]) if len(sys.argv) > 2 else 411
     hoogte = int(sys.argv[3]) if len(sys.argv) > 3 else 686
     shutil.rmtree(PROFIEL, ignore_errors=True)
@@ -65,7 +66,8 @@ def main():
         b.call("Runtime.enable")
         b.call("Emulation.setDeviceMetricsOverride", width=breedte, height=hoogte,
                deviceScaleFactor=2, mobile=True)
-        b.call("Page.navigate", url=f"http://127.0.0.1:{poort}/index.html?debug=1#level1")
+        begin = "sudoku" if direct_sudoku else "level1"
+        b.call("Page.navigate", url=f"http://127.0.0.1:{poort}/index.html?debug=1#{begin}")
         for _ in range(60):
             if b.js("document.querySelectorAll('#bord .cel').length") == 56:
                 break
@@ -90,7 +92,9 @@ def main():
                   celCssBreedte: getComputedStyle(cellen[0]).width};
         })()""")
         print(json.dumps(uit, ensure_ascii=False, indent=2))
-        if uit["cellen"] != 56:
+        if direct_sudoku:
+            print("(direct op de sudokutab begonnen; het levelbord laten we hier liggen)")
+        elif uit["cellen"] != 56:
             print("FOUT: niet alle 56 cellen bestaan")
         elif uit["zichtbaar"] != 56:
             print(f"FOUT: {56 - uit['zichtbaar']} cellen vallen buiten het bord")
@@ -98,13 +102,14 @@ def main():
             print(f"FOUT: {uit['rijen']} rijen in plaats van 8")
         else:
             print(f"goed: 8 rijen, alle 56 cellen binnen het bord ({uit['bordBreedte']}x{uit['bordHoogte']})")
-        if uit["eersteTegel"].split("x")[0] != uit["eersteTegel"].split("x")[1]:
+        if not direct_sudoku and uit["eersteTegel"].split("x")[0] != uit["eersteTegel"].split("x")[1]:
             print(f"FOUT: de tegels zijn niet vierkant: {uit['eersteTegel']}")
 
         # En het sudokubord: dat moet vierkant zijn, ook zonder `aspect-ratio`
         # (die kent de WebView van Android 11 niet).
-        b.js("document.querySelector('.tab[data-tab=sudoku]').click()")
-        time.sleep(1.2)
+        if not direct_sudoku:
+            b.js("document.querySelector('.tab[data-tab=sudoku]').click()")
+            time.sleep(1.2)
         sud = b.js("""(() => {
           const b = document.getElementById('sudoku-bord');
           const r = b.getBoundingClientRect();
