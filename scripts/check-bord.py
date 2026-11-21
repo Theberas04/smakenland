@@ -113,13 +113,22 @@ def main():
         sud = b.js("""(() => {
           const b = document.getElementById('sudoku-bord');
           const r = b.getBoundingClientRect();
+          const vakken = [...b.querySelectorAll('.sudoku-cel')];
           return {breedte: Math.round(r.width), hoogte: Math.round(r.height),
-                  vakken: b.querySelectorAll('.sudoku-cel').length,
+                  vakken: vakken.length,
+                  metTekst: vakken.filter(v => (v.textContent || '').trim()).length,
+                  eersteTekst: (vakken.map(v => (v.textContent || '').trim()).find(t => t) || '') ,
+                  eersteKleur: getComputedStyle(vakken[0]).color,
+                  eersteFont: getComputedStyle(vakken[0]).fontSize,
                   cel: Math.round(b.querySelector('.sudoku-cel').getBoundingClientRect().width)};
         })()""")
         print("sudoku:", json.dumps(sud))
         if sud["vakken"] != 81:
             print("FOUT: geen 81 sudokuvakken")
+        elif sud.get("metTekst", 0) < 20:
+            # Een leeg bord betekent dat er wel vakken zijn maar geen opgave: dat zag er
+            # op een echt toestel uit als een kapot scherm.
+            print(f"FOUT: het sudokubord toont geen opgave ({sud.get('metTekst', 0)} cijfers)")
         elif abs(sud["breedte"] - sud["hoogte"]) > 4:
             print(f"FOUT: het sudokubord is niet vierkant: {sud['breedte']}x{sud['hoogte']}")
         elif sud["hoogte"] < 200:

@@ -95,7 +95,7 @@ start_en_wacht "sudoku" "SmakenlandScherm=sudoku"
 adb exec-out screencap -p > scherm-sudoku.png 2>/dev/null || true
 
 # En het sudokubord: dat moet vierkant zijn, ook zonder `aspect-ratio`.
-sudoku_maat="$(adb logcat -d | grep -o 'SmakenlandSudoku breedte=[0-9]* hoogte=[0-9]* tegel=[0-9]*' | tail -1 || true)"
+sudoku_maat="$(adb logcat -d | grep -o 'SmakenlandSudoku breedte=[0-9]* hoogte=[0-9]* tegel=[0-9]* cijfers=[0-9]*' | tail -1 || true)"
 echo "sudoku: ${sudoku_maat:-niets gemeld}"
 sud_breedte="$(echo "$sudoku_maat" | sed -n 's/.*breedte=\([0-9]*\).*/\1/p')"
 sud_hoogte="$(echo "$sudoku_maat" | sed -n 's/.*hoogte=\([0-9]*\).*/\1/p')"
@@ -105,6 +105,11 @@ if [ -z "$sud_hoogte" ] || [ "$sud_hoogte" -lt 200 ]; then
 fi
 if [ $(( sud_hoogte > sud_breedte ? sud_hoogte - sud_breedte : sud_breedte - sud_hoogte )) -gt 4 ]; then
   echo "::error::het sudokubord is niet vierkant: ${sud_breedte}x${sud_hoogte}"
+  exit 1
+fi
+sud_cijfers="$(echo "$sudoku_maat" | sed -n 's/.*cijfers=\([0-9]*\).*/\1/p')"
+if [ -z "$sud_cijfers" ] || [ "$sud_cijfers" -lt 20 ]; then
+  echo "::error::het sudokubord toont geen opgave (${sud_cijfers:-0} cijfers)"
   exit 1
 fi
 

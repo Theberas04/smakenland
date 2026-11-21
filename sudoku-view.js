@@ -72,8 +72,9 @@
     houder.style.height = breedte + 'px';
     window.requestAnimationFrame(function () {
       const r = houder.getBoundingClientRect();
+      const gevuld = cellen.filter(function (c) { return (c.textContent || '').trim(); }).length;
       const maat = 'breedte=' + Math.round(r.width) + ' hoogte=' + Math.round(r.height) +
-        ' tegel=' + Math.round(r.width / 9);
+        ' tegel=' + Math.round(r.width / 9) + ' cijfers=' + gevuld;
       if (maat !== laatsteMaat) {
         laatsteMaat = maat;
         console.info('SmakenlandSudoku ' + maat);
@@ -390,6 +391,13 @@
       zetCijfer: zetCijfer, kiesCel: kiesCel, wis: wis, hint: hint,
       timerUit: stopTimer, pasMaat: pasMaat
     };
+
+    // De app start vóór deze view (app.js staat eerder in de pagina), dus een diepe
+    // link als #sudoku is dan al toegepast terwijl deze view nog niet bestond: de app
+    // zocht een view die er nog niet was en sloeg het vullen over. Staat de sudokutab
+    // al open, doe het dan hier alsnog — anders bleef het bord leeg tot je op de tab klikte.
+    const tabSudoku = document.querySelector('.tab[data-tab=sudoku]');
+    if (tabSudoku && tabSudoku.getAttribute('aria-current') === 'true') toon();
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
