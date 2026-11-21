@@ -237,15 +237,25 @@
     if (scherm === 'level' && !level) scherm = 'kaart';
     renderAlles();
     if (naam === 'sudoku' && window.SmakenlandSudokuView) window.SmakenlandSudokuView.toon();
-    zetHash(scherm === 'level' ? ('level' + level.level) : (scherm === 'kaart' ? 'levels' : scherm));
+    // De maat van de sudoku hoort in de adresbalk te blijven staan: stond er
+    // #sudoku16, dan mag dat geen #sudoku worden, want dan raakt de maat kwijt
+    // voordat de sudokuvieuw hem kan lezen.
+    zetHash(scherm === 'level' ? ('level' + level.level)
+      : (scherm === 'kaart' ? 'levels'
+        : (scherm === 'sudoku' && sudokuMaat ? 'sudoku' + sudokuMaat : scherm)));
     meldScherm();
   }
+
+  /** De sudokumaat uit de adresbalk (#sudoku16), zolang die maat gekozen is. */
+  let sudokuMaat = null;
 
   /** Wat de adresbalk vraagt, bijvoorbeeld #sudoku of #level12. */
   function pasHashToe() {
     const ruw = (window.location.hash || '').replace(/^#/, '');
     if (!ruw) return false;
-    if (ruw === 'sudoku' || /^sudoku(4|6|9|12|16)$/.test(ruw)) { zetTab('sudoku'); return true; }
+    const sud = /^sudoku(4|6|9|12|16)$/.exec(ruw);
+    if (sud) { sudokuMaat = Number(sud[1]); zetTab('sudoku'); return true; }
+    if (ruw === 'sudoku') { sudokuMaat = null; zetTab('sudoku'); return true; }
     if (ruw === 'vrij') { zetTab('vrij'); return true; }
     if (ruw === 'levels' || ruw === 'kaart') { zetTab('levels'); return true; }
     const m = /^level(\d+)$/.exec(ruw);

@@ -361,11 +361,14 @@ public class MainActivity extends ComponentActivity {
     if (intent == null) return null;
     String scherm = intent.getStringExtra(EXTRA_SCHERM);
     if (scherm == null || scherm.isEmpty()) return null;
-    if (!scherm.matches("levels|sudoku|vrij|level[0-9]{1,3}")) {
+    // De lijst met toegestane schermen staat in Schermen.java, zodat er een gewone
+    // Java-test op kan lopen: "sudoku16" werd hier eerst afgewezen.
+    String gekeurd = Schermen.uit(scherm);
+    if (gekeurd == null) {
       Log.w(TAG, "onbekend scherm gevraagd: " + scherm);
       return null;
     }
-    return scherm;
+    return gekeurd;
   }
 
   static boolean isDebuggable(ComponentActivity activity) {

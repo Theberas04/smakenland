@@ -267,6 +267,13 @@ check('het vrije spel heeft de munten bewaard', UI2.vrij.munten, 40);
 check('tweede lading zonder JS-fouten', tweede.jsFouten.join(' | '), '');
 
 // -------------------------------------------------------- diepe link (hash)
+const diep16 = await open(`${basis}/index.html#sudoku16`);
+check('een diepe link met de maat erin geeft 256 vakken',
+  diep16.w.document.querySelectorAll('.sudoku-cel').length, 256);
+check('en de adresbalk houdt de maat vast', diep16.w.location.hash, '#sudoku16');
+check('en de cijferknoppen lopen tot G',
+  tekst(diep16.w.document.querySelectorAll('.cijfers button')[15]), 'G');
+
 const diep = await open(`${basis}/index.html#sudoku`);
 check('een diepe link naar sudoku opent dat scherm', diep.w.SmakenlandUI.scherm, 'sudoku');
 check('en slaat de uitleg over', diep.w.document.getElementById('modal-uitleg').hidden, true);

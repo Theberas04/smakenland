@@ -31,7 +31,8 @@ def chromium():
 
 def main():
     poort = int(sys.argv[1]) if len(sys.argv) > 1 else 8231
-    direct_sudoku = "direct" in sys.argv
+    direct_sudoku = "direct" in sys.argv or "direct16" in sys.argv
+    direct_maat = 16 if "direct16" in sys.argv else (9 if direct_sudoku else None)
     breedte = int(sys.argv[2]) if len(sys.argv) > 2 else 411
     hoogte = int(sys.argv[3]) if len(sys.argv) > 3 else 686
     shutil.rmtree(PROFIEL, ignore_errors=True)
@@ -66,7 +67,7 @@ def main():
         b.call("Runtime.enable")
         b.call("Emulation.setDeviceMetricsOverride", width=breedte, height=hoogte,
                deviceScaleFactor=2, mobile=True)
-        begin = "sudoku" if direct_sudoku else "level1"
+        begin = ("sudoku" + str(direct_maat)) if direct_maat else "level1"
         b.call("Page.navigate", url=f"http://127.0.0.1:{poort}/index.html?debug=1#{begin}")
         for _ in range(60):
             if b.js("document.querySelectorAll('#bord .cel').length") == 56:
@@ -123,9 +124,10 @@ def main():
                   cel: Math.round(b.querySelector('.sudoku-cel').getBoundingClientRect().width)};
         })()""")
         print("sudoku:", json.dumps(sud))
-        if sud["vakken"] != 81:
-            print("FOUT: geen 81 sudokuvakken")
-        elif sud.get("metTekst", 0) < 20:
+        verwacht_vakken = direct_maat * direct_maat if direct_maat else 81
+        if sud["vakken"] != verwacht_vakken:
+            print(f"FOUT: {sud['vakken']} sudokuvakken in plaats van {verwacht_vakken}")
+        elif sud.get("metTekst", 0) < max(20, verwacht_vakken // 4):
             # Een leeg bord betekent dat er wel vakken zijn maar geen opgave: dat zag er
             # op een echt toestel uit als een kapot scherm.
             print(f"FOUT: het sudokubord toont geen opgave ({sud.get('metTekst', 0)} cijfers)")

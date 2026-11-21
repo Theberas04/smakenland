@@ -62,6 +62,12 @@ jobs:
             android/app/src/main/java/nl/werdens/smakenland/Updates.java \
             tests/java/UpdatesTest.java
           java -cp "$RUNNER_TEMP/javatest" UpdatesTest
+          # En de schermnamen die de app van buitenaf accepteert: "sudoku16" werd
+          # hier afgewezen, waardoor de app op de levelkaart startte.
+          javac -d "$RUNNER_TEMP/javatest" \
+            android/app/src/main/java/nl/werdens/smakenland/Schermen.java \
+            tests/java/SchermenTest.java
+          java -cp "$RUNNER_TEMP/javatest" SchermenTest
           # En meteen tegen een ECHT antwoord van de GitHub-API: laat de app-code zelf
           # de nieuwste uitgave lezen. Lukt het ophalen niet (storing of geen netwerk),
           # dan slaan we het over in plaats van de bouw te laten klappen.
