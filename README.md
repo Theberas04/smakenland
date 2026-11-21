@@ -66,6 +66,11 @@ zelfs niet in het manifest), alles zit in de bundel en je potje blijft op het to
   release-APK en controleert de handtekening, het versienummer en de inhoud van de bundel; een tweede
   job bouwt een debug-APK, speelt hem op een emulator en zet foto's van de drie schermen in
   `docs/android/`.
+![De updateregel in de app](docs/smakenland-update.png)
+
+*De updateregel zoals de Android-app hem in de uitleg toont — hier nagemaakt in de browser met
+dezelfde brug die de app aan het venster hangt, want in een browser hoort die regel er niet te staan.*
+
 - **De app kijkt zelf of er een nieuwe versie is.** Bij het starten vraagt hij één keer bij GitHub
   naar de nieuwste uitgave (`api.github.com/repos/Theberas04/smakenland/releases/latest`), vergelijkt
   het versienummer met wat er op het toestel staat en biedt aan om bij te werken. In de uitleg staat
@@ -95,6 +100,7 @@ zelfs niet in het manifest), alles zit in de bundel en je potje blijft op het to
 | `scripts/shoot.py` | speelt het spel in Chromium en maakt de schermafbeeldingen |
 | `scripts/record-demo.py` | neemt de demo op (echte tikken en slepen, daarna ffmpeg) |
 | `scripts/check-live.py` | laadt een uitgerolde kopie in een echte browser en meldt JS-fouten |
+| `scripts/shoot-update.py` | fotografeert de updateregel met dezelfde brug als de app |
 | `android/.../Updates.java` | het versierekenwerk van de updatecontrole (gewone Java, te testen) |
 
 De spellogica is DOM-vrij en werkt in de browser én in Node, zodat de tests precies dezelfde regels
