@@ -194,11 +194,20 @@ jobs:
           bash scripts/sync-assets.sh
           cd android && gradle --no-daemon assembleDebug
 
-      - name: Is er hardwareversnelling (KVM)?
+      - name: Hardwareversnelling (KVM) vrijgeven
         run: |
-          # Zonder KVM start de emulator niet op tijd; dan is een mislukte job
-          # geen fout in de app maar een eigenschap van de bouwmachine.
-          ls -la /dev/kvm 2>/dev/null && echo "KVM aanwezig" || echo "GEEN KVM — de emulator zal traag of niet starten"
+          # De emulator-runner zet -accel off zodra hij /dev/kvm niet zelf mag
+          # gebruiken, en zonder versnelling start een x86_64-emulator niet op tijd
+          # op. /dev/kvm staat hier op root:kvm met rechten 660, dus de bouwgebruiker
+          # moet er expliciet bij mogen. Dit is de reden dat de vorige pogingen
+          # omvielen op "Timeout waiting for emulator to boot".
+          if [ -e /dev/kvm ]; then
+            sudo chmod 666 /dev/kvm || true
+            ls -la /dev/kvm
+            echo "KVM is vrijgegeven voor de emulator"
+          else
+            echo "::warning::geen /dev/kvm op deze machine; de emulator loopt op software en kan de wachttijd overschrijden"
+          fi
 
       - name: App installeren en de echte app controleren
         uses: reactivecircus/android-emulator-runner@v2
