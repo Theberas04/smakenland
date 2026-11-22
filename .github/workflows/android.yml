@@ -11,9 +11,13 @@ on:
       - 'art.js'
       - 'levels.js'
       - 'engine.js'
+      - 'prestaties.js'
+      - 'voortgangscode.js'
       - 'sudoku.js'
+      - 'sudokus.js'
       - 'app.js'
       - 'sudoku-view.js'
+      - 'tools/gen_sudokus.js'
       - 'sw.js'
       - 'manifest.webmanifest'
       - 'icons/**'
@@ -137,6 +141,7 @@ jobs:
               'assets/www/index.html', 'assets/www/app.js', 'assets/www/styles.css',
               'assets/www/engine.js', 'assets/www/levels.js', 'assets/www/art.js',
               'assets/www/sudoku.js', 'assets/www/sudoku-view.js', 'assets/www/content.js',
+              'assets/www/prestaties.js', 'assets/www/voortgangscode.js', 'assets/www/sudokus.js',
               'assets/www/icons/icon-192.png',
           ]
           with zipfile.ZipFile(apk) as pakket:
@@ -146,17 +151,18 @@ jobs:
                   grootte = pakket.getinfo(lid).file_size
                   assert grootte > 0, f'leeg in de APK: {lid}'
                   print(f'{lid}: {grootte} bytes')
-              # 800 levels en de kunst moeten er echt in zitten.
+              # 1200 levels en de kunst moeten er echt in zitten.
               levels = pakket.read('assets/www/levels.js').decode('utf-8')
-              assert levels.count('"nr":') == 800, 'geen 800 levels in de bundel'
+              assert levels.count('"nr":') == 1200, 'geen 1200 levels in de bundel'
               kunst = pakket.read('assets/www/art.js').decode('utf-8')
               assert kunst.count('<svg') >= 52, 'de kunst ontbreekt in de bundel'
-              print('800 levels en 52 stuks kunst in de bundel')
+              print('1200 levels en 52 stuks kunst in de bundel')
               # De updatecontrole hoort in de code te zitten, niet alleen in de repo.
               dex = b''.join(pakket.read(n) for n in namen
                              if n.startswith('classes') and n.endswith('.dex'))
               assert b'Lnl/werdens/smakenland/Updates;' in dex, 'updatecontrole ontbreekt in de app'
-              print('de updatecontrole zit in de app')
+              assert b'Lnl/werdens/smakenland/Schermen;' in dex, 'de schermnamenlijst ontbreekt in de app'
+              print('de updatecontrole en de schermnamenlijst zitten in de app')
           PY
 
       - name: APK op de release zetten

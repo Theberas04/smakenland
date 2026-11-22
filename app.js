@@ -1074,10 +1074,6 @@
     $('prestaties-klein').textContent = tel.behaald === tel.totaal
       ? 'Alles gehaald! Petje af.'
       : 'Speel verder om de rest te halen';
-    // De emulator-smoketest leest deze regel uit logcat: zo is op een echt toestel
-    // te zien dat het scherm niet alleen opent, maar ook gevuld is.
-    console.info('SmakenlandPrestaties behaald=' + tel.behaald + ' van=' + tel.totaal +
-      ' kaartjes=' + document.querySelectorAll('.prestatie').length);
     rooster.innerHTML = lijst.map(function (p) {
       const percentage = Math.round(p.deel * 100);
       return '<div class="prestatie' + (p.behaald ? ' behaald' : '') + '">' +
@@ -1088,6 +1084,12 @@
           '<span class="prestatie-teller">' + p.nu + ' / ' + p.doel + '</span>' +
         '</div></div>';
     }).join('');
+    // De emulator-smoketest leest deze regel uit logcat: zo is op een echt toestel
+    // te zien dat het scherm niet alleen opent, maar ook gevuld is. De regel staat
+    // hier NAAST het vullen van het rooster, want anders meldt hij nul kaartjes.
+    const kaartjes = rooster.querySelectorAll('.prestatie').length;
+    console.info('SmakenlandPrestaties behaald=' + tel.behaald + ' van=' + tel.totaal +
+      ' kaartjes=' + kaartjes);
   }
 
   /** Kijkt of er een prestatie bijgekomen is en viert dat met een klein venster. */
