@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Smakenland — versmelten, sudoku en reizen</title>
-<meta name="description" content="Versmelt items in 800 levels, los sudoku's op in drie moeilijkheden en reis door Smakenland.">
+<meta name="description" content="Versmelt items in 1200 levels, los sudoku's op in vijf maten en reis door Smakenland.">
 <meta name="theme-color" content="#f6f1e7">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
@@ -25,6 +25,7 @@
   <div class="balk-knoppen">
     <button id="knop-thema" class="rond" type="button" aria-pressed="false" title="Lichte of donkere weergave">🌙</button>
     <button id="knop-geluid" class="rond" type="button" aria-pressed="true" title="Geluid aan of uit">🔊</button>
+    <button id="knop-tril" class="rond" type="button" aria-pressed="true" title="Trillen aan of uit">📳</button>
     <button id="knop-uitleg" class="rond" type="button" title="Uitleg en instellingen">?</button>
   </div>
 </header>
@@ -50,6 +51,7 @@
         <small id="kaart-gehaald">0 van 800 gehaald</small>
       </div>
     </div>
+    <div class="dag" id="dag"></div>
     <div id="hoofdstukken"></div>
   </section>
 
@@ -59,6 +61,7 @@
       <span id="bord-hint">Tik op een kist om te oogsten</span>
       <button id="knop-kiezen" class="rond klein" type="button" hidden>Wis keuze</button>
     </div>
+    <div class="boosters" id="boosters" hidden></div>
     <div class="bord" id="bord" role="grid" aria-label="Speelveld van 7 bij 8"></div>
     <p class="bord-voet">
       <span>3 gelijk = 1 hoger</span><span>4 = 1 hoger + 1 over</span><span>5 = 2 hoger</span>
@@ -82,6 +85,11 @@
         <button type="button" data-maat="9" aria-pressed="true">9×9</button>
         <button type="button" data-maat="12" aria-pressed="false">12×12</button>
         <button type="button" data-maat="16" aria-pressed="false">16×16</button>
+      </div>
+      <div class="niveaus varianten" id="sudoku-varianten">
+        <button type="button" data-variant="gewoon" aria-pressed="true">Gewoon</button>
+        <button type="button" data-variant="diagonaal" aria-pressed="false">Diagonaal</button>
+        <button type="button" data-variant="ongelijk" aria-pressed="false">Ongelijk</button>
       </div>
       <div class="sudoku-tijd">
         <b id="sudoku-klok">00:00</b>
@@ -140,6 +148,7 @@
     <h2 id="level-titel">Level 1</h2>
     <div class="sterren-groot" id="level-sterren"></div>
     <p id="level-tekst"></p>
+    <p class="level-record" id="level-record" hidden></p>
     <div class="modal-knoppen">
       <button class="primair" id="level-volgende" type="button">Volgende level</button>
       <button id="level-opnieuw" type="button">Nog een keer</button>
@@ -165,7 +174,14 @@
         foutenteller en je beste tijd per maat.</li>
       <li><b>Prestaties</b> — twintig dingen om te halen, van je eerste level tot een sudoku van 16×16
         zonder fouten.</li>
-      <li><b>Vrij</b> — onbeperkt spelen met klanten, munten, de winkel en de reis langs de gebieden.</li>
+      <li><b>Dagelijkse opgave</b> — bovenaan de levelkaart staat elke dag één level met bonusmunten.
+        Zeven dagen op rij houd je de reeks vast.</li>
+      <li><b>Vrij</b> — onbeperkt spelen met klanten, munten, de winkel en de reis langs de gebieden.
+        In de winkel koop je ook <b>boosters</b> (🔨 hamer, ✂️ schaar, ✖️ dubbelmunten); die draag je mee
+        tot je ze nodig hebt, ook een level in. En met <b>Tuin</b> zet je je munten om in versieringen.</li>
+      <li><b>Records</b> — van elk level onthoudt het spel je minste zetten en je snelste tijd. Ze staan
+        onder de levelkaart en in het venster als je een level haalt.</li>
+      <li><b>Trillen</b> 📳 — naast het geluid kun je ook het trillen aan- of uitzetten.</li>
     </ul>
     <div class="code-blok">
       <h3>Voortgangscode</h3>
@@ -188,6 +204,19 @@
     <div class="modal-knoppen">
       <button class="primair" id="uitleg-sluiten" type="button">Spelen</button>
       <button class="gevaar" id="opnieuw" type="button">Alles opnieuw beginnen</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="modal-tuin" hidden>
+  <div class="kaart tuin-kaart" role="dialog" aria-modal="true" aria-labelledby="tuin-titel">
+    <small id="tuin-klein">Jouw tuin</small>
+    <h2 id="tuin-titel">De tuin van Smakenland</h2>
+    <div class="tuin-beeld" id="tuin-beeld"></div>
+    <p class="tuin-teller" id="tuin-teller">Nog niets geplant.</p>
+    <div class="tuin-lijst" id="tuin-lijst"></div>
+    <div class="modal-knoppen">
+      <button class="primair" id="tuin-sluiten" type="button">Terug</button>
     </div>
   </div>
 </div>

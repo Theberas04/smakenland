@@ -24,9 +24,25 @@ kern, energie als tempo, kisten als generatoren, klanten als opdrachtgevers.
   het eerste level van zo'n zijpad staat meteen open en de kaart vermeldt wat er in de andere seizoenen
   klaarstaat. Dat is te toetsen: `seizoenVanMaand`, `zichtbareHoofdstukken` en `levelOpen` krijgen een
   seizoen mee, dus er zit geen blik op de klok midden in de spellogica.
-- **Prestaties**: twintig dingen om te halen (eerste level, honderd versmeltingen, een hoofdstuk op
-  drie sterren, een sudoku van 16×16, zeven dagen op rij) met een eigen scherm, voortgangsbalken en een
-  klein venster als je er een haalt. De regels staan in `prestaties.js` en zijn los te toetsen.
+- **Prestaties**: achtentwintig dingen om te halen (eerste level, honderd versmeltingen, een hoofdstuk op
+  drie sterren, een sudoku van 16×16, zeven dagen op rij, de tuin vol) met een eigen scherm,
+  voortgangsbalken en een klein venster als je er een haalt. De regels staan in `prestaties.js` en zijn
+  los te toetsen.
+- **Dagelijkse opgave**: bovenaan de levelkaart staat elke dag één level met bonusmunten (100, en per dag
+  van de reeks 25 erbij tot 300). De strook laat zeven dagen zien, de reeks loopt door zolang je geen dag
+  mist, en één keer per dag is genoeg. Welk level het is hangt alleen van de datum af — geen netwerk.
+- **Boosters**: in de winkel koop je een 🔨 hamer (haalt een voorwerp weg), een ✂️ schaar (knipt één stuk
+  van een stapel los) en ✖️ dubbelmunten (de volgende drie leveringen geven dubbel). Je draagt ze mee op
+  de plank, ook een level in, waar ze als balk boven het bord staan. Dubbelmunten werken alleen in Vrij,
+  want in een level levert niets munten op.
+- **Records per level**: van elk level onthoudt het spel je minste zetten en je snelste tijd, te zien
+  onder de levelkaart en in het venster als je een level haalt.
+- **Tuin**: negen versieringen die je met munten koopt en die daarna in je tuinbeeld staan (onder Vrij).
+- **Trillen en geluid**: versmeltingen, munten en prestaties hebben een geluidje; in de app trilt het
+  toestel mee. Beide zijn met één knop in de balk uit te zetten.
+- **Melding als je energie vol is**: leg je de app weg, dan laat het toestel zich horen zodra de energie
+  weer vol is. Dat doet de Android-schil (een WebView mag op de achtergrond niets plannen); de pagina
+  geeft alleen door hoeveel seconden het nog duurt.
 - **Voortgangscode**: je sterren, munten, sudokutijden, prestaties en thema in één stuk tekst, om te
   bewaren of over te zetten naar een ander toestel. De code heeft een korte controle: zit er een fout
   in, dan weigert de app hem in plaats van er halve voortgang van te maken.
@@ -36,6 +52,11 @@ kern, energie als tempo, kisten als generatoren, klanten als opdrachtgevers.
 hints, foutenteller, klok en je beste tijd per maat en niveau. Vanaf 12×12 komen er letters bij de
 cijfers (A t/m G), net als in een echte sudoku van die maat.
   Elke opgave heeft precies één oplossing (nagerekend met een bitmasker-oplosser).
+- **Drie sudoku-varianten**: *gewoon*, *diagonaal* (de twee lange diagonalen tellen ook mee, in alle vijf
+  de maten) en *ongelijk* (blokken met een andere vorm, in 4×4 tot en met 12×12). Een ongelijke sudoku
+  wordt uit een bestaand vol bord gebouwd — elke groep krijgt één vakje van elk cijfer — zodat er altijd
+  een oplossing is; bij 16×16 lukt dat niet betrouwbaar, dus daar biedt de app hem niet aan en zegt dat
+  er ook bij.
 - **Versmelten**: sleep twee gelijke items op elkaar, de derde versmelt tot één item een tree hoger.
   Alleen door te slepen — een oogst legt nooit iets vanzelf op een stapel.
   4 gelijk geeft 1 hoger + 1 over, 5 gelijk geeft er 2. Drie dezelfde kisten op elkaar geven een kist
@@ -58,6 +79,10 @@ cijfers (A t/m G), net als in een echte sudoku van die maat.
 | ![Sudoku 16](docs/smakenland-sudoku16.png) | ![Telefoon 16](docs/smakenland-telefoon-sudoku16.png) | ![Telefoon 4](docs/smakenland-telefoon-sudoku4.png) |
 | Prestaties | Seizoenshoofdstukken | Donker thema |
 | ![Prestaties](docs/smakenland-prestaties.png) | ![Seizoen](docs/smakenland-seizoen.png) | ![Donker](docs/smakenland-donker-kaart.png) |
+| Dagelijkse opgave | Boosters in de winkel | De tuin |
+| ![Dag](docs/smakenland-dag.png) | ![Boosters](docs/smakenland-boosters.png) | ![Tuin](docs/smakenland-tuin.png) |
+| Sudoku met diagonalen | Ongelijke sudoku | Sudoku van 16×16 in het donker |
+| ![Diagonaal](docs/smakenland-sudoku-diagonaal.png) | ![Ongelijk](docs/smakenland-sudoku-ongelijk.png) | ![Donker sudoku](docs/smakenland-donker-sudoku.png) |
 
 | Telefoon · level | Telefoon · levelkaart |
 | --- | --- |
@@ -105,19 +130,21 @@ dezelfde brug die de app aan het venster hangt, want in een browser hoort die re
 | --- | --- |
 | `content.js` | ketens, kisten, gebieden met verhaal, winkel |
 | `art.js` | alle getekende kunst (gegenereerd, niet met de hand aanpassen) |
-| `levels.js` | de 800 levels (gegenereerd) |
+| `levels.js` | de 1200 levels (gegenereerd) |
 | `engine.js` | de spellogica: bord, versmelten, energie, doelen, levels, gebieden, opslag |
 | `sudoku.js` | sudokuregels voor alle maten: generator met unieke oplossing, oplosser, hints |
 | `sudokus.js` | kant-en-klare 16×16-opgaven uit `tools/gen_sudokus.js` (nagerekend: één oplossing) |
-| `prestaties.js` | de twintig prestaties en hun regels (los te toetsen) |
+| `prestaties.js` | de achtentwintig prestaties en hun regels (los te toetsen) |
 | `voortgangscode.js` | je voortgang in één code, met een controle op typefouten |
-| `tools/gen_sudokus.js` | maakt en narekent die 16×16-opgaven (`--check`) |
+| `tools/gen_sudokus.js` | maakt en narekent die 16×16-opgaven, gewoon én met diagonalen (`--check`) |
 | `app.js` | de schil: tabs, bord, slepen, effecten, geluid, bewaren |
 | `sudoku-view.js` | het sudokupaneel |
 | `styles.css` | huisstijl: papier en inkt, hout op het bord, geen schaduwen of neon |
 | `android/` | de WebView-app en het icoon |
+| `android/.../Trillen.java` | laat het toestel trillen als de pagina daarom vraagt |
+| `android/.../EnergieMelder.java` | de wekker en de melding "je energie is weer vol" |
 | `tools/gen_art.py` | tekent alle kunst (`--check` vergelijkt met `art.js`) |
-| `tools/gen_levels.py` | maakt de 800 levels en rekent ze na (`--check`) |
+| `tools/gen_levels.py` | maakt de 1200 levels en rekent ze na (`--check`) |
 | `tools/render_icons.py` | het app-icoon in alle maten (web + Android) |
 | `tools/contactsheet.py` | één overzichtsbeeld van alle kunst |
 | `scripts/sync-assets.sh` | zet de webapp in de bundel van de Android-app |
@@ -134,15 +161,15 @@ herhaalbaar is en de tests niet gokken.
 ## Controles
 
 ```bash
-node --test "tests/*.test.mjs"                    # spellogica: bord, levels, sudoku, prestaties, code (70 tests)
+node --test "tests/*.test.mjs"                    # spellogica: bord, levels, sudoku, varianten, boosters, dag, prestaties (103 tests)
 python3 -m http.server 8231 &                     # de pagina moet geserveerd worden
-node tests/smoke.mjs 8231                         # de pagina zelf in jsdom (115 controles)
+node tests/smoke.mjs 8231                         # de pagina zelf in jsdom (186 controles)
 python3 scripts/check-live.py <url>               # een uitgerolde kopie in een echte browser
 javac -d /tmp/ut android/app/src/main/java/nl/werdens/smakenland/Updates.java \
       tests/java/UpdatesTest.java && java -cp /tmp/ut UpdatesTest   # versierekenwerk (28 controles)
 javac -d /tmp/st android/app/src/main/java/nl/werdens/smakenland/Schermen.java \
       tests/java/SchermenTest.java && java -cp /tmp/st SchermenTest # schermnamen (25 controles)
-node tools/gen_sudokus.js --check                 # de 16 kant-en-klare 16×16-opgaven zijn uniek
+node tools/gen_sudokus.js --check                 # de 32 kant-en-klare 16×16-opgaven (gewoon en met diagonalen)
 python3 tools/gen_art.py --check                  # kunst loopt niet uit de pas met de generator
 python3 tools/gen_levels.py --check               # en alle 1200 levels zijn nog haalbaar
 python3 scripts/shoot.py 8231                     # schermafbeeldingen opnieuw

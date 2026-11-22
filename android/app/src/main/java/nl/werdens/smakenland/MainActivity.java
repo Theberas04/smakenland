@@ -133,6 +133,21 @@ public class MainActivity extends ComponentActivity {
     // De pagina kan hiermee aan de app vragen of er een nieuwe versie is, en ziet
     // meteen welk versienummer er op het toestel staat.
     webView.addJavascriptInterface(new Brug(), "SmakenlandApp");
+    // En hiermee laat de pagina het toestel trillen bij een versmelting of een
+    // prestatie. Let op: de eigen module van de pagina heet SmakenlandTrillen,
+    // anders zou hij deze brug overschrijven.
+    webView.addJavascriptInterface(new TrilBrug(), "SmakenlandTril");
+    Log.i(TAG, "SmakenlandTril kan=" + Trillen.kan(this));
+
+    // Op Android 13 en hoger mag een app pas meldingen plaatsen als de speler het
+    // vraagt. Zonder die toestemming blijft het spel gewoon werken; alleen de
+    // melding "je energie is weer vol" komt dan niet.
+    if (Build.VERSION.SDK_INT >= 33) {
+      if (checkSelfPermission("android.permission.POST_NOTIFICATIONS")
+          != PackageManager.PERMISSION_GRANTED) {
+        requestPermissions(new String[] { "android.permission.POST_NOTIFICATIONS" }, 1);
+      }
+    }
 
     webView.loadUrl(startUrl(getIntent()));
 
@@ -159,6 +174,46 @@ public class MainActivity extends ComponentActivity {
       // Let op: zonder MainActivity.this pakt Java de eigen methode van deze brug.
       new Thread(() -> MainActivity.this.controleerOpUpdates(true)).start();
     }
+
+    /**
+     * De pagina laat weten hoeveel seconden het nog duurt voordat de energie vol
+     * is. Wij zetten daarvoor een wekker (en de vorige wekker af).
+     */
+    @JavascriptInterface
+    public void planEnergieMelding(int seconden) {
+      if (seconden <= 0) {
+        EnergieMelder.annuleer(MainActivity.this);
+        return;
+      }
+      EnergieMelder.plan(MainActivity.this, seconden);
+    }
+
+    /** De speler is terug in de app: geen melding meer nodig. */
+    @JavascriptInterface
+    public void annuleerEnergieMelding() {
+      EnergieMelder.annuleer(MainActivity.this);
+    }
+  }
+
+  /** Trillen voor de pagina. */
+  private class TrilBrug {
+    @JavascriptInterface
+    public boolean tril(String patroon) {
+      return Trillen.doe(MainActivity.this, patroon);
+    }
+
+    @JavascriptInterface
+    public boolean kan() {
+      return Trillen.kan(MainActivity.this);
+    }
+  }
+
+  @Override
+  protected void onResume() {
+    super.onResume();
+    // Terug in de app: de melding en de wekker horen nu niet meer.
+    EnergieMelder.annuleer(this);
+    Log.i(TAG, "SmakenlandEnergie aanwezig=true gepland=" + EnergieMelder.staatGepland(this));
   }
 
   private void leesEigenVersie() {

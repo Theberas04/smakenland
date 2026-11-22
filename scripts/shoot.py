@@ -215,6 +215,16 @@ def main():
         time.sleep(0.8)
         b.call("Emulation.clearDeviceMetricsOverride")
 
+        # 3c. De sudoku-varianten: de diagonalen, en blokken met een andere vorm.
+        b.js(f"window.SmakenlandSudokuView.zetVariant('diagonaal')")
+        time.sleep(1.0)
+        schiet(b, os.path.join(DOCS, "smakenland-sudoku-diagonaal.png"), 1440, inhoud_hoogte(b))
+        b.js(f"window.SmakenlandSudokuView.zetVariant('ongelijk')")
+        time.sleep(1.2)
+        schiet(b, os.path.join(DOCS, "smakenland-sudoku-ongelijk.png"), 1440, inhoud_hoogte(b))
+        b.js(f"window.SmakenlandSudokuView.zetVariant('gewoon')")
+        time.sleep(0.8)
+
         # 4. Telefoon: het level
         b.js("document.querySelector('.tab[data-tab=levels]').click()")
         time.sleep(0.4)
@@ -252,6 +262,51 @@ def main():
         })()""")
         time.sleep(0.4)
         schiet(b, os.path.join(DOCS, "smakenland-vrij.png"), 1440, inhoud_hoogte(b))
+
+        # 5a. De boosters en de tuin. Eerst munten, dan een paar boosters kopen —
+        #     die komen in een balk boven het bord te staan — en daarna de tuin met
+        #     een paar versieringen erin.
+        b.js("""(() => {
+          const UI = window.SmakenlandUI;
+          UI.vrij.munten = 2000;
+          ['hamer', 'schaar', 'dubbel'].forEach(id => UI.koop(id));
+          return UI.vrij.boosters;
+        })()""")
+        time.sleep(0.5)
+        schiet(b, os.path.join(DOCS, "smakenland-boosters.png"), 1440, inhoud_hoogte(b))
+
+        b.js("""(() => {
+          const UI = window.SmakenlandUI;
+          // In de tuin kopen gaat via dezelfde weg als in de app: de knop zelf.
+          UI.openTuin();
+          // Na elke koop wordt de lijst opnieuw getekend, dus telkens opnieuw zoeken.
+          for (let i = 0; i < 5; i++) {
+            const knop = document.querySelector('#tuin-lijst [data-tuin]:not([disabled])');
+            if (!knop) break;
+            knop.click();
+          }
+          return UI.vrij.tuin.length;
+        })()""")
+        time.sleep(0.6)
+        schiet(b, os.path.join(DOCS, "smakenland-tuin.png"), 1440, inhoud_hoogte(b))
+        b.js("document.getElementById('tuin-sluiten').click()")
+        time.sleep(0.3)
+
+        # 5a2. De dagelijkse opgave met een reeks: de bovenkant van de kaart.
+        b.js("document.querySelector('.tab[data-tab=levels]').click()")
+        time.sleep(0.4)
+        b.js("""(() => {
+          const UI = window.SmakenlandUI;
+          // Een paar dagen op rij gedaan, zodat de strook en de reeks te zien zijn.
+          const vandaag = window.SmakenlandEngine.dagNummer(Date.now());
+          UI.vrij.dag = { reeks: 4, laatste: vandaag - 1, besteReeks: 4,
+                          dagen: [vandaag - 4, vandaag - 3, vandaag - 2, vandaag - 1] };
+          UI.render();
+          window.scrollTo(0, 0);
+          return window.SmakenlandEngine.dagStand(UI.vrij, Date.now());
+        })()""")
+        time.sleep(0.5)
+        schiet(b, os.path.join(DOCS, "smakenland-dag.png"), 1440, 640)
 
         # 5a. Het einde van de kaart: de seizoenshoofdstukken en de noot erover
         b.js("document.querySelector('.tab[data-tab=levels]').click()")

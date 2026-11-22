@@ -48,7 +48,23 @@
     { id: 'rijk', naam: 'Goed gevuld', e: '🪙', stand: 'muntenVerdiend', doel: 1000,
       tekst: 'Verdien duizend munten.' },
     { id: 'week-op-rij', naam: 'Vaste klant', e: '📅', stand: 'dagenOpRij', doel: 7,
-      tekst: 'Zeven dagen op rij gespeeld.' }
+      tekst: 'Zeven dagen op rij gespeeld.' },
+    { id: 'eerste-booster', naam: 'Gereedschap', e: '🔨', stand: 'boostersGebruikt', doel: 1,
+      tekst: 'Gebruik je eerste booster.' },
+    { id: 'vijf-boosters', naam: 'Handige Harry', e: '✂️', stand: 'boostersGebruikt', doel: 10,
+      tekst: 'Gebruik tien boosters.' },
+    { id: 'eerste-tuin', naam: 'Groene vingers', e: '🌳', stand: 'tuin', doel: 1,
+      tekst: 'Koop je eerste versiering voor de tuin.' },
+    { id: 'tuin-af', naam: 'Tuinbaas', e: '⛲', stand: 'tuin', doel: 9,
+      tekst: 'Zet alle negen versieringen in je tuin.' },
+    { id: 'dag-eerste', naam: 'Dagplucht', e: '🌤️', stand: 'dagGehaald', doel: 1,
+      tekst: 'Haal de dagelijkse opgave.' },
+    { id: 'dag-reeks', naam: 'Onverbiddelijk', e: '🔥', stand: 'dagReeks', doel: 7,
+      tekst: 'Zeven dagelijkse opgaven op rij.' },
+    { id: 'records-tien', naam: 'Recordjager', e: '⏱️', stand: 'records', doel: 10,
+      tekst: 'Zet een record in tien verschillende levels.' },
+    { id: 'records-vijftig', naam: 'Snelle jongen', e: '🏁', stand: 'records', doel: 50,
+      tekst: 'Zet een record in vijftig verschillende levels.' }
   ];
 
   /** De stand van een speler, met alle tellers op nul als ze er niet zijn. */

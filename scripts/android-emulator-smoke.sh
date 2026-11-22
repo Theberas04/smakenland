@@ -152,6 +152,37 @@ if [ "$p_kaartjes" != "$p_totaal" ]; then
   exit 1
 fi
 
+# Trillen en de energiemelding horen bij de schil. Het trillen is op een emulator
+# niet te zien, maar de brug moet er wel zijn (de app meldt of het toestel een
+# trilblokje heeft). De energiemelding: als het spel naar de achtergrond gaat,
+# moet de app een wekker zetten, en bij terugkomst moet die weer af zijn.
+tril="$(adb logcat -d | grep -o 'SmakenlandTril kan=[a-z]*' | tail -1 || true)"
+echo "trillen: ${tril:-niets gemeld}"
+if [ -z "$tril" ]; then
+  echo "::error::de trilbrug meldt niets; de pagina kan het toestel dan niet laten trillen"
+  exit 1
+fi
+
+adb shell input keyevent KEYCODE_HOME >/dev/null 2>&1 || true
+sleep 6
+# Let op: de energie kan inmiddels vol zijn (die vult zich per twaalf seconden aan),
+# en dan is er geen wekker nodig. Waar het hier om gaat is dat de app op het
+# weggaan reageert en dat de energiemelding geen fout oplevert.
+if adb logcat -d | grep -q "SmakenlandEnergie"; then
+  adb logcat -d | grep -m2 "SmakenlandEnergie" | sed 's/^/energie: /'
+else
+  echo "::error::de app reageerde niet op het naar de achtergrond gaan (energiemelding)"
+  exit 1
+fi
+adb shell am start -n "$ACTIVITY" >/dev/null 2>&1 || true
+sleep 6
+if adb logcat -d | grep -q "SmakenlandEnergie aanwezig=true"; then
+  echo "energie: bij terugkomst is de melding afgezegd"
+else
+  echo "::error::bij terugkomst is de energiemelding niet afgezegd"
+  exit 1
+fi
+
 # De updatecontrole loopt op de achtergrond bij het starten van de app. Met netwerk
 # hoort hier de eigen versie en wat GitHub zegt te staan; zonder netwerk een regel
 # dat het niet lukte. Beide zijn goed — stilletjes niets doen is dat niet.

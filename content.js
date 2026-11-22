@@ -182,10 +182,28 @@
     { id: 'energie', naam: 'Energiedrank', e: '⚡', prijs: 60, tekst: '+25 energie, meteen bruikbaar.' },
     { id: 'zadenkist', naam: 'Extra Zadenkist', e: '🧺', prijs: 140, tekst: 'Een tweede kist voor je tuin.' },
     { id: 'geldkist', naam: 'Extra Geldkist', e: '💰', prijs: 220, tekst: 'Meer munten per oogst.' },
-    { id: 'bakkerskist', naam: 'Extra Deegkom', e: '🥣', prijs: 320, tekst: 'Een tweede bakkerskist.' }
+    { id: 'bakkerskist', naam: 'Extra Deegkom', e: '🥣', prijs: 320, tekst: 'Een tweede bakkerskist.' },
+    // Boosters: die koop je, en dan draag je ze mee tot je ze nodig hebt.
+    { id: 'hamer', soort: 'booster', naam: 'Hamer', e: '🔨', prijs: 90, tekst: 'Tik een voorwerp weg dat je niet meer wilt.' },
+    { id: 'schaar', soort: 'booster', naam: 'Schaar', e: '✂️', prijs: 70, tekst: 'Knipt één stuk van een stapel los.' },
+    { id: 'dubbel', soort: 'booster', naam: 'Dubbelmunten', e: '✖️', prijs: 200, tekst: 'De volgende drie leveringen geven dubbel munten.' }
   ];
 
-  const content = { CHAINS, MUNT_WAARDE, GENERATORS, AREAS, SHOP };
+  // Versieringen voor de tuin: die koop je met munten en zie je terug in het
+  // tuinbeeld. `vak` is de plek in het rooster (kolom, rij) van 0 tot 5 bij 0 tot 2.
+  const TUIN = [
+    { id: 'bankje', naam: 'Tuinbank', e: '🪑', prijs: 80, vak: [0, 1], tekst: 'Om even uit te rusten na het oogsten.' },
+    { id: 'lantaarn', naam: 'Lantaarn', e: '🏮', prijs: 110, vak: [5, 1], tekst: 'Licht in de tuin als het donker wordt.' },
+    { id: 'heg', naam: 'Beukenheg', e: '🌿', prijs: 140, vak: [1, 2], tekst: 'Een heg die je tuin afbakent.' },
+    { id: 'vijver', naam: 'Vijver', e: '🦆', prijs: 220, vak: [2, 1], tekst: 'Met een eend die er zelf naartoe kwam.' },
+    { id: 'kruiwagen', naam: 'Kruiwagen', e: '🛒', prijs: 160, vak: [5, 2], tekst: 'Voor het zware werk.' },
+    { id: 'kas', naam: 'Kas', e: '🏡', prijs: 300, vak: [0, 0], tekst: 'Plantjes die het hele jaar doorgaan.' },
+    { id: 'fontein', naam: 'Fontein', e: '⛲', prijs: 420, vak: [3, 1], tekst: 'Het pronkstuk van je tuin.' },
+    { id: 'bijenkorf', naam: 'Bijenkorf', e: '🐝', prijs: 260, vak: [1, 0], tekst: 'Bijen doen het werk, jij krijgt de honing.' },
+    { id: 'prieel', naam: 'Prieel', e: '🌺', prijs: 520, vak: [2, 0], tekst: 'Waar de klanten hun feestmaal opeten.' }
+  ];
+
+  const content = { CHAINS, MUNT_WAARDE, GENERATORS, AREAS, SHOP, TUIN };
   root.SmakenlandContent = content;
   if (typeof module !== 'undefined' && module.exports) module.exports = content;
 })(typeof globalThis !== 'undefined' ? globalThis : this);

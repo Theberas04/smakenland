@@ -9,6 +9,7 @@
 
   const S = window.SmakenlandSudoku;
   const SLEUTEL = 'smakenland.sudoku.v1';
+  const SLEUTEL_VARIANT = 'smakenland.sudoku.variant';
 
   const $ = function (id) { return document.getElementById(id); };
 
@@ -16,6 +17,9 @@
   let maat = S.maatVan(9);
   let n = 9;
   let cel = 81;
+
+  /** Welke variant: 'gewoon', 'diagonaal' of 'ongelijk'. */
+  let variant = 'gewoon';
 
   let bord = [];        // cel velden met de stand van de speler (0 = leeg)
   let notities = [];    // cel × n vlaggen
@@ -36,6 +40,16 @@
   /** De sleutel waaronder de beste tijd van deze maat en moeilijkheid staat. */
   function statSleutel(niveau) { return niveau + '-' + maatKey; }
 
+  /**
+   * Kan deze variant in deze maat? Ongelijke sudoku's van 16×16 krijgen we niet
+   * betrouwbaar in elkaar (de groepen van 16 vakjes lopen daar te vaak vast), dus
+   * die bieden we niet aan: beter eerlijk niets dan een scherm dat blijft hangen.
+   */
+  function magVariant(v, key) {
+    if (v === 'ongelijk') return Number(key) !== 16;
+    return true;
+  }
+
   // --------------------------------------------------------------- opslag
 
   function bewaar() {
@@ -43,9 +57,11 @@
       localStorage.setItem(SLEUTEL, JSON.stringify({
         niveau: puzzel ? puzzel.niveau : 'midden',
         maat: maatKey,
+        variant: variant,
         puzzel: puzzel ? {
           zaad: puzzel.zaad, niveau: puzzel.niveau, maat: puzzel.maat,
-          opgave: puzzel.opgave, oplossing: puzzel.oplossing, gegeven: puzzel.gegeven
+          opgave: puzzel.opgave, oplossing: puzzel.oplossing, gegeven: puzzel.gegeven,
+          variant: puzzel.variant || variant, regio: puzzel.regio || null
         } : null,
         bord: bord, notities: notities, fouten: fouten, seconden: seconden, klaar: klaar, stats: stats
       }));
@@ -121,9 +137,12 @@
   }
 
   /** Zet de maat klaar: aantal vakken, notitievakken en de tekens van deze maat. */
-  function zetMaat(key) {
+  function zetMaat(key, regio) {
     maatKey = S.MATEN[key] ? Number(key) : 9;
-    maat = S.maatVan(maatKey);
+    // De variant bepaalt de eisen (diagonalen, of andere groepen dan rechthoeken).
+    if (variant === 'diagonaal') maat = S.maatDiagonaal(maatKey);
+    else if (variant === 'ongelijk' && regio) maat = S.maatMetRegio(maatKey, regio);
+    else maat = S.maatVan(maatKey);
     n = maat.n;
     cel = n * n;
     // Notities op een bord met letters zijn onleesbaar klein; die zetten we uit.
@@ -138,8 +157,9 @@
     niveau = S.MOEILIJKHEID[niveau] ? niveau : 'midden';
     // De 16x16 met veel lege vakken staat kant-en-klaar in sudokus.js; de rest maakt
     // de app zelf (dat is snel genoeg, en dan is elke puzzel weer anders).
-    const uitVoorraad = S.uitVerzameling ? S.uitVerzameling(maatKey, niveau) : null;
-    puzzel = uitVoorraad || S.maak(Date.now() % 1000000, niveau, maatKey);
+    const uitVoorraad = S.uitVerzameling ? S.uitVerzameling(maatKey, niveau, undefined, variant) : null;
+    puzzleZoeken(niveau, uitVoorraad);
+    if (puzzel.regio) zetMaat(maatKey, puzzel.regio);
     bord = puzzel.opgave.slice();
     notities = legeNotities();
     fouten = 0;
@@ -148,10 +168,66 @@
     gekozen = -1;
     bouw();
     maatKies(maatKey);
+    variantKies();
+    if (variant !== 'gewoon') $('sudoku-bord').classList.add(variant);
     niveauKies(puzzel.niveau);
     bewaar();
     render();
     pasMaat();
+  }
+
+  /**
+   * Zoekt een opgave voor deze maat, moeilijkheid en variant. Lukt het maken van
+   * een ongelijke sudoku een paar keer niet (de groepen kunnen vastlopen), dan
+   * vallen we terug op de gewone sudoku en zeggen dat eerlijk.
+   */
+  function puzzleZoeken(niveau, uitVoorraad) {
+    if (uitVoorraad) { puzzel = uitVoorraad; return; }
+    for (let poging = 0; poging < 6; poging++) {
+      const gemaakt = S.maak((Date.now() % 1000000) + poging * 7919, niveau, maatKey, variant);
+      if (gemaakt) { puzzel = gemaakt; return; }
+    }
+    // Geen variant te maken: gewone sudoku, en dat melden we.
+    puzzel = S.maak(Date.now() % 1000000, niveau, maatKey, 'gewoon');
+    if (variant !== 'gewoon') {
+      variant = 'gewoon';
+      maat = S.maatVan(maatKey);
+      n = maat.n;
+      cel = n * n;
+      setTimeout(function () { meld('Deze variant lukte niet; hier is een gewone sudoku.'); }, 0);
+    }
+  }
+
+  function variantKies() {
+    Array.from(document.querySelectorAll('#sudoku-varianten button')).forEach(function (b) {
+      const kan = magVariant(b.dataset.variant, maatKey);
+      b.setAttribute('aria-pressed', b.dataset.variant === variant ? 'true' : 'false');
+      b.disabled = !kan;
+      b.title = kan ? '' : 'In 16×16 lukt een ongelijke sudoku niet betrouwbaar; kies een kleinere maat.';
+    });
+  }
+
+  function zetVariant(nieuw) {
+    const v = S.VARIANTEN[nieuw] ? nieuw : 'gewoon';
+    if (v === variant) return;
+    if (!magVariant(v, maatKey)) {
+      meld('Ongelijke sudoku lukt niet in 16×16 — kies 4×4 tot 12×12.');
+      variantKies();
+      return;
+    }
+    variant = v;
+    try { localStorage.setItem(SLEUTEL_VARIANT, variant); } catch (e) { /* stil */ }
+    nieuwSpel(puzzel ? puzzel.niveau : 'midden');
+  }
+
+  /** De dikkere randen tussen de groepen: waar de buur een andere groep is. */
+  function zetRanden(c, i) {
+    const rij = Math.floor(i / n);
+    const kol = i % n;
+    const regio = S.regioVan(i, maat);
+    if (kol < n - 1 && S.regioVan(i + 1, maat) !== regio) c.classList.add('blok-rechts');
+    if (rij < n - 1 && S.regioVan(i + n, maat) !== regio) c.classList.add('blok-onder');
+    if (variant === 'diagonaal' && (rij === kol || rij + kol === n - 1)) c.classList.add('diagonaal');
   }
 
   // -------------------------------------------------------------- tekenen
@@ -159,6 +235,7 @@
   function bouw() {
     const houder = $('sudoku-bord');
     houder.className = 'sudoku-bord maat-' + n;
+    if (variant !== 'gewoon') houder.classList.add(variant);
     houder.style.gridTemplateColumns = 'repeat(' + n + ', 1fr)';
     houder.innerHTML = '';
     cellen = [];
@@ -170,8 +247,7 @@
       c.setAttribute('role', 'gridcell');
       // De dikkere lijnen tussen de blokken: die hangen van de maat af (bij 6x6 zijn
       // de blokken 2 bij 3, bij 16x16 4 bij 4), dus zetten we ze hier per vak.
-      if ((i % n + 1) % maat.bk === 0 && (i % n) !== n - 1) c.classList.add('blok-rechts');
-      if ((Math.floor(i / n) + 1) % maat.br === 0 && Math.floor(i / n) !== n - 1) c.classList.add('blok-onder');
+      zetRanden(c, i);
       c.addEventListener('click', function () { kiesCel(i); });
       houder.appendChild(c);
       cellen.push(c);
@@ -191,13 +267,12 @@
 
   function render() {
     if (!puzzel) return;
-    const rood = S.conflicten(bord);
+    const rood = S.conflicten(bord, maat);
     for (let i = 0; i < cel; i++) {
       const c = cellen[i];
       const waarde = bord[i];
       c.className = 'sudoku-cel';
-      if ((i % n + 1) % maat.bk === 0 && (i % n) !== n - 1) c.classList.add('blok-rechts');
-      if ((Math.floor(i / n) + 1) % maat.br === 0 && Math.floor(i / n) !== n - 1) c.classList.add('blok-onder');
+      zetRanden(c, i);
       if (puzzel.gegeven[i]) c.classList.add('geven');
       if (i === gekozen) c.classList.add('gekozen');
       if (waarde && !puzzel.gegeven[i] && waarde !== puzzel.oplossing[i]) c.classList.add('fout');
@@ -383,11 +458,17 @@
       }
       const bewaard = laad();
       if (bewaard && bewaard.puzzel && bewaard.puzzel.opgave && bewaard.puzzel.oplossing) {
-        zetMaat(bewaard.maat || bewaard.puzzel.maat || Math.round(Math.sqrt(bewaard.puzzel.opgave.length)));
+        // Eerst de variant, want die bepaalt de eisen van het bord (en dus de maat).
+        if (S.VARIANTEN[bewaard.variant]) variant = bewaard.variant;
+        else if (S.VARIANTEN[bewaard.puzzel.variant]) variant = bewaard.puzzel.variant;
+        zetMaat(bewaard.maat || bewaard.puzzel.maat || Math.round(Math.sqrt(bewaard.puzzel.opgave.length)),
+          bewaard.puzzel.regio);
         puzzel = {
           niveau: bewaard.niveau || bewaard.puzzel.niveau,
           zaad: bewaard.puzzel.zaad,
           maat: maatKey,
+          variant: bewaard.puzzel.variant || variant,
+          regio: bewaard.puzzel.regio || null,
           opgave: bewaard.puzzel.opgave,
           oplossing: bewaard.puzzel.oplossing,
           gegeven: bewaard.puzzel.gegeven
@@ -400,6 +481,7 @@
         stats = bewaard.stats || stats;
         bouw();
         maatKies(maatKey);
+        variantKies();
         niveauKies(puzzel.niveau);
       } else {
         nieuwSpel('midden');
@@ -418,9 +500,23 @@
     $('sudoku-maten').addEventListener('click', function (e) {
       const knop = e.target.closest ? e.target.closest('button[data-maat]') : null;
       if (knop && Number(knop.dataset.maat) !== maatKey) {
-        nieuwSpel(puzzel ? puzzel.niveau : 'midden', Number(knop.dataset.maat));
+        const nieuweMaat = Number(knop.dataset.maat);
+        // Kan de gekozen variant deze maat niet aan, dan eerst terug naar gewoon.
+        if (!magVariant(variant, nieuweMaat)) {
+          variant = 'gewoon';
+          try { localStorage.setItem(SLEUTEL_VARIANT, variant); } catch (err) { /* stil */ }
+          meld('Voor 16×16 gebruiken we de gewone sudoku.');
+        }
+        nieuwSpel(puzzel ? puzzel.niveau : 'midden', nieuweMaat);
       }
     });
+    const variantBalk = $('sudoku-varianten');
+    if (variantBalk) {
+      variantBalk.addEventListener('click', function (e) {
+        const knop = e.target.closest ? e.target.closest('button[data-variant]') : null;
+        if (knop && !knop.disabled) zetVariant(knop.dataset.variant);
+      });
+    }
     $('sudoku-notitie').addEventListener('click', function () {
       if (n > 9) return;
       noteerModus = !noteerModus;
@@ -450,7 +546,7 @@
 
   function opnieuw() {
     try { localStorage.removeItem(SLEUTEL); } catch (e) { /* stil */ }
-    stats = { beste: {}, gewonnen: 0 };
+    stats = { beste: {}, gewonnen: 0, gewonnenPerMaat: {}, gewonnenFoutloos: 0 };
     puzzel = null;
     nieuwSpel('midden', maatKey);
   }
@@ -466,9 +562,15 @@
   function statistiek() { return stats; }
 
   function start() {
+    // De gekozen variant onthouden we, zodat je niet elke keer opnieuw hoeft te kiezen.
+    try {
+      const bewaard = localStorage.getItem(SLEUTEL_VARIANT);
+      if (S.VARIANTEN[bewaard]) variant = bewaard;
+    } catch (e) { /* stil */ }
     zetMaat(9);
     bouw();
     maatKies(9);
+    variantKies();
     bind();
     window.addEventListener('resize', pasMaat);
     // Zodra het bord een maat krijgt (paneel wordt zichtbaar) meteen vierkant maken.
@@ -484,6 +586,8 @@
       get klaar() { return klaar; },
       get fouten() { return fouten; },
       get maat() { return n; },
+      get variant() { return variant; },
+      zetVariant: zetVariant,
       zetCijfer: zetCijfer, kiesCel: kiesCel, wis: wis, hint: hint,
       timerUit: stopTimer, pasMaat: pasMaat
     };

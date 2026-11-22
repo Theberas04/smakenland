@@ -295,12 +295,66 @@ check('een cijfer invullen werkt ook op 16×16',
 maatKnop(9).click();
 check('terug naar 9×9 geeft weer 81 vakken', w.document.querySelectorAll('.sudoku-cel').length, 81);
 
+// ------------------------------------------------------------ varianten
+const varKnop = (v) => w.document.querySelector(`#sudoku-varianten button[data-variant="${v}"]`);
+check('er zijn drie varianten te kiezen', w.document.querySelectorAll('#sudoku-varianten button').length, 3);
+check('gewoon staat aan', varKnop('gewoon').getAttribute('aria-pressed'), 'true');
+check('geen enkel vak is diagonaal', w.document.querySelectorAll('.sudoku-cel.diagonaal').length, 0);
+varKnop('diagonaal').click();
+check('de diagonaalvariant doet het', SV.variant, 'diagonaal');
+check('en de opgave is er een met diagonalen', SV.puzzel.variant, 'diagonaal');
+const diagVakken = w.document.querySelectorAll('.sudoku-cel.diagonaal').length;
+check('de twee diagonalen zijn gemarkeerd', diagVakken, 17);
+// Twee keer hetzelfde cijfer op één diagonaal moet als botsing gezien worden.
+const diagLijst = Array.from(w.document.querySelectorAll('.sudoku-cel.diagonaal'));
+const d1 = diagLijst.find((c) => !c.classList.contains('geven'));
+const d2 = d1 && diagLijst.find((c) => c !== d1 && !c.classList.contains('geven') &&
+  Number(c.dataset.cel) % 9 !== Number(d1.dataset.cel) % 9 &&
+  Math.floor(Number(c.dataset.cel) / 9) !== Math.floor(Number(d1.dataset.cel) / 9));
+check('er zijn twee vrije diagonaalvakken om te proberen', !!(d1 && d2), true);
+if (d1 && d2) {
+  SV.kiesCel(Number(d1.dataset.cel));
+  SV.zetCijfer(SV.puzzel.oplossing[Number(d1.dataset.cel)]);
+  SV.kiesCel(Number(d2.dataset.cel));
+  SV.zetCijfer(SV.puzzel.oplossing[Number(d1.dataset.cel)]);
+  check('hetzelfde cijfer twee keer op de diagonaal botst', d2.classList.contains('botsing') ||
+    d2.classList.contains('fout'), true);
+}
+varKnop('ongelijk').click();
+check('de ongelijke variant doet het', SV.variant, 'ongelijk');
+check('en heeft eigen groepen', Array.isArray(SV.puzzel.regio) && SV.puzzel.regio.length === 81, true);
+const groepen = {};
+SV.puzzel.regio.forEach((g) => { groepen[g] = (groepen[g] || 0) + 1; });
+check('elke groep heeft negen vakjes', Object.values(groepen).every((n) => n === 9), true);
+check('en er zijn negen groepen', Object.keys(groepen).length, 9);
+check('een ongelijke sudoku is niet de gewone blokken',
+  JSON.stringify(SV.puzzel.regio) !== JSON.stringify(Array.from({ length: 81 }, (v, i) =>
+    Math.floor(Math.floor(i / 9) / 3) * 3 + Math.floor((i % 9) / 3))), true);
+check('de randen volgen de groepen', w.document.querySelectorAll('.sudoku-cel.blok-rechts').length > 0, true);
+varKnop('gewoon').click();
+check('terug naar gewoon', SV.variant, 'gewoon');
+
+// 16×16 met een ongelijke vorm lukt niet betrouwbaar: die knop hoort uit te staan.
+maatKnop(16).click();
+check('16×16 kan geen ongelijke sudoku', varKnop('ongelijk').disabled, true);
+check('16×16 kan wel een diagonaal-sudoku', varKnop('diagonaal').disabled, false);
+varKnop('ongelijk').click();
+check('een uitgeschakelde variant verandert niets', SV.variant, 'gewoon');
+varKnop('diagonaal').click();
+check('16×16 met diagonalen werkt', SV.variant, 'diagonaal');
+check('en het bord heeft 256 vakken', w.document.querySelectorAll('.sudoku-cel').length, 256);
+check('met kant-en-klare opgave uit de verzameling',
+  typeof SV.puzzel.verzamelingIndex === 'number', true);
+maatKnop(9).click();
+check('en terug naar 9×9 met de variant erbij', SV.puzzel.variant, 'diagonaal');
+varKnop('gewoon').click();
+
 // ------------------------------------------------------------ vrij spelen
 w.document.querySelector('.tab[data-tab=vrij]').click();
 check('de vrij-tab opent', UI.scherm, 'vrij');
 check('het bord is er weer', w.document.querySelectorAll('#bord .cel').length, 56);
 check('er zijn klanten', w.document.querySelectorAll('#orders .order').length, 3);
-check('de winkel heeft artikelen', w.document.querySelectorAll('.artikel').length, 4);
+check('de winkel heeft artikelen', w.document.querySelectorAll('.artikel').length, 7);
 const vrijKist = UI.vrij.cells.findIndex((c) => c && c.kind === 'gen');
 const muntenCel = UI.vrij.cells.findIndex((c) => c && c.keten === 'munt');
 const muntenVoor = UI.vrij.munten;
@@ -331,6 +385,82 @@ check('na herladen telt de kaart 1 van 1050',
 check('de uitleg blijft dicht bij een bestaand potje', tweede.w.document.getElementById('modal-uitleg').hidden, true);
 check('het vrije spel heeft de munten bewaard', UI2.vrij.munten, 40);
 check('tweede lading zonder JS-fouten', tweede.jsFouten.join(' | '), '');
+
+// -------------------------------------------------------------- boosters
+const Engine = w.SmakenlandEngine;
+UI.vrij.munten = 5000;
+UI.render();
+check('de boosters staan in de winkel', w.document.querySelectorAll('.artikel.booster-artikel').length, 3);
+w.document.querySelector('[data-koop="hamer"]').click();
+check('een booster kopen legt hem op de plank', Engine.boosterAantal(UI.vrij, 'hamer'), 1);
+check('en de winkel meldt de voorraad',
+  tekst(w.document.querySelector('.artikel.booster-artikel b')).indexOf('in voorraad: 1') >= 0, true);
+check('de boosterbalk verschijnt', w.document.getElementById('boosters').hidden, false);
+check('met de hamer erin', w.document.querySelectorAll('#boosters .booster').length, 1);
+const bezetVak = UI.vrij.cells.findIndex((c) => c);
+check('er ligt iets op het bord om weg te halen', bezetVak >= 0, true);
+w.document.querySelector('[data-booster="hamer"]').click();
+check('de hamer is opgepakt', w.document.querySelector('#boosters .booster').classList.contains('actief'), true);
+UI.tik(bezetVak);
+check('de hamer haalt het voorwerp weg', UI.vrij.cells[bezetVak], null);
+check('en is daarna op', Engine.boosterAantal(UI.vrij, 'hamer'), 0);
+check('de balk verdwijnt weer', w.document.getElementById('boosters').hidden, true);
+
+// ------------------------------------------------------------------ tuin
+UI.openTuin();
+check('de tuin opent', w.document.getElementById('modal-tuin').hidden, false);
+check('het tuinbeeld heeft achttien vakken', w.document.querySelectorAll('#tuin-beeld .tuin-vak').length, 18);
+check('er staat nog niets', w.document.querySelectorAll('#tuin-beeld .tuin-vak.staat').length, 0);
+check('de tuin is nog niet af', tekst(w.document.getElementById('tuin-teller')).indexOf('Nog niets') === 0, true);
+const muntenVoorTuin = UI.vrij.munten;
+w.document.querySelector('[data-tuin="bankje"]').click();
+check('een versiering kopen lukt', UI.vrij.tuin.length, 1);
+check('de munten zijn eraf', UI.vrij.munten, muntenVoorTuin - 80);
+check('en hij staat in het tuinbeeld', w.document.querySelectorAll('#tuin-beeld .tuin-vak.staat').length, 1);
+check('en de teller noemt hem', tekst(w.document.getElementById('tuin-teller')).indexOf('1 van 9') === 0, true);
+check('nog eens kopen kan niet', w.document.querySelector('[data-tuin="bankje"]') === null, true);
+w.document.getElementById('tuin-sluiten').click();
+check('de tuin sluit weer', w.document.getElementById('modal-tuin').hidden, true);
+
+// ------------------------------------------------------- dagelijkse opgave
+UI.zetTab('levels');
+const dagStand = UI.dag();
+check('de dagelijkse opgave staat op de kaart', w.document.querySelectorAll('#dag .dag-vak').length, 7);
+check('met vandaag als laatste', w.document.querySelectorAll('#dag .dag-vak.vandaag').length, 1);
+check('vandaag is nog niet gedaan', dagStand.gedaanVandaag, false);
+check('de opgave is een bestaand level',
+  dagStand.level >= 1 && dagStand.level <= w.SmakenlandLevels.levels.length, true);
+check('er staat een knop om hem te spelen', tekst(w.document.getElementById('dag-speel')), 'Speel vandaag');
+const muntenVoorDag = UI.vrij.munten;
+w.document.getElementById('dag-speel').click();
+check('de dagelijkse opgave start', UI.level.level, dagStand.level);
+check('en het level zegt dat het de dagelijkse is',
+  tekst(w.document.querySelector('.record-regel')).indexOf('dagelijkse opgave') >= 0, true);
+// Het level uitspelen zoals een speler het doet: bord vol leggen en inleveren.
+let beurten = 0;
+while (UI.level && UI.level.orders.length && beurten < 10) {
+  legDoel();
+  const knop = w.document.querySelector('[data-lever]');
+  if (!knop || knop.disabled) break;
+  knop.click();
+  beurten++;
+}
+await new Promise((r) => setTimeout(r, 700));
+check('de dagelijkse opgave is gehaald', w.SmakenlandEngine.dagStand(UI.vrij, Date.now()).gedaanVandaag, true);
+check('met bonusmunten erbij', UI.vrij.munten > muntenVoorDag, true);
+check('en de reeks staat op één', w.SmakenlandEngine.dagStand(UI.vrij, Date.now()).reeks, 1);
+check('het venster meldt de bonus',
+  tekst(w.document.getElementById('level-record')).indexOf('Dagelijkse opgave gehaald') >= 0, true);
+check('er staat nu een record voor dit level',
+  (UI.record(dagStand.level).zetten || 0) > 0, true);
+check('met een tijd erbij', (UI.record(dagStand.level).ms || 0) > 0, true);
+const dagVakGehaald = w.document.querySelectorAll('#dag .dag-vak.gehaald').length;
+check('het dagblok stond nog op niet-gehaald', dagVakGehaald, 0);
+w.document.getElementById('level-terug').click();
+check('en de knop is uit', w.document.getElementById('dag-speel').disabled, true);
+check('de kaart onthoudt de dag opnieuw', w.document.querySelectorAll('#dag .dag-vak.gehaald').length, 1);
+check('met een reeks erbij', tekst(w.document.querySelector('#dag .dag-reeks')).indexOf('1 dag op rij') >= 0, true);
+
 
 // -------------------------------------------------------- diepe link (hash)
 const diep16 = await open(`${basis}/index.html#sudoku16`);
@@ -364,9 +494,57 @@ if (updateKnop) updateKnop.click();
 check('de knop vraagt de app om te controleren', gecontroleerd, 1);
 check('de app-vorm laadt zonder JS-fouten', metBrug.jsFouten.join(' | '), '');
 
+// Trillen en de energiemelding horen bij de schil: zonder brug zijn ze er niet,
+// met brug moet de knop werken en moet de schil om de melding gevraagd worden.
+check('zonder tril-brug is er geen trilkop', w.document.getElementById('knop-tril').hidden, true);
+
+let getrild = [];
+let meldingGevraagd = null;
+let meldingGeannuleerd = 0;
+const metTril = await open(`${basis}/index.html#vrij`, null, (win) => {
+  win.SmakenlandTril = { tril: (patroon) => { getrild.push(patroon); } };
+  win.SmakenlandApp = {
+    versie: () => '1.2.0',
+    controleerOpUpdates: () => {},
+    planEnergieMelding: (seconden) => { meldingGevraagd = seconden; },
+    annuleerEnergieMelding: () => { meldingGeannuleerd++; },
+  };
+});
+const trilKnop = metTril.w.document.getElementById('knop-tril');
+check('met tril-brug staat de trilkop er', trilKnop.hidden, false);
+check('en staat hij aan', trilKnop.getAttribute('aria-pressed'), 'true');
+trilKnop.click();
+check('uitzetten werkt', trilKnop.getAttribute('aria-pressed'), 'false');
+check('en er is niets getrild toen hij uit stond', getrild.length, 0);
+trilKnop.click();
+const kist3 = metTril.w.SmakenlandUI.vrij.cells.findIndex((c) => c && c.kind === 'gen');
+metTril.w.SmakenlandUI.tik(kist3);
+check('een oogst laat het toestel trillen', getrild.length > 0, true);
+check('met een patroon in milliseconden', /^[0-9]+$/.test(String(getrild[0])), true);
+// De energiemelding: het scherm op de achtergrond zetten moet de schil vragen om
+// over `seconden` te wekken. Eerst de energie leegmaken, anders is er niets te
+// wachten (vol = geen melding nodig).
+const vrijStand = metTril.w.SmakenlandUI.vrij;
+vrijStand.energie = 0;
+vrijStand.laatsteEnergie = Date.now();
+Object.defineProperty(metTril.w.document, 'visibilityState', { value: 'hidden', configurable: true });
+metTril.w.document.dispatchEvent(new metTril.w.Event('visibilitychange'));
+check('bij weggaan vraagt de pagina om de energiemelding', meldingGevraagd !== null, true);
+check('met het aantal seconden tot de energie vol is', meldingGevraagd > 0 && meldingGevraagd <= 60 * 20, true);
+// En als de energie vol is, valt er niets te melden.
+vrijStand.energie = vrijStand.energieMax;
+meldingGevraagd = null;
+metTril.w.document.dispatchEvent(new metTril.w.Event('visibilitychange'));
+check('met een volle energie vraagt de pagina om niets', meldingGevraagd, 0);
+Object.defineProperty(metTril.w.document, 'visibilityState', { value: 'visible', configurable: true });
+metTril.w.document.dispatchEvent(new metTril.w.Event('visibilitychange'));
+check('en bij terugkomst wordt hij geannuleerd', meldingGeannuleerd, 1);
+check('de trilversie laadt zonder JS-fouten', metTril.jsFouten.join(' | '), '');
+
 console.log(`\n${gedaan - fouten}/${gedaan} controles goed${fouten ? ` — ${fouten} FOUT` : ''}`);
 dom.window.close();
 tweede.dom.window.close();
 diep.dom.window.close();
 metBrug.dom.window.close();
+metTril.dom.window.close();
 process.exit(fouten ? 1 : 0);

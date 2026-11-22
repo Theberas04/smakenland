@@ -9,6 +9,12 @@
   <!-- Nodig om een gedownloade APK aan Android aan te bieden. Android vraagt de
        speler daarna zelf nog om toestemming voor installatie. -->
   <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+  <!-- Trillen bij een versmelting of een prestatie (de speler kan het uitzetten). -->
+  <uses-permission android:name="android.permission.VIBRATE" />
+  <!-- De melding "je energie is weer vol". Op Android 13 en hoger vraagt de app
+       de speler daar bij het starten om; zonder die toestemming blijft het spel
+       gewoon werken, alleen zonder die ene melding. -->
+  <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
   <application
       android:allowBackup="true"
@@ -43,5 +49,10 @@
           android:name="android.support.FILE_PROVIDER_PATHS"
           android:resource="@xml/bestanden" />
     </provider>
+
+    <!-- De wekker die de melding plaatst als de energie vol is. -->
+    <receiver
+        android:name=".EnergieMelder"
+        android:exported="false" />
   </application>
 </manifest>

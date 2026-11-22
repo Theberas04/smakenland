@@ -181,7 +181,9 @@ jobs:
                              if n.startswith('classes') and n.endswith('.dex'))
               assert b'Lnl/werdens/smakenland/Updates;' in dex, 'updatecontrole ontbreekt in de app'
               assert b'Lnl/werdens/smakenland/Schermen;' in dex, 'de schermnamenlijst ontbreekt in de app'
-              print('de updatecontrole en de schermnamenlijst zitten in de app')
+              assert b'Lnl/werdens/smakenland/Trillen;' in dex, 'het trillen ontbreekt in de app'
+              assert b'Lnl/werdens/smakenland/EnergieMelder;' in dex, 'de energiemelding ontbreekt in de app'
+              print('de updatecontrole, de schermnamenlijst, het trillen en de energiemelding zitten in de app')
           PY
 
       - name: APK op de release zetten

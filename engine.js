@@ -93,6 +93,11 @@
       orders: [],
       ordersKlaar: 0,
       merges: 0,
+      zetten: 0,       // hoeveel zetten de speler in dit bord deed (voor records)
+      boosters: {},    // gekochte boosters die je nog hebt (hamer, schaar, dubbelmunten)
+      tuin: [],        // versieringen die in de tuin staan
+      dubbel: 0,       // hoeveel leveringen er nog dubbel tellen
+      dag: { reeks: 0, laatste: 0, dagen: [] },   // de dagelijkse opgave
       gezien: {} // verhaalkaarten die al getoond zijn
     };
     if (opts.leeg) {
@@ -217,6 +222,7 @@
     if (state.energie >= state.energieMax) state.laatsteEnergie = Date.now();
 
     state.cells[doel] = maakItem(keten, tier, 1);
+    state.zetten++;
     events.push({ type: 'oogst', cel: doel, keten: keten, tier: tier });
     events.unshift({ type: 'energie', waarde: state.energie });
     return { ok: true, cel: doel, events: events };
@@ -231,6 +237,7 @@
     if (!doel) {
       state.cells[naar] = bron;
       state.cells[van] = null;
+      state.zetten++;
       events.push({ type: 'verplaats', van: van, naar: naar });
       return { ok: true, events: events };
     }
@@ -243,6 +250,7 @@
 
     // Ruil van cel naar doel; de bron-cel komt vrij (of krijgt de rest).
     state.cells[van] = null;
+    state.zetten++;
     combineer(state, naar, bron, van, events);
     return { ok: true, events: events };
   }
@@ -255,6 +263,7 @@
     const waarde = C.MUNT_WAARDE.munt[cel.tier - 1] * cel.count;
     state.munten += waarde;
     state.cells[celIdx] = null;
+    state.zetten++;
     events.push({ type: 'munten', bedrag: waarde, totaal: state.munten, cel: celIdx });
     return { ok: true, waarde: waarde, events: events };
   }
@@ -344,13 +353,19 @@
       c.count -= weg;
       if (c.count <= 0) state.cells[cel] = null;
     }
-    state.munten += order.munten;
+    // Dubbelmunten: de booster verdubbelt de volgende drie leveringen.
+    const verdubbeld = state.dubbel > 0;
+    const munten = verdubbeld ? order.munten * 2 : order.munten;
+    if (verdubbeld) state.dubbel--;
+    state.munten += munten;
     state.sterren += order.sterren;
     state.ordersKlaar++;
     state.orders.splice(i, 1);
+    state.zetten++;
     events.push({
       type: 'levering', keten: order.keten, tier: order.tier, aantal: order.aantal,
-      munten: order.munten, sterren: order.sterren, muntenTotaal: state.munten, sterrenTotaal: state.sterren
+      munten: munten, sterren: order.sterren, muntenTotaal: state.munten, sterrenTotaal: state.sterren,
+      verdubbeld: verdubbeld
     });
     if (state.modus === 'level') {
       // Een level heeft vaste doelen: geen nieuwe opdracht erbij. Zodra alles
@@ -467,8 +482,13 @@
     return state.modus === 'level' && state.orders.length === 0;
   }
 
-  /** Een verse stand voor één level: vast bord, vast energietegoed. */
-  function startLevel(nr, nu) {
+  /**
+   * Een verse stand voor één level: vast bord, vast energietegoed.
+   *
+   * `boosters` zijn de boosters die de speler in het vrije spel op de plank heeft
+   * liggen; die dragen we mee het level in (een hamer is juist daar nuttig).
+   */
+  function startLevel(nr, nu, boosters) {
     const lv = levelVan(nr);
     if (!lv) return null;
     const state = createState({ leeg: true, nu: nu, seed: (1000003 * nr) >>> 0 });
@@ -481,6 +501,7 @@
     state.sterren = 0;
     state.levelSterren = 0;
     state.hulpGebruikt = 0;
+    state.boosters = boosters ? JSON.parse(JSON.stringify(boosters)) : {};
 
     // Kisten bovenin, om en om verdeeld over de rij.
     lv.kisten.forEach(function (k, i) {
@@ -592,6 +613,18 @@
     const artikel = C.SHOP.find(function (a) { return a.id === id; });
     if (!artikel) return { ok: false, reden: 'onbekend', events: events };
     if (state.munten < artikel.prijs) return { ok: false, reden: 'munten', events: events };
+
+    // Een booster leg je op de plank tot je hem nodig hebt; daar is geen vrij vak
+    // voor nodig, en je kunt er ook meer dan één van hebben.
+    if (artikel.soort === 'booster') {
+      state.munten -= artikel.prijs;
+      if (!state.boosters) state.boosters = {};
+      state.boosters[id] = (state.boosters[id] || 0) + 1;
+      events.push({ type: 'booster-gekocht', booster: id, naam: artikel.naam, aantal: state.boosters[id] });
+      events.push({ type: 'munten', bedrag: -artikel.prijs, totaal: state.munten });
+      return { ok: true, events: events };
+    }
+
     const vrij = vrijeCell(state, idx(Math.floor(ROWS / 2), Math.floor(COLS / 2)));
     if (vrij < 0 && id !== 'energie') return { ok: false, reden: 'vol', events: events };
 
@@ -606,6 +639,174 @@
     }
     events.push({ type: 'munten', bedrag: -artikel.prijs, totaal: state.munten });
     return { ok: true, events: events };
+  }
+
+  /** Een booster gebruiken. `celIdx` is het vak waar je hem op richt. */
+  function gebruikBooster(state, id, celIdx) {
+    const events = [];
+    const hebt = (state.boosters && state.boosters[id]) || 0;
+    if (hebt < 1) return { ok: false, reden: 'geen', events: events };
+    const cel = celIdx === undefined || celIdx === null ? null : state.cells[celIdx];
+
+    if (id === 'dubbel') {
+      // In een level levert niets munten op — daar zou hij weggegooid geld zijn.
+      if (state.modus === 'level') return { ok: false, reden: 'niet-in-level', events: events };
+      if (state.dubbel > 0) return { ok: false, reden: 'al-bezig', events: events };
+      state.dubbel = 3;
+      state.boosters[id] = hebt - 1;
+      events.push({ type: 'booster', booster: id, aantal: 3 });
+      return { ok: true, events: events };
+    }
+
+    if (!cel) return { ok: false, reden: 'leeg', events: events };
+
+    if (id === 'hamer') {
+      state.cells[celIdx] = null;
+      state.boosters[id] = hebt - 1;
+      events.push({ type: 'booster', booster: id, cel: celIdx, naam: itemNaam(cel) });
+      return { ok: true, events: events };
+    }
+
+    if (id === 'schaar') {
+      if (!cel.count || cel.count < 2) return { ok: false, reden: 'niets-te-knippen', events: events };
+      const vrij = vrijeCell(state, celIdx);
+      if (vrij < 0) return { ok: false, reden: 'vol', events: events };
+      cel.count -= 1;
+      state.cells[vrij] = cel.kind === 'gen'
+        ? maakGen(cel.gen, cel.level, 1)
+        : maakItem(cel.keten, cel.tier, 1);
+      state.boosters[id] = hebt - 1;
+      events.push({ type: 'booster', booster: id, cel: vrij, van: celIdx });
+      return { ok: true, events: events };
+    }
+
+    return { ok: false, reden: 'onbekend', events: events };
+  }
+
+  /** Hoeveel je van een booster nog hebt. */
+  function boosterAantal(state, id) {
+    return (state.boosters && state.boosters[id]) || 0;
+  }
+
+  /** Een versiering voor de tuin kopen. */
+  function koopTuin(state, id) {
+    const events = [];
+    if (!C.TUIN) return { ok: false, reden: 'onbekend', events: events };
+    const stuk = C.TUIN.find(function (t) { return t.id === id; });
+    if (!stuk) return { ok: false, reden: 'onbekend', events: events };
+    if (!state.tuin) state.tuin = [];
+    if (state.tuin.indexOf(id) >= 0) return { ok: false, reden: 'al-in-tuin', events: events };
+    if (state.munten < stuk.prijs) return { ok: false, reden: 'munten', events: events };
+    state.munten -= stuk.prijs;
+    state.tuin.push(id);
+    events.push({ type: 'tuin', id: id, naam: stuk.naam });
+    events.push({ type: 'munten', bedrag: -stuk.prijs, totaal: state.munten });
+    return { ok: true, events: events };
+  }
+
+  // ------------------------------------------------------- dagelijkse opgave
+
+  /**
+   * Het dagnummer (dagen sinds 1 januari 1970, in de tijdzone van het toestel).
+   * Mag een Date zijn of een tijdstip in milliseconden.
+   */
+  function dagNummer(datum) {
+    const d = datum instanceof Date
+      ? datum
+      : new Date(datum === undefined || datum === null ? Date.now() : datum);
+    return Math.floor((d.getTime() - d.getTimezoneOffset() * 60000) / 86400000);
+  }
+
+  /**
+   * Welk level vandaag de dagelijkse opgave is. Deterministisch: dezelfde dag
+   * geeft altijd hetzelfde level, en elke dag schuift hij op.
+   */
+  function dagLevel(nr, totaal) {
+    const aantal = totaal || (LEVELS ? LEVELS.levels.length : 1);
+    const h = (Math.imul(nr >>> 0, 2654435761) >>> 0) % 4294967296;
+    return 1 + (h % aantal);
+  }
+
+  /** De stand van de dagelijkse opgave: vandaag, de reeks en de laatste zeven dagen. */
+  function dagStand(state, nu) {
+    const vandaag = dagNummer(nu);
+    const dag = state.dag || { reeks: 0, laatste: 0, dagen: [] };
+    const gedaan = dag.dagen || [];
+    const week = [];
+    for (let i = 6; i >= 0; i--) {
+      const nr = vandaag - i;
+      week.push({ nummer: nr, gehaald: gedaan.indexOf(nr) >= 0, vandaag: i === 0 });
+    }
+    // De reeks telt alleen als hij niet afgebroken is: mist de laatste dag, dan
+    // begint de reeks pas weer bij de volgende die je haalt.
+    const reeks = dag.laatste >= vandaag - 1 ? (dag.reeks || 0) : 0;
+    return {
+      nummer: vandaag,
+      level: dagLevel(vandaag),
+      gedaanVandaag: gedaan.indexOf(vandaag) >= 0,
+      reeks: reeks,
+      besteReeks: dag.besteReeks || 0,
+      week: week
+    };
+  }
+
+  /** Hoeveel munten een dagelijkse opgave op de zoveelste dag van een reeks geeft. */
+  function dagBonus(reeks) {
+    return Math.min(300, 100 + 25 * Math.max(0, reeks - 1));
+  }
+
+  /**
+   * De dagelijkse opgave gehaald: de dag wordt bijgeschreven en de reeks loopt op.
+   * Eén keer per dag; een tweede keer levert niets op (en zegt dat ook).
+   */
+  function dagKlaar(state, nu) {
+    const vandaag = dagNummer(nu);
+    if (!state.dag) state.dag = { reeks: 0, laatste: 0, dagen: [] };
+    if (!Array.isArray(state.dag.dagen)) state.dag.dagen = [];
+    if (state.dag.dagen.indexOf(vandaag) >= 0) {
+      return { ok: false, reden: 'al-gedaan', munten: 0, reeks: state.dag.reeks || 0 };
+    }
+    state.dag.reeks = state.dag.laatste === vandaag - 1 ? (state.dag.reeks || 0) + 1 : 1;
+    state.dag.laatste = vandaag;
+    state.dag.besteReeks = Math.max(state.dag.besteReeks || 0, state.dag.reeks);
+    state.dag.dagen.push(vandaag);
+    // Alleen de laatste dertig dagen onthouden: meer heeft geen nut en het bestand
+    // groeit er anders mee door.
+    if (state.dag.dagen.length > 30) state.dag.dagen = state.dag.dagen.slice(-30);
+    const munten = dagBonus(state.dag.reeks);
+    state.munten += munten;
+    return {
+      ok: true, munten: munten, reeks: state.dag.reeks,
+      events: [
+        { type: 'dag', reeks: state.dag.reeks, munten: munten },
+        { type: 'munten', bedrag: munten, totaal: state.munten }
+      ]
+    };
+  }
+
+  // ------------------------------------------------------------- records
+
+  /**
+   * Het beste resultaat van een level bijhouden. Minder zetten is beter, en een
+   * kortere tijd ook. Wat niet verbetert blijft staan; de functie zegt wat er
+   * nieuw is, zodat de app alleen dán iets kan vieren.
+   */
+  function samenvoegenRecord(oud, nu) {
+    const record = {
+      zetten: (oud && oud.zetten) || 0,
+      ms: (oud && oud.ms) || 0
+    };
+    const verbeterd = [];
+    const nieuw = !oud;
+    if (nu.zetten > 0 && (nieuw || record.zetten === 0 || nu.zetten < record.zetten)) {
+      record.zetten = nu.zetten;
+      verbeterd.push('zetten');
+    }
+    if (nu.ms > 0 && (nieuw || record.ms === 0 || nu.ms < record.ms)) {
+      record.ms = nu.ms;
+      verbeterd.push('ms');
+    }
+    return { record: record, verbeterd: verbeterd, nieuw: nieuw && verbeterd.length > 0 };
   }
 
   // --------------------------------------------------------------- opslag
@@ -625,6 +826,13 @@
       while (state.orders.length < MAX_ORDERS) nieuweOrder(state);
     }
     if (!state.gezien) state.gezien = {};
+    // Wat er in oudere potjes nog niet was.
+    if (typeof state.zetten !== 'number') state.zetten = 0;
+    if (!state.boosters || typeof state.boosters !== 'object') state.boosters = {};
+    if (!Array.isArray(state.tuin)) state.tuin = [];
+    if (typeof state.dubbel !== 'number') state.dubbel = 0;
+    if (!state.dag || typeof state.dag !== 'object') state.dag = { reeks: 0, laatste: 0, dagen: [] };
+    if (!Array.isArray(state.dag.dagen)) state.dag.dagen = [];
     tickEnergie(state, nu);
     return state;
   }
@@ -646,6 +854,9 @@
     nieuweOrder: nieuweOrder, klantVoor: klantVoor, telItems: telItems, kanLeveren: kanLeveren, lever: lever,
     ontgrendeldeKetenen: ontgrendeldeKetenen, maxOrderTier: maxOrderTier,
     checkGebied: checkGebied, volgendGebied: volgendGebied, koop: koop,
+    gebruikBooster: gebruikBooster, boosterAantal: boosterAantal, koopTuin: koopTuin,
+    dagNummer: dagNummer, dagLevel: dagLevel, dagStand: dagStand, dagKlaar: dagKlaar, dagBonus: dagBonus,
+    samenvoegenRecord: samenvoegenRecord,
     levels: levels, levelVan: levelVan, startLevel: startLevel, levelSterren: levelSterren,
     levelKlaar: levelKlaar, levelOpen: levelOpen, hulp: hulp, hulpOver: hulpOver,
     SEIZOENEN: SEIZOENEN, seizoenVanMaand: seizoenVanMaand, seizoenNu: seizoenNu,

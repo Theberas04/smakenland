@@ -24,7 +24,7 @@
   let level = null;        // stand van het level dat nu gespeeld wordt
   /** Een lege voortgang, inclusief de tellers voor de prestaties. */
   function legeVoortgang() {
-    return { levelSterren: {}, sudoku: {}, stats: {}, prestaties: [], thema: 'licht' };
+    return { levelSterren: {}, sudoku: {}, stats: {}, prestaties: [], records: {}, thema: 'licht' };
   }
 
   let voortgang = legeVoortgang();
@@ -35,6 +35,9 @@
   let gekozen = -1;
   let sleept = null;
   let laatsteBewaard = 0;
+  let gekozenBooster = null;   // welke booster je hebt opgepakt om te gebruiken
+  let levelStart = 0;          // wanneer dit level begon (voor het tijdrecord)
+  let dagelijks = false;       // speelt de speler de dagelijkse opgave?
 
   // ------------------------------------------------------------- geluid
 
@@ -93,6 +96,52 @@
   // De sudoku gebruikt hetzelfde geluid als het bord.
   window.SmakenlandGeluid = geluid;
 
+  const SLEUTEL_TRIL = 'smakenland.tril';
+
+  /**
+   * Trillen. In de Android-app doet de schil het (window.SmakenlandTril), en in de
+   * browser proberen we het met de tril-API van de browser. Zonder een van beide
+   * gebeurt er niets: dat is geen fout, dan is er nu eenmaal geen trilblokje.
+   */
+  const tril = (function () {
+    let aan = true;
+    try { aan = localStorage.getItem(SLEUTEL_TRIL) !== 'uit'; } catch (e) { aan = true; }
+    const brug = function () { return window.SmakenlandTril; };
+
+    function doen(patroon) {
+      if (!aan) return;
+      const b = brug();
+      const lijst = Array.isArray(patroon) ? patroon : [patroon];
+      if (b && typeof b.tril === 'function') {
+        try { b.tril(lijst.join(',')); return; } catch (e) { /* dan de browser maar */ }
+      }
+      if (navigator.vibrate) {
+        try { navigator.vibrate(lijst); } catch (e) { /* stil */ }
+      }
+    }
+
+    return {
+      tik: function () { doen(12); },
+      zwaar: function () { doen([22, 40, 22]); },
+      feest: function () { doen([16, 30, 16, 30, 40]); },
+      isAan: function () { return aan; },
+      /** Kan dit toestel eigenlijk trillen? */
+      kan: function () {
+        const b = brug();
+        return !!(b && typeof b.tril === 'function') || !!navigator.vibrate;
+      },
+      zet: function (v) {
+        aan = v;
+        try { localStorage.setItem(SLEUTEL_TRIL, v ? 'aan' : 'uit'); } catch (e) { /* stil */ }
+        if (v) doen(14);
+      }
+    };
+  })();
+
+  // Let op: `window.SmakenlandTril` is de brug van de Android-schil. Onze eigen
+  // module heet daarom anders, anders overschrijven we de brug.
+  window.SmakenlandTrillen = tril;
+
   function itemBeeld(item) {
     if (item.kind === 'gen') return ART.kisten[item.gen] || '';
     const rij = ART.ketens[item.keten];
@@ -128,6 +177,7 @@
         sudoku: p.sudoku || {},
         stats: p.stats || {},
         prestaties: p.prestaties || [],
+        records: p.records || {},
         thema: p.thema === 'donker' ? 'donker' : 'licht'
       };
     } catch (e) {
@@ -200,6 +250,7 @@
         const doel = s && s.cells[ev.cel];
         if (doel && p) { zwevendeTekst(p.x, p.y, (ev.aantal > 1 ? ev.aantal + '× ' : '') + naamVan(doel)); pufjes(p.x, p.y); }
         geluid.versmelt();
+        tril.tik();
         if (borden[ev.cel]) {
           borden[ev.cel].classList.add('net-versmelt');
           setTimeout(function () { if (borden[ev.cel]) borden[ev.cel].classList.remove('net-versmelt'); }, 500);
@@ -215,14 +266,29 @@
         if (ev.bedrag > 0) {
           telOp('muntenVerdiend', ev.bedrag);
           geluid.munt();
+          tril.tik();
           if (p) zwevendeTekst(p.x, p.y, '+' + ev.bedrag + ' 🪙', 'munten');
         }
       } else if (ev.type === 'levering') {
         telOp('klanten');
         if (ev.munten > 0) telOp('muntenVerdiend', ev.munten);
         geluid.feest();
+        tril.feest();
         zwevendeTekst(window.innerWidth / 2, 120,
           ev.munten > 0 ? '+' + ev.munten + ' 🪙  +' + ev.sterren + ' ⭐' : 'Doel gehaald!', 'munten');
+      } else if (ev.type === 'booster') {
+        geluid.versmelt();
+        tril.zwaar();
+      } else if (ev.type === 'booster-gekocht') {
+        geluid.munt();
+        if (p) zwevendeTekst(p.x, p.y, ev.naam + ' in je voorraad');
+      } else if (ev.type === 'tuin') {
+        geluid.feest();
+        tril.feest();
+        if (p) zwevendeTekst(p.x, p.y, ev.naam + ' staat in je tuin!');
+      } else if (ev.type === 'dag') {
+        geluid.feest();
+        tril.feest();
       } else if (ev.type === 'gebied') {
         toonVerhaal(ev);
       } else if (ev.type === 'level-klaar') {
@@ -506,6 +572,95 @@
     return r;
   }
 
+  // ------------------------------------------------------------- boosters
+
+  /** Welke boosters draagt de speler mee? In een level die van het level zelf. */
+  function boosterBron() {
+    return actieveStand() || vrij;
+  }
+
+  function boosterVoorraad(id) {
+    const s = boosterBron();
+    return s ? E.boosterAantal(s, id) : 0;
+  }
+
+  function renderBoosters() {
+    const houder = $('boosters');
+    if (!houder) return;
+    const s = boosterBron();
+    const lijst = C.SHOP.filter(function (a) { return a.soort === 'booster'; });
+    const heb = lijst.filter(function (a) { return boosterVoorraad(a.id) > 0; });
+    if (!heb.length) {
+      houder.hidden = true;
+      houder.innerHTML = '';
+      return;
+    }
+    houder.hidden = false;
+    houder.innerHTML = '<span class="boosters-kop">Boosters</span>' + heb.map(function (a) {
+      const aantal = boosterVoorraad(a.id);
+      const actief = gekozenBooster === a.id ||
+        (a.id === 'dubbel' && s && s.dubbel > 0);
+      return '<button type="button" class="booster' + (actief ? ' actief' : '') +
+        '" data-booster="' + a.id + '" aria-pressed="' + (actief ? 'true' : 'false') +
+        '" title="' + a.tekst + '">' + a.e + ' ' + a.naam +
+        '<small>×' + aantal + (a.id === 'dubbel' && s && s.dubbel > 0 ? ' · nog ' + s.dubbel : '') +
+        '</small></button>';
+    }).join('') +
+      (gekozenBooster ? '<span class="boosters-hint">Tik het voorwerp aan dat je wilt aanpakken</span>' : '');
+  }
+
+  /** Een booster oppakken (of meteen gebruiken, als hij geen vak nodig heeft). */
+  function doeBooster(id) {
+    const artikel = C.SHOP.find(function (a) { return a.id === id; });
+    if (!artikel) return null;
+    if (id === 'dubbel') {
+      const r = E.gebruikBooster(boosterBron(), id);
+      if (r.ok) {
+        verwerk(r.events, null);
+        renderAlles();
+      } else {
+        geluid.weg();
+        zwevendeTekst(window.innerWidth / 2, 110, r.reden === 'niet-in-level'
+          ? 'Dubbelmunten werken in Vrij, niet in een level'
+          : (r.reden === 'al-bezig' ? 'Ze lopen al' : 'Die heb je niet'));
+      }
+      return r;
+    }
+    gekozenBooster = gekozenBooster === id ? null : id;
+    gekozen = -1;
+    renderBoosters();
+    renderBord();
+    geluid.tik();
+    return { ok: true };
+  }
+
+  /** De opgepakte booster op dit vak gebruiken. */
+  function gebruikBoosterOp(celIdx) {
+    const id = gekozenBooster;
+    const s = boosterBron();
+    const r = E.gebruikBooster(s, id, celIdx);
+    if (!r.ok) {
+      geluid.weg();
+      tril.zwaar();
+      const teksten = {
+        leeg: 'Kies een vak met iets erin',
+        'niets-te-knippen': 'Deze stapel is maar één stuk — daar valt niets te knippen',
+        vol: 'Het bord is vol; eerst ruimte maken',
+        geen: 'Die booster heb je niet meer'
+      };
+      zwevendeTekst(window.innerWidth / 2, 110, teksten[r.reden] || 'Dat kan hier niet');
+      if (r.reden === 'geen') gekozenBooster = null;
+      renderBoosters();
+      return r;
+    }
+    gekozenBooster = null;
+    telOp('boostersGebruikt');
+    verwerk(r.events, rectVan(celIdx));
+    renderAlles();
+    bewaar();
+    return r;
+  }
+
   function bewaar() {
     if (scherm === 'vrij') bewaarVrij();
   }
@@ -515,6 +670,8 @@
   function tik(celIdx) {
     const s = actieveStand();
     const cel = s.cells[celIdx];
+    // Een opgepakte booster gaat vóór: die is bedoeld voor het vak dat je aanraakt.
+    if (gekozenBooster) { gebruikBoosterOp(celIdx); return; }
     if (!cel) {
       if (gekozen >= 0) {
         const van = gekozen;
@@ -679,9 +836,71 @@
     return (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
   }
 
+  // -------------------------------------------------- dagelijkse opgave
+
+  const DAG_NAMEN = ['zo', 'ma', 'di', 'wo', 'do', 'vr', 'za'];
+
+  /** Het level van vandaag, en hoever de reeks staat. */
+  function dagStand() {
+    return E.dagStand(vrij, Date.now());
+  }
+
+  function renderDag() {
+    const houder = $('dag');
+    if (!houder) return;
+    const stand = dagStand();
+    const lv = E.levelVan(stand.level);
+    const naam = lv ? LV.hoofdstukken[lv.hfst].naam : '';
+    const strook = stand.week.map(function (d) {
+      // Een tijdstip midden op die dag, in de tijdzone van het toestel, zodat de
+      // weekdag klopt (het dagnummer komt uit dezelfde rekenwijze).
+      const datum = new Date((d.nummer * 86400000) + (new Date().getTimezoneOffset() * 60000) + 43200000);
+      return '<span class="dag-vak' + (d.gehaald ? ' gehaald' : '') + (d.vandaag ? ' vandaag' : '') +
+        '" title="' + (d.gehaald ? 'gehaald' : 'nog niet gedaan') + '">' +
+        '<small>' + DAG_NAMEN[datum.getDay()] + '</small>' +
+        '<b>' + (d.gehaald ? '✓' : '·') + '</b></span>';
+    }).join('');
+    houder.innerHTML =
+      '<div class="dag-kop">' +
+        '<span class="dag-e">' + (stand.gedaanVandaag ? '✅' : '📅') + '</span>' +
+        '<div class="dag-tekst"><b>Dagelijkse opgave</b>' +
+          '<small>' + (stand.gedaanVandaag
+            ? 'Vandaag gehaald! Morgen ligt er weer een klaar.'
+            : 'Vandaag: level ' + stand.level + (naam ? ' · ' + naam : '') +
+              ' — met ' + E.dagBonus(Math.max(1, stand.reeks + (stand.reeks && stand.gedaanVandaag ? 0 : 1))) +
+              ' bonusmunten voor de reeks') + '</small></div>' +
+        '<div class="dag-reeks">' + (stand.reeks ? stand.reeks + ' dag' + (stand.reeks === 1 ? '' : 'en') + ' op rij' : 'nog geen reeks') + '</div>' +
+      '</div>' +
+      '<div class="dag-week">' + strook + '</div>' +
+      '<button type="button" class="dag-knop" id="dag-speel"' + (stand.gedaanVandaag ? ' disabled' : '') +
+        '>' + (stand.gedaanVandaag ? 'Vandaag al gehaald' : 'Speel vandaag') + '</button>';
+  }
+
+  function startDagelijks() {
+    const stand = dagStand();
+    if (stand.gedaanVandaag) return false;
+    if (!startLevel(stand.level, { dagelijks: true })) return false;
+    return true;
+  }
+
+  // ------------------------------------------------------------ records
+
+  function recordVan(nr) {
+    return (voortgang.records && voortgang.records[nr]) || null;
+  }
+
+  function recordTekst(record) {
+    if (!record || (!record.zetten && !record.ms)) return 'nog geen record';
+    const delen = [];
+    if (record.zetten) delen.push(record.zetten + ' zetten');
+    if (record.ms) delen.push(klokTekst(record.ms / 1000));
+    return delen.join(' · ');
+  }
+
   function renderKaart() {
     const houder = $('hoofdstukken');
     houder.innerHTML = '';
+    renderDag();
     let gehaald = 0;
     let sterren = 0;
     Object.keys(voortgang.levelSterren).forEach(function (nr) {
@@ -795,6 +1014,11 @@
           Math.round((level.energie / level.energieMax) * 100) + '%"></i></div>' +
       '</div>' +
       '<div class="sterren-rij">' + sterrenBeeld(E.levelSterren(level)) + '</div>' +
+      '<p class="record-regel">Jouw record: <b>' + recordTekst(recordVan(lv.nr)) + '</b>' +
+        (dagelijks ? '<span class="dag-vlag">📅 dagelijkse opgave</span>' : '') + '</p>' +
+      (Object.keys(level.boosters || {}).length
+        ? ''
+        : '<p class="record-regel klein">Boosters kun je in de winkel kopen (onder Vrij); die gaan mee elk level in.</p>') +
       '<div class="knop-rij">' +
         '<button type="button" id="level-hulp"' +
           (E.hulpOver(level) ? '' : ' disabled') + '>⚡ +10 energie' +
@@ -850,11 +1074,22 @@
     }
   }
 
-  function startLevel(nr) {
-    const nieuw = E.startLevel(nr);
+  /**
+   * Een level beginnen.
+   *
+   * `opties.dagelijks` markeert de dagelijkse opgave: die levert bij het halen
+   * bonusmunten op en schrijft de dag bij. De boosters die de speler in het vrije
+   * spel heeft liggen, gaan mee het level in.
+   */
+  function startLevel(nr, opties) {
+    opties = opties || {};
+    const nieuw = E.startLevel(nr, undefined, vrij ? vrij.boosters : null);
     if (!nieuw) return false;
     level = nieuw;
     gekozen = -1;
+    gekozenBooster = null;
+    dagelijks = !!opties.dagelijks;
+    levelStart = Date.now();
     tab = 'levels';
     scherm = 'level';
     Array.from(document.querySelectorAll('.tab')).forEach(function (b) {
@@ -872,6 +1107,27 @@
       voortgang.levelSterren[ev.level] = ev.sterren;
       bewaarVoortgang();
     }
+    // Het record van dit level bijwerken: minste zetten en snelste tijd.
+    if (!voortgang.records) voortgang.records = {};
+    const tijd = levelStart ? Date.now() - levelStart : 0;
+    const samen = E.samenvoegenRecord(voortgang.records[ev.level], {
+      zetten: level.zetten || 0, ms: tijd
+    });
+    voortgang.records[ev.level] = samen.record;
+    if (samen.verbeterd.length) telOp('recordsVerbetert');
+    // De boosters die over zijn gaan terug naar de plank in het vrije spel; die
+    // zijn op dit punt verbruikt.
+    if (vrij && level && level.boosters) {
+      vrij.boosters = JSON.parse(JSON.stringify(level.boosters));
+      bewaarVrijNu();
+    }
+    // De dagelijkse opgave: bonusmunten en de dag bijschrijven.
+    let dagUitslag = null;
+    if (dagelijks && vrij) {
+      dagUitslag = E.dagKlaar(vrij, Date.now());
+      if (dagUitslag.ok) bewaarVrijNu();
+    }
+    dagelijks = false;
     // Het volgende level dat nu te spelen is: na het laatste gewone level (1000)
     // komt het seizoenshoofdstuk, en dat is er alleen in zijn eigen seizoen.
     let volgende = ev.level + 1;
@@ -884,6 +1140,22 @@
     $('level-sterren').innerHTML = sterrenBeeld(ev.sterren);
     $('level-tekst').textContent = 'Je hield ' + ev.energie + ' energie over.' +
       (ev.sterren < 3 ? ' Met meer energie over verdien je drie sterren.' : ' Mooi zuinig gespeeld.');
+    // Wat er met het record gebeurde, en de bonus van de dagelijkse opgave.
+    const recordVak = $('level-record');
+    if (recordVak) {
+      const delen = [];
+      if (samen.nieuw) delen.push('Eerste record voor dit level: ' + recordTekst(samen.record));
+      else if (samen.verbeterd.length) delen.push('Nieuw record: ' + recordTekst(samen.record));
+      else delen.push('Je record blijft ' + recordTekst(voortgang.records[ev.level]));
+      if (dagUitslag) {
+        delen.push(dagUitslag.ok
+          ? 'Dagelijkse opgave gehaald: +' + dagUitslag.munten + ' 🪙 (' + dagUitslag.reeks +
+            ' dag' + (dagUitslag.reeks === 1 ? '' : 'en') + ' op rij)'
+          : 'De dagelijkse opgave was vandaag al gedaan');
+      }
+      recordVak.textContent = delen.join(' · ');
+      recordVak.hidden = false;
+    }
     $('level-volgende').hidden = !bestaat;
     $('modal-level').hidden = false;
     // Prestaties nakijken (en vieren) nadat de uitslag in de voortgang staat.
@@ -942,7 +1214,14 @@
             '<span class="kunst-houder klein">' + (ART.ketens[id] ? ART.ketens[id][0] : '') + '</span>' +
             (open ? keten.naam : '🔒 ' + keten.naam) + '</span>';
         }).join('') +
+      '</div>' +
+      '<div class="knop-rij">' +
+        '<button type="button" id="naar-tuin">🌳 Tuin <small>(' +
+          (vrij.tuin ? vrij.tuin.length : 0) + '/' + (C.TUIN ? C.TUIN.length : 0) + ')</small></button>' +
       '</div>';
+
+    const tuinKnop = $('naar-tuin');
+    if (tuinKnop) tuinKnop.addEventListener('click', openTuin);
   }
 
   function tekenKlantenPaneel() {
@@ -975,15 +1254,78 @@
     const winkel = $('winkel');
     C.SHOP.forEach(function (artikel) {
       const div = document.createElement('div');
-      div.className = 'artikel';
+      const isBooster = artikel.soort === 'booster';
+      const hebt = isBooster ? E.boosterAantal(vrij, artikel.id) : 0;
+      div.className = 'artikel' + (isBooster ? ' booster-artikel' : '');
       const kan = vrij.munten >= artikel.prijs;
       div.innerHTML =
         '<span class="e">' + artikel.e + '</span>' +
-        '<span class="tekst"><b>' + artikel.naam + '</b><small>' + artikel.tekst + '</small></span>' +
+        '<span class="tekst"><b>' + artikel.naam +
+          (hebt ? ' <span class="hebt">in voorraad: ' + hebt + '</span>' : '') +
+          '</b><small>' + artikel.tekst + '</small></span>' +
         '<button type="button" data-koop="' + artikel.id + '"' + (kan ? '' : ' disabled') +
         '>🪙 ' + artikel.prijs + '</button>';
       winkel.appendChild(div);
     });
+  }
+
+  // ---------------------------------------------------------------- tuin
+
+  /** De tuin: wat er staat, en wat je nog kunt kopen. */
+  function renderTuin() {
+    const beeld = $('tuin-beeld');
+    const lijst = $('tuin-lijst');
+    if (!beeld || !lijst) return;
+    const hebt = vrij.tuin || [];
+    const vakken = [];
+    for (let r = 0; r < 3; r++) {
+      for (let k = 0; k < 6; k++) {
+        const stuk = C.TUIN.find(function (t) { return t.vak[0] === k && t.vak[1] === r; });
+        if (!stuk) { vakken.push('<span class="tuin-vak leeg"></span>'); continue; }
+        const staat = hebt.indexOf(stuk.id) >= 0;
+        vakken.push('<span class="tuin-vak' + (staat ? ' staat' : '') + '" title="' +
+          stuk.naam + '">' + (staat
+            ? '<span class="tuin-e">' + stuk.e + '</span><small>' + stuk.naam + '</small>'
+            : '<small class="prijs">🪙 ' + stuk.prijs + '</small>') + '</span>');
+      }
+    }
+    beeld.innerHTML = vakken.join('');
+    const aantal = hebt.length;
+    $('tuin-teller').textContent = aantal === 0
+      ? 'Nog niets geplant. Alles wat je koopt, blijft staan.'
+      : aantal + ' van ' + C.TUIN.length + ' versieringen staan in je tuin' +
+        (aantal === C.TUIN.length ? ' — de tuin is af!' : '.');
+    lijst.innerHTML = C.TUIN.map(function (t) {
+      const staat = hebt.indexOf(t.id) >= 0;
+      const kan = vrij.munten >= t.prijs;
+      return '<div class="tuin-regel' + (staat ? ' staat' : '') + '">' +
+        '<span class="e">' + t.e + '</span>' +
+        '<span class="tekst"><b>' + t.naam + '</b><small>' + t.tekst + '</small></span>' +
+        (staat
+          ? '<span class="tuin-staat">staat in je tuin</span>'
+          : '<button type="button" data-tuin="' + t.id + '"' + (kan ? '' : ' disabled') +
+            '>🪙 ' + t.prijs + '</button>') +
+        '</div>';
+    }).join('');
+  }
+
+  function doeKoopTuin(id) {
+    const r = E.koopTuin(vrij, id);
+    if (r.ok) {
+      verwerk(r.events, null);
+      bewaarVrijNu();
+      renderTuin();
+      renderAlles();
+    } else {
+      geluid.weg();
+      tril.zwaar();
+    }
+    return r;
+  }
+
+  function openTuin() {
+    renderTuin();
+    $('modal-tuin').hidden = false;
   }
 
   // --------------------------------------------------------------- tekenen
@@ -1055,6 +1397,11 @@
       levelZonderHulp: stats.levelZonderHulp || 0,
       muntenVerdiend: stats.muntenVerdiend || 0,
       klanten: vrij ? (vrij.ordersKlaar || 0) : 0,
+      boostersGebruikt: stats.boostersGebruikt || 0,
+      tuin: vrij && vrij.tuin ? vrij.tuin.length : 0,
+      dagGehaald: vrij && vrij.dag && Array.isArray(vrij.dag.dagen) ? vrij.dag.dagen.length : 0,
+      dagReeks: vrij && vrij.dag ? (vrij.dag.besteReeks || 0) : 0,
+      records: voortgang.records ? Object.keys(voortgang.records).length : 0,
       dagenOpRij: stats.dagenOpRij || 0,
       dagenGespeeld: stats.dagenGespeeld || 0,
       sudokuGewonnen: sudoku ? (sudoku.gewonnen || 0) : 0,
@@ -1113,6 +1460,7 @@
       '<div><small>Prestatie behaald</small><b>' + p.naam + '</b>' +
       '<small>' + p.tekst + (aantal > 1 ? ' (+' + (aantal - 1) + ' meer)' : '') + '</small></div>';
     document.body.appendChild(doos);
+    tril.feest();
     setTimeout(function () { doos.classList.add('weg'); }, 3200);
     setTimeout(function () { doos.remove(); }, 3800);
   }
@@ -1236,6 +1584,7 @@
     if (scherm === 'prestaties') { renderPrestaties(); return; }
     if (scherm === 'level') { tekenLevelPanelen(); tekenDoelen(); }
     else { tekenReisPaneel(); tekenKlantenPaneel(); }
+    renderBoosters();
     renderBord();
     renderHint();
     renderStats();
@@ -1291,6 +1640,25 @@
     $('knop-geluid').textContent = geluid.isAan() ? '🔊' : '🔇';
     $('knop-geluid').setAttribute('aria-pressed', geluid.isAan() ? 'true' : 'false');
 
+    // Trillen: de knop staat er alleen als dit toestel kan trillen (in de browser
+    // kan het bijna nooit, in de app altijd).
+    const trilKnop = $('knop-tril');
+    if (trilKnop) {
+      if (!tril.kan()) {
+        trilKnop.hidden = true;
+      } else {
+        trilKnop.addEventListener('click', function () {
+          const nuAan = !tril.isAan();
+          tril.zet(nuAan);
+          this.textContent = nuAan ? '📳' : '🔕';
+          this.setAttribute('aria-pressed', nuAan ? 'true' : 'false');
+          this.setAttribute('title', nuAan ? 'Trillen aan' : 'Trillen uit');
+        });
+        trilKnop.textContent = tril.isAan() ? '📳' : '🔕';
+        trilKnop.setAttribute('aria-pressed', tril.isAan() ? 'true' : 'false');
+      }
+    }
+
     $('knop-thema').addEventListener('click', function () {
       zetThema(voortgang.thema === 'donker' ? 'licht' : 'donker');
       bewaarVoortgang();
@@ -1311,12 +1679,23 @@
       if (lever && !lever.disabled) doeLever(lever.dataset.lever);
       const koop = e.target.closest ? e.target.closest('[data-koop]') : null;
       if (koop && !koop.disabled) doeKoop(koop.dataset.koop);
+      const booster = e.target.closest ? e.target.closest('[data-booster]') : null;
+      if (booster) doeBooster(booster.dataset.booster);
+      const tuinKoop = e.target.closest ? e.target.closest('[data-tuin]') : null;
+      if (tuinKoop && !tuinKoop.disabled) doeKoopTuin(tuinKoop.dataset.tuin);
+      const dagKnop = e.target.closest ? e.target.closest('#dag-speel') : null;
+      if (dagKnop && !dagKnop.disabled) startDagelijks();
     });
+    const tuinSluiten = $('tuin-sluiten');
+    if (tuinSluiten) tuinSluiten.addEventListener('click', function () { $('modal-tuin').hidden = true; });
     window.addEventListener('keydown', function (e) {
       if (e.key === 'Escape') {
         gekozen = -1;
+        gekozenBooster = null;
         renderBord();
+        renderBoosters();
         $('modal-uitleg').hidden = true;
+        if ($('modal-tuin')) $('modal-tuin').hidden = true;
       }
     });
   }
@@ -1328,6 +1707,26 @@
    * controleren. In de browser bestaat de brug niet en blijft dit weg, zodat er
    * niets staat dat daar niets doet.
    */
+
+  /**
+   * De melding "je energie is weer vol" hoort bij de app, niet bij de pagina: een
+   * WebView mag op de achtergrond niets plannen. We geven de schil door hoe lang
+   * het nog duurt, en die laat zich op dat moment laten wekken.
+   */
+  function planEnergieMelding() {
+    const brug = window.SmakenlandApp;
+    if (!brug || typeof brug.planEnergieMelding !== 'function') return;
+    if (scherm === 'level') return;          // in een level loopt de energie niet
+    const seconden = E.tijdTotVol(vrij, Date.now());
+    try { brug.planEnergieMelding(Math.max(0, Math.round(seconden))); } catch (e) { /* stil */ }
+  }
+
+  function annuleerEnergieMelding() {
+    const brug = window.SmakenlandApp;
+    if (!brug || typeof brug.annuleerEnergieMelding !== 'function') return;
+    try { brug.annuleerEnergieMelding(); } catch (e) { /* stil */ }
+  }
+
   function toonAppVersie() {
     const brug = window.SmakenlandApp;
     if (!brug || typeof brug.controleerOpUpdates !== 'function') return;
@@ -1374,7 +1773,10 @@
       if (scherm === 'vrij') { renderStats(); if (hersteld > 0) { renderHint(); bewaarVrij(); } }
     }, 1000);
 
-    window.addEventListener('pagehide', function () { if (vrij) bewaarVrijNu(); });
+    window.addEventListener('pagehide', function () {
+      if (vrij) bewaarVrijNu();
+      planEnergieMelding();
+    });
     window.addEventListener('resize', pasMaat);
     // De maat van de tegels volgt de echte breedte van het bord. Een resize--event
     // alleen is niet genoeg: het bord kan ook van breedte veranderen doordat een
@@ -1383,8 +1785,14 @@
       new ResizeObserver(pasMaat).observe(bord);
     }
     document.addEventListener('visibilitychange', function () {
-      if (document.visibilityState === 'hidden') { if (vrij) bewaarVrijNu(); }
-      else { E.tickEnergie(vrij); renderAlles(); }
+      if (document.visibilityState === 'hidden') {
+        if (vrij) bewaarVrijNu();
+        planEnergieMelding();
+      } else {
+        E.tickEnergie(vrij);
+        annuleerEnergieMelding();
+        renderAlles();
+      }
     });
 
     if (!hadOpslag && !viaHash) {
@@ -1409,6 +1817,14 @@
         incasseer: doeIncasseer,
         lever: doeLever,
         koop: doeKoop,
+        booster: doeBooster,
+        gebruikBoosterOp: gebruikBoosterOp,
+        koopTuin: doeKoopTuin,
+        openTuin: openTuin,
+        dag: function () { return E.dagStand(vrij, Date.now()); },
+        startDagelijks: startDagelijks,
+        record: function (nr) { return recordVan(nr); },
+        trillen: tril,
         render: renderAlles,
         bewaar: function () { bewaarVrijNu(); bewaarVoortgang(); },
         borden: borden,
