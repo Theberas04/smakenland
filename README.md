@@ -1,6 +1,6 @@
 # Smakenland 🍲
 
-**Versmelt items in 800 levels, los sudoku's op en reis door een verhalenwereld.** Een spel voor de
+**Versmelt items in 1200 levels, los sudoku's op en reis door een verhalenwereld.** Een spel voor de
 browser én als Android-app, in het genre van *Tasty Travels*, *EverMerge* en *Fable Town*: versmelten als
 kern, energie als tempo, kisten als generatoren, klanten als opdrachtgevers.
 
@@ -14,10 +14,24 @@ kern, energie als tempo, kisten als generatoren, klanten als opdrachtgevers.
 
 ## Wat er in zit
 
-- **800 levels** over 32 hoofdstukken, met een levelkaart en sterren. Elk level heeft vaste doelen en
+- **1200 levels** over 48 hoofdstukken, met een levelkaart en sterren. Elk level heeft vaste doelen en
   een eigen energietegoed; wat je overhoudt bepaalt je sterren (3 bij ≥ 40 % over). De generator
   *berekent* dat tegoed uit de doelen — een item van tree 5 maken kost 3⁴ oogsten van een kist van
-  niveau 1 — en `tools/gen_levels.py --check` rekent na dat alle 800 levels met dat tegoed te halen zijn.
+  niveau 1 — en `tools/gen_levels.py --check` rekent na dat alle 1200 levels met dat tegoed te halen zijn.
+  De eerste 800 levels zijn precies dezelfde gebleven, zodat bestaande voortgang blijft kloppen.
+- **Seizoenshoofdstukken**: naast de veertig gewone hoofdstukken heeft elk seizoen twee eigen
+  hoofdstukken (lente, zomer, herfst, winter). Je ziet alleen het seizoen dat het op dat moment is,
+  het eerste level van zo'n zijpad staat meteen open en de kaart vermeldt wat er in de andere seizoenen
+  klaarstaat. Dat is te toetsen: `seizoenVanMaand`, `zichtbareHoofdstukken` en `levelOpen` krijgen een
+  seizoen mee, dus er zit geen blik op de klok midden in de spellogica.
+- **Prestaties**: twintig dingen om te halen (eerste level, honderd versmeltingen, een hoofdstuk op
+  drie sterren, een sudoku van 16×16, zeven dagen op rij) met een eigen scherm, voortgangsbalken en een
+  klein venster als je er een haalt. De regels staan in `prestaties.js` en zijn los te toetsen.
+- **Voortgangscode**: je sterren, munten, sudokutijden, prestaties en thema in één stuk tekst, om te
+  bewaren of over te zetten naar een ander toestel. De code heeft een korte controle: zit er een fout
+  in, dan weigert de app hem in plaats van er halve voortgang van te maken.
+- **Donker thema**: één knop in de balk (of de voorkeur van je toestel bij het eerste bezoek). Alle
+  kleuren zitten in variabelen, zodat geen enkel onderdeel vergeten kan worden.
 - **Sudoku** in vijf maten (4×4, 6×6, 9×9, 12×12 en 16×16) en drie moeilijkheden, met notities,
 hints, foutenteller, klok en je beste tijd per maat en niveau. Vanaf 12×12 komen er letters bij de
 cijfers (A t/m G), net als in een echte sudoku van die maat.
@@ -42,6 +56,8 @@ cijfers (A t/m G), net als in een echte sudoku van die maat.
 | ![Level](docs/smakenland-level.png) | ![Sudoku](docs/smakenland-sudoku.png) | ![Vrij](docs/smakenland-vrij.png) |
 | Sudoku van 16×16 | Sudoku op de telefoon (16×16) | Sudoku op de telefoon (4×4) |
 | ![Sudoku 16](docs/smakenland-sudoku16.png) | ![Telefoon 16](docs/smakenland-telefoon-sudoku16.png) | ![Telefoon 4](docs/smakenland-telefoon-sudoku4.png) |
+| Prestaties | Seizoenshoofdstukken | Donker thema |
+| ![Prestaties](docs/smakenland-prestaties.png) | ![Seizoen](docs/smakenland-seizoen.png) | ![Donker](docs/smakenland-donker-kaart.png) |
 
 | Telefoon · level | Telefoon · levelkaart |
 | --- | --- |
@@ -93,6 +109,8 @@ dezelfde brug die de app aan het venster hangt, want in een browser hoort die re
 | `engine.js` | de spellogica: bord, versmelten, energie, doelen, levels, gebieden, opslag |
 | `sudoku.js` | sudokuregels voor alle maten: generator met unieke oplossing, oplosser, hints |
 | `sudokus.js` | kant-en-klare 16×16-opgaven uit `tools/gen_sudokus.js` (nagerekend: één oplossing) |
+| `prestaties.js` | de twintig prestaties en hun regels (los te toetsen) |
+| `voortgangscode.js` | je voortgang in één code, met een controle op typefouten |
 | `tools/gen_sudokus.js` | maakt en narekent die 16×16-opgaven (`--check`) |
 | `app.js` | de schil: tabs, bord, slepen, effecten, geluid, bewaren |
 | `sudoku-view.js` | het sudokupaneel |
@@ -116,14 +134,17 @@ herhaalbaar is en de tests niet gokken.
 ## Controles
 
 ```bash
-node --test "tests/*.test.mjs"                    # spellogica: bord, levels, sudoku (50 tests)
+node --test "tests/*.test.mjs"                    # spellogica: bord, levels, sudoku, prestaties, code (70 tests)
 python3 -m http.server 8231 &                     # de pagina moet geserveerd worden
-node tests/smoke.mjs 8231                         # de pagina zelf in jsdom (65 controles)
+node tests/smoke.mjs 8231                         # de pagina zelf in jsdom (115 controles)
 python3 scripts/check-live.py <url>               # een uitgerolde kopie in een echte browser
 javac -d /tmp/ut android/app/src/main/java/nl/werdens/smakenland/Updates.java \
       tests/java/UpdatesTest.java && java -cp /tmp/ut UpdatesTest   # versierekenwerk (28 controles)
+javac -d /tmp/st android/app/src/main/java/nl/werdens/smakenland/Schermen.java \
+      tests/java/SchermenTest.java && java -cp /tmp/st SchermenTest # schermnamen (25 controles)
+node tools/gen_sudokus.js --check                 # de 16 kant-en-klare 16×16-opgaven zijn uniek
 python3 tools/gen_art.py --check                  # kunst loopt niet uit de pas met de generator
-python3 tools/gen_levels.py --check               # en alle 800 levels zijn nog haalbaar
+python3 tools/gen_levels.py --check               # en alle 1200 levels zijn nog haalbaar
 python3 scripts/shoot.py 8231                     # schermafbeeldingen opnieuw
 python3 scripts/record-demo.py 8231               # de demo opnieuw opnemen
 ```
@@ -133,6 +154,8 @@ python3 scripts/record-demo.py 8231               # de demo opnieuw opnemen
 - Geen muziek, en op iOS blijft geluid stil tot je één keer tikt (dat eist de browser zo).
 - Geen app-store-versie: dit is een webspel/PWA plus een losse APK, geen Play-uitgave.
 - De sudoku bewaart één potje tegelijk; wisselen van moeilijkheid of maat begint een nieuwe puzzel.
+- De voortgangscode gaat over je voortgang (sterren, munten, tijden, prestaties, thema); het losse bord
+  van Vrij spelen zit er niet in, want dat is de stand van dit moment en geen voortgang.
 - De 16×16 met veel lege vakken komt kant-en-klaar uit `sudokus.js`: die in de app maken kost
   seconden tot minuten, want bij zo'n groot bord wordt het narekenen van "precies één oplossing"
   razendsnel veel werk. De generator in de app blijft voor alle andere maten, en kan door een

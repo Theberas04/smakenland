@@ -73,10 +73,25 @@ check('de UI-laag is bereikbaar', !!UI, true);
 if (!UI) process.exit(1);
 
 // ------------------------------------------------------------ levelkaart
-check('er zijn 800 levelknoppen', w.document.querySelectorAll('.level-knop').length, 800);
-check('er zijn 32 hoofdstukken', w.document.querySelectorAll('.hoofdstuk').length, 32);
-check('alleen level 1 is open', w.document.querySelectorAll('.level-knop:not(.op-slot)').length, 1);
-check('de kaart telt 0 van 800', tekst(w.document.getElementById('kaart-gehaald')), '0 van 800 gehaald');
+check('er zijn 1050 levelknoppen', w.document.querySelectorAll('.level-knop').length, 1050);
+check('er zijn 42 hoofdstukken (40 gewoon + 2 van dit seizoen)',
+  w.document.querySelectorAll('.hoofdstuk').length, 42);
+// Open staan: level 1, plus het eerste level van elk seizoenshoofdstuk van dit
+// seizoen (dat zijpad begint open — zie engine.levelOpen).
+const seizoenNu = w.SmakenlandEngine.seizoenNu();
+const seizoenHfst = w.SmakenlandEngine.zichtbareHoofdstukken(seizoenNu)
+  .filter((x) => x.hoofdstuk.seizoen);
+check('er zijn twee seizoenshoofdstukken te zien', seizoenHfst.length, 2);
+check('level 1 en het begin van de seizoenshoofdstukken staan open',
+  w.document.querySelectorAll('.level-knop:not(.op-slot)').length, 1 + seizoenHfst.length);
+const eersteSeizoenLevel = seizoenHfst[0].hfst * 25 + 1;
+check('het eerste level van het seizoenshoofdstuk is te openen',
+  w.document.querySelector(`.level-knop[data-level="${eersteSeizoenLevel}"]`).classList.contains('op-slot'), false);
+check('en het tweede level van dat hoofdstuk nog niet',
+  w.document.querySelector(`.level-knop[data-level="${eersteSeizoenLevel + 1}"]`).classList.contains('op-slot'), true);
+check('de seizoensnoot noemt de andere seizoenen',
+  w.document.querySelectorAll('.seizoen-regel').length, 3);
+check('de kaart telt 0 van 1050', tekst(w.document.getElementById('kaart-gehaald')).startsWith('0 van 1050 gehaald'), true);
 check('de uitleg staat open bij een nieuw potje', w.document.getElementById('modal-uitleg').hidden, false);
 w.document.getElementById('uitleg-sluiten').click();
 
@@ -154,6 +169,57 @@ check('level 1 is gehaald op de kaart',
   w.document.querySelector('.level-knop[data-level="1"]').classList.contains('gehaald'), true);
 check('level 3 is nog op slot',
   w.document.querySelector('.level-knop[data-level="3"]').classList.contains('op-slot'), true);
+
+// ------------------------------------------------------------ prestaties
+w.document.querySelector('.tab[data-tab=prestaties]').click();
+check('de prestaties-tab opent', UI.scherm, 'prestaties');
+check('de prestaties staan in een rooster', w.document.querySelectorAll('.prestatie').length,
+  w.SmakenlandPrestaties.LIJST.length);
+check('er is er minstens één behaald na level 1',
+  w.document.querySelectorAll('.prestatie.behaald').length >= 1, true);
+const prestaties = UI.prestaties();
+const eerste = prestaties.find((p) => p.id === 'eerste-level');
+check('"eerste-level" is behaald', eerste && eerste.behaald, true);
+check('met de teller op 1', eerste && eerste.nu, 1);
+check('elk vakje heeft een balk met voortgang',
+  w.document.querySelectorAll('.prestatie-balk i').length, w.SmakenlandPrestaties.LIJST.length);
+// De hulp is in dit level gebruikt, dus "op eigen kracht" hoort nog niet behaald te zijn.
+const zuinig = prestaties.find((p) => p.id === 'zuinig');
+check('"op eigen kracht" is nog niet behaald (er is hulp gebruikt)', zuinig.behaald, false);
+
+// ------------------------------------------------------------------ thema
+const themaKnop = () => w.document.getElementById('knop-thema');
+check('het thema staat op licht', w.document.documentElement.getAttribute('data-thema'), 'licht');
+themaKnop().click();
+check('de knop maakt het donker', w.document.documentElement.getAttribute('data-thema'), 'donker');
+check('en de knop laat de zon zien', tekst(themaKnop()), '☀️');
+check('de voortgang onthoudt het thema', UI.voortgang.thema, 'donker');
+themaKnop().click();
+check('nog een keer klikken maakt het weer licht', w.document.documentElement.getAttribute('data-thema'), 'licht');
+
+// -------------------------------------------------------- voortgangscode
+w.document.getElementById('knop-uitleg').click();
+const codeUit = w.document.getElementById('code-uit');
+check('er staat een voortgangscode klaar', codeUit.value.length > 20, true);
+check('de code begint met de versie', UI.voortgangscode().length > 20, true);
+// Dezelfde code erin stoppen moet gewoon goed gaan.
+w.document.getElementById('code-in').value = codeUit.value;
+w.confirm = () => true;
+w.document.getElementById('code-terug').click();
+check('een goede code wordt overgenomen',
+  w.document.getElementById('code-melding').className.indexOf('goed') >= 0, true);
+check('en de sterren staan er nog', UI.voortgang.levelSterren['1'], 3);
+// Een code met een fout erin hoort geweigerd te worden, zonder iets te veranderen.
+const verpest = codeUit.value.slice(0, 30) + (codeUit.value[30] === 'A' ? 'B' : 'A') + codeUit.value.slice(31);
+w.document.getElementById('code-in').value = verpest;
+w.document.getElementById('code-terug').click();
+check('een verpeste code wordt geweigerd',
+  w.document.getElementById('code-melding').className.indexOf('fout') >= 0, true);
+check('en er is niets veranderd', UI.voortgang.levelSterren['1'], 3);
+check('de telling in het venster noemt de voortgang',
+  tekst(w.document.getElementById('bewaard')).indexOf('munten') > 0, true);
+w.document.getElementById('uitleg-sluiten').click();
+w.document.querySelector('.tab[data-tab=levels]').click();
 
 // ---------------------------------------------------------------- sudoku
 w.document.querySelector('.tab[data-tab=sudoku]').click();
@@ -260,8 +326,8 @@ const UI2 = tweede.w.SmakenlandUI;
 check('na herladen zijn de sterren er nog', UI2.voortgang.levelSterren['1'], 3);
 check('na herladen is level 2 open',
   tweede.w.document.querySelector('.level-knop[data-level="2"]').classList.contains('op-slot'), false);
-check('na herladen telt de kaart 1 van 800', tekst(tweede.w.document.getElementById('kaart-gehaald')),
-  '1 van 800 gehaald');
+check('na herladen telt de kaart 1 van 1050',
+  tekst(tweede.w.document.getElementById('kaart-gehaald')).startsWith('1 van 1050 gehaald'), true);
 check('de uitleg blijft dicht bij een bestaand potje', tweede.w.document.getElementById('modal-uitleg').hidden, true);
 check('het vrije spel heeft de munten bewaard', UI2.vrij.munten, 40);
 check('tweede lading zonder JS-fouten', tweede.jsFouten.join(' | '), '');

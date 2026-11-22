@@ -136,6 +136,22 @@ if [ -z "$m16_tegel" ] || [ "$m16_tegel" -lt 14 ]; then
   exit 1
 fi
 
+# En het prestatiescherm: opent het, en staat het ook gevuld?
+start_en_wacht "prestaties" "SmakenlandScherm=prestaties"
+adb exec-out screencap -p > scherm-prestaties.png 2>/dev/null || true
+prest="$(adb logcat -d | grep -o 'SmakenlandPrestaties behaald=[0-9]* van=[0-9]* kaartjes=[0-9]*' | tail -1 || true)"
+echo "prestaties: ${prest:-niets gemeld}"
+p_kaartjes="$(echo "$prest" | sed -n 's/.*kaartjes=\([0-9]*\).*/\1/p')"
+p_totaal="$(echo "$prest" | sed -n 's/.*van=\([0-9]*\).*/\1/p')"
+if [ -z "$p_kaartjes" ] || [ "$p_kaartjes" -lt 15 ]; then
+  echo "::error::het prestatiescherm toont maar ${p_kaartjes:-0} kaartjes"
+  exit 1
+fi
+if [ "$p_kaartjes" != "$p_totaal" ]; then
+  echo "::error::er staan $p_kaartjes kaartjes maar er horen er $p_totaal te zijn"
+  exit 1
+fi
+
 # De updatecontrole loopt op de achtergrond bij het starten van de app. Met netwerk
 # hoort hier de eigen versie en wat GitHub zegt te staan; zonder netwerk een regel
 # dat het niet lukte. Beide zijn goed — stilletjes niets doen is dat niet.
@@ -147,18 +163,18 @@ fi
 
 adb logcat -d > logcat-opstart.txt 2>/dev/null || true
 
-for foto in scherm-kaart.png scherm-level.png scherm-sudoku.png scherm-sudoku16.png; do
+for foto in scherm-kaart.png scherm-level.png scherm-sudoku.png scherm-sudoku16.png scherm-prestaties.png; do
   test -s "$foto" || { echo "::error::$foto ontbreekt"; exit 1; }
 done
 
 python3 - <<'PY'
 import pathlib
 import struct
-for naam in ('scherm-kaart.png', 'scherm-level.png', 'scherm-sudoku.png', 'scherm-sudoku16.png'):
+for naam in ('scherm-kaart.png', 'scherm-level.png', 'scherm-sudoku.png', 'scherm-sudoku16.png', 'scherm-prestaties.png'):
     data = pathlib.Path(naam).read_bytes()
     breedte, hoogte = struct.unpack('>II', data[16:24])
     assert breedte > 400 and hoogte > 600, (naam, breedte, hoogte)
     print(f'{naam}: {breedte}x{hoogte}')
 PY
 
-echo "smoketest klaar: de bundel laadt en alle vier de schermen openen"
+echo "smoketest klaar: de bundel laadt en alle vijf de schermen openen"

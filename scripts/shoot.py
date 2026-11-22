@@ -123,7 +123,8 @@ def main():
             "try { localStorage.setItem('smakenland.voortgang.v1', %s); } catch (e) {}"
             % json.dumps(json.dumps(voortgang))))
         b.call("Page.navigate", url=BASIS + "/index.html?debug=1")
-        if not wacht_op(b, "!!(window.SmakenlandUI && document.querySelectorAll('.level-knop').length === 800)"):
+        # 40 gewone hoofdstukken + 2 van dit seizoen = 42 hoofdstukken van 25 = 1050 knoppen.
+        if not wacht_op(b, "!!(window.SmakenlandUI && document.querySelectorAll('.level-knop').length === 1050)"):
             sys.exit("De levelkaart kwam niet op gang")
         b.js("document.getElementById('uitleg-sluiten') && document.getElementById('uitleg-sluiten').click()")
         time.sleep(0.5)
@@ -251,6 +252,40 @@ def main():
         })()""")
         time.sleep(0.4)
         schiet(b, os.path.join(DOCS, "smakenland-vrij.png"), 1440, inhoud_hoogte(b))
+
+        # 5a. Het einde van de kaart: de seizoenshoofdstukken en de noot erover
+        b.js("document.querySelector('.tab[data-tab=levels]').click()")
+        time.sleep(0.4)
+        b.js("window.scrollTo(0, document.body.scrollHeight)")
+        time.sleep(0.4)
+        schiet(b, os.path.join(DOCS, "smakenland-seizoen.png"), 1440, 1000)
+        b.js("window.scrollTo(0, 0)")
+        time.sleep(0.3)
+
+        # 5b. Prestaties (licht) en de voortgangscode in het uitlegvenster
+        b.js("document.querySelector('.tab[data-tab=prestaties]').click()")
+        time.sleep(0.6)
+        schiet(b, os.path.join(DOCS, "smakenland-prestaties.png"), 1440, inhoud_hoogte(b))
+        b.js("document.getElementById('knop-uitleg').click()")
+        time.sleep(0.5)
+        schiet(b, os.path.join(DOCS, "smakenland-code.png"), 1440, inhoud_hoogte(b))
+        b.js("document.getElementById('uitleg-sluiten').click()")
+        time.sleep(0.3)
+
+        # 5c. Donker thema: de levelkaart, de sudoku en de prestaties
+        b.js("document.getElementById('knop-thema').click()")
+        time.sleep(0.5)
+        b.js("document.querySelector('.tab[data-tab=levels]').click()")
+        time.sleep(0.6)
+        schiet(b, os.path.join(DOCS, "smakenland-donker-kaart.png"), 1440, inhoud_hoogte(b))
+        b.js("document.querySelector('.tab[data-tab=sudoku]').click()")
+        time.sleep(0.8)
+        schiet(b, os.path.join(DOCS, "smakenland-donker-sudoku.png"), 1440, inhoud_hoogte(b))
+        b.js("document.querySelector('.tab[data-tab=prestaties]').click()")
+        time.sleep(0.5)
+        schiet(b, os.path.join(DOCS, "smakenland-donker-prestaties.png"), 1440, inhoud_hoogte(b))
+        b.js("document.getElementById('knop-thema').click()")   # terug naar licht
+        time.sleep(0.4)
 
         # 6. Telefoon: de levelkaart
         b.js("document.querySelector('.tab[data-tab=levels]').click()")

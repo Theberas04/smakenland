@@ -27,7 +27,7 @@
   let klaar = false;
   let timer = null;
   let cellen = [];
-  let stats = { beste: {}, gewonnen: 0 };
+  let stats = { beste: {}, gewonnen: 0, gewonnenPerMaat: {}, gewonnenFoutloos: 0 };
 
   function legeNotities() {
     return new Array(cel).fill(null).map(function () { return new Array(n).fill(false); });
@@ -300,6 +300,12 @@
     const vorige = stats.beste[sleutel];
     if (!vorige || seconden < vorige) stats.beste[sleutel] = seconden;
     stats.gewonnen = (stats.gewonnen || 0) + 1;
+    // Per maat bijhouden welke maten je hebt uitgespeeld (voor de prestaties), en
+    // hoeveel sudoku's er zonder één fout gingen.
+    if (!stats.gewonnenPerMaat) stats.gewonnenPerMaat = {};
+    stats.gewonnenPerMaat[n] = (stats.gewonnenPerMaat[n] || 0) + 1;
+    if (fouten === 0) stats.gewonnenFoutloos = (stats.gewonnenFoutloos || 0) + 1;
+    if (window.SmakenlandUI && window.SmakenlandUI.checkPrestaties) window.SmakenlandUI.checkPrestaties();
     bewaar();
     render();
     toonGewonnen();
@@ -472,6 +478,7 @@
     window.SmakenlandSudokuView = {
       toon: toon, opnieuw: opnieuw, kop: kop, statistiek: statistiek,
       nieuw: nieuwSpel, maatZet: zetMaat,
+      zetStatistiek: function (nieuw) { stats = nieuw; bewaar(); },
       get bord() { return bord; },
       get puzzel() { return puzzel; },
       get klaar() { return klaar; },

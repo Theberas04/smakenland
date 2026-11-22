@@ -76,7 +76,7 @@ def main():
 
         klaar = False
         for _ in range(60):
-            if b.js("document.querySelectorAll('.level-knop').length") == 800:
+            if b.js("document.querySelectorAll('.level-knop').length") == 1050:
                 klaar = True
                 break
             time.sleep(0.5)
@@ -85,11 +85,17 @@ def main():
              " window.addEventListener('unhandledrejection', e => window.__fouten.push('belofte: ' + e.reason));")
         print(f"url        : {URL}")
         print(f"titel      : {b.js('document.title')}")
-        aantal_hfst = b.js("document.querySelectorAll('.hoofdstuk').length")   # 32 hoofdstukken van 25
+        aantal_hfst = b.js("document.querySelectorAll('.hoofdstuk').length")   # 40 gewone hoofdstukken + 2 van dit seizoen
         aantal_open = b.js("document.querySelectorAll('.level-knop:not(.op-slot)').length")
-        alles_goed &= meld("levelkaart", b.js("document.querySelectorAll('.level-knop').length"), 800, klaar)
-        alles_goed &= meld("hoofdstukken", aantal_hfst, 32, aantal_hfst == 32)
-        alles_goed &= meld("open levels", aantal_open, 1, aantal_open == 1)
+        alles_goed &= meld("levelkaart", b.js("document.querySelectorAll('.level-knop').length"), 1050, klaar)
+        alles_goed &= meld("hoofdstukken", aantal_hfst, 42, aantal_hfst == 42)
+        # Open staan: level 1 plus het eerste level van elk seizoenshoofdstuk van dit
+        # seizoen (dat zijpad begint open).
+        seizoen_hfst = b.js("window.SmakenlandEngine.zichtbareHoofdstukken()"
+                            ".filter(x => x.hoofdstuk.seizoen).length")
+        alles_goed &= meld("open levels", aantal_open, f"1 + {seizoen_hfst} (seizoen)",
+                           aantal_open == 1 + seizoen_hfst)
+        alles_goed &= meld("seizoenshoofdstukken te zien", seizoen_hfst, 2, seizoen_hfst == 2)
 
         # Level 1 openen en één keer oogsten met een echte tik op het bord.
         b.js("document.getElementById('uitleg-sluiten').click()")
@@ -141,6 +147,42 @@ def main():
                            b.js("!!document.querySelector('.sudoku-cel.gekozen')"))
 
         fouten = b.js("JSON.stringify(window.__fouten)")
+        # Prestaties: het scherm opent en is gevuld.
+        b.js("document.querySelector('.tab[data-tab=prestaties]').click()")
+        time.sleep(0.5)
+        kaartjes = b.js("document.querySelectorAll('.prestatie').length")
+        teller = b.js("document.getElementById('prestaties-teller').textContent")
+        balken = b.js("document.querySelectorAll('.prestatie-balk i').length")
+        alles_goed &= meld("prestatiekaartjes", kaartjes, "minstens 15", kaartjes >= 15)
+        alles_goed &= meld("voortgangsbalken bij de prestaties", balken, kaartjes, balken == kaartjes)
+        alles_goed &= meld("de teller noemt het totaal", teller, "x van y",
+                           " van " in teller and teller.split(" van ")[1].strip() == str(kaartjes))
+
+        # Thema: de knop zet het donker en weer terug.
+        thema_voor = b.js("document.documentElement.getAttribute('data-thema')")
+        b.js("document.getElementById('knop-thema').click()")
+        time.sleep(0.3)
+        thema_na = b.js("document.documentElement.getAttribute('data-thema')")
+        alles_goed &= meld("het thema wisselt", f"{thema_voor} -> {thema_na}", "anders",
+                           thema_voor != thema_na and thema_na in ("donker", "licht"))
+
+        # Voortgangscode: er staat een code klaar, en een verpeste code wordt geweigerd.
+        b.js("document.getElementById('knop-uitleg').click()")
+        time.sleep(0.4)
+        code = b.js("document.getElementById('code-uit').value")
+        alles_goed &= meld("de voortgangscode is er", f"{len(code)} tekens", "minstens 60",
+                           len(code) >= 60)
+        b.js("(() => { const vak = document.getElementById('code-uit');"
+             " const verpest = vak.value.slice(0, 30) + (vak.value[30] === 'A' ? 'B' : 'A')"
+             " + vak.value.slice(31);"
+             " document.getElementById('code-in').value = verpest;"
+             " window.confirm = () => true;"
+             " document.getElementById('code-terug').click(); return 1; })()")
+        time.sleep(0.4)
+        melding = b.js("document.getElementById('code-melding').className")
+        alles_goed &= meld("een verpeste code wordt geweigerd", melding, "fout", "fout" in melding)
+        b.js("document.getElementById('uitleg-sluiten').click()")
+
         alles_goed &= meld("JS-fouten", fouten, "[]", fouten == "[]")
         print("OORDEEL    : " + ("werkt" if alles_goed else "NIET GOED"))
         proc.terminate()

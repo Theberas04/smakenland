@@ -9,9 +9,9 @@ const C = require('../content.js');
 
 const NU = 1_700_000_000_000;
 
-test('er zijn 800 levels in 32 hoofdstukken van 25', () => {
-  assert.equal(L.levels.length, 800);
-  assert.equal(L.hoofdstukken.length, 32);
+test('er zijn 1200 levels in 48 hoofdstukken van 25', () => {
+  assert.equal(L.levels.length, 1200);
+  assert.equal(L.hoofdstukken.length, 48);
   assert.equal(L.niveauPerHoofdstuk, 25);
   L.levels.forEach((lv, i) => {
     assert.equal(lv.nr, i + 1, 'de levels zijn op volgorde genummerd');
@@ -146,10 +146,10 @@ test('een level gaat pas open als het vorige gehaald is', () => {
 
 test('een levelnummer buiten bereik bestaat niet', () => {
   assert.equal(E.levelVan(0), null);
-  assert.equal(E.levelVan(801), null);
+  assert.equal(E.levelVan(1201), null);
   assert.equal(E.startLevel(0, NU), null);
-  assert.equal(E.levelVan(800).nr, 800);
-  assert.equal(E.levelVan(801), null, 'voorbij het laatste level is er niets');
+  assert.equal(E.levelVan(1200).nr, 1200);
+  assert.equal(E.levelVan(1201), null, 'voorbij het laatste level is er niets');
 });
 
 test('vrij spelen blijft gewoon werken naast de levels', () => {
@@ -172,4 +172,69 @@ test('vrij spelen blijft gewoon werken naast de levels', () => {
   assert.equal(s.munten, 40);
   assert.equal(s.orders.length, E.MAX_ORDERS, 'vrij spelen vult opdrachten aan');
   assert.equal(s.ordersKlaar, 1);
+});
+
+// -------------------------------------------------------- seizoenen
+
+test('de eerste 32 hoofdstukken blijven gewoon: bestaande voortgang blijft kloppen', () => {
+  for (let h = 0; h < 32; h++) {
+    assert.equal(L.hoofdstukken[h].seizoen, null, `hoofdstuk ${h + 1} is geen seizoenshoofdstuk`);
+  }
+  // De levels 1 t/m 800 liggen nog precies in die hoofdstukken.
+  for (const nr of [1, 25, 26, 400, 799, 800]) {
+    assert.ok(E.levelVan(nr).hfst < 32, `level ${nr} hoort bij de gewone hoofdstukken`);
+  }
+  // En de seizoenshoofdstukken komen daarna, met een seizoen eraan.
+  assert.equal(L.hoofdstukken[32].seizoen, null);
+  assert.equal(L.hoofdstukken[40].seizoen, 'lente');
+  assert.equal(L.hoofdstukken[47].seizoen, 'winter');
+});
+
+test('elke maand hoort bij een seizoen', () => {
+  const verwacht = { 1: 'winter', 2: 'winter', 3: 'lente', 4: 'lente', 5: 'lente',
+    6: 'zomer', 7: 'zomer', 8: 'zomer', 9: 'herfst', 10: 'herfst', 11: 'herfst', 12: 'winter' };
+  for (const maand of Object.keys(verwacht)) {
+    assert.equal(E.seizoenVanMaand(Number(maand)), verwacht[maand], `maand ${maand}`);
+  }
+  assert.equal(E.seizoenNu(new Date(2026, 0, 15)), 'winter');
+  assert.equal(E.seizoenNu(new Date(2026, 3, 1)), 'lente');
+  assert.equal(E.seizoenNu(new Date(2026, 6, 1)), 'zomer');
+  assert.equal(E.seizoenNu(new Date(2026, 9, 1)), 'herfst');
+  assert.equal(E.seizoenNu(new Date(2026, 11, 31)), 'winter');
+});
+
+test('de kaart laat alleen de hoofdstukken van dit seizoen zien', () => {
+  for (const seizoen of ['lente', 'zomer', 'herfst', 'winter']) {
+    const zichtbaar = E.zichtbareHoofdstukken(seizoen);
+    assert.equal(zichtbaar.length, 42, `42 hoofdstukken in de ${seizoen}`);
+    const metSeizoen = zichtbaar.filter((x) => x.hoofdstuk.seizoen);
+    assert.equal(metSeizoen.length, 2);
+    metSeizoen.forEach((x) => assert.equal(x.hoofdstuk.seizoen, seizoen));
+    assert.equal(E.aantalZichtbareLevels(seizoen), 42 * 25);
+  }
+  const anderen = E.andereSeizoenen('zomer');
+  assert.equal(anderen.length, 3);
+  anderen.forEach((s) => {
+    assert.notEqual(s.seizoen, 'zomer');
+    assert.equal(s.hoofdstukken.length, 2);
+  });
+});
+
+test('een seizoenshoofdstuk is een zijpad dat alleen in zijn seizoen opengaat', () => {
+  const leeg = {};
+  // Level 1001 is het eerste level van het lentefeest.
+  assert.equal(E.levelVan(1001).hfst, 40);
+  assert.equal(E.levelOpen(leeg, 1001, 'lente'), true, 'eerste level van het zijpad staat open');
+  assert.equal(E.levelOpen(leeg, 1001, 'zomer'), false, 'buiten het seizoen dicht');
+  assert.equal(E.levelZichtbaar(1001, 'lente'), true);
+  assert.equal(E.levelZichtbaar(1001, 'herfst'), false);
+  // Het tweede level van dat hoofdstuk moet wel gewoon op het eerste wachten.
+  assert.equal(E.levelOpen(leeg, 1002, 'lente'), false);
+  assert.equal(E.levelOpen({ 1001: 2 }, 1002, 'lente'), true);
+  // Gewone levels blijven zoals ze waren.
+  assert.equal(E.levelOpen(leeg, 1), true);
+  assert.equal(E.levelOpen(leeg, 500), false);
+  assert.equal(E.levelOpen({ 499: 3 }, 500), true);
+  assert.equal(E.levelOpen({ 499: 3 }, 501), false);
+  assert.equal(E.levelZichtbaar(500, 'winter'), true, 'gewone levels zie je altijd');
 });

@@ -11,8 +11,9 @@ package nl.werdens.smakenland;
  */
 public final class Schermen {
 
-    /** levels, sudoku (met de maat eraan vast), vrij en level<nummer>. */
-    public static final String PATROON = "levels|sudoku|sudoku(4|6|9|12|16)|vrij|level[0-9]{1,3}";
+    /** levels, sudoku (met de maat eraan vast), vrij, prestaties en level<nummer>. */
+    public static final String PATROON =
+        "levels|sudoku|sudoku(4|6|9|12|16)|vrij|prestaties|level[0-9]{1,3}";
 
     private Schermen() {
     }

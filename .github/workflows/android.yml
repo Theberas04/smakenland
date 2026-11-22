@@ -235,7 +235,7 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p docs/android
-          for foto in scherm-kaart.png scherm-level.png scherm-sudoku.png scherm-sudoku16.png logcat-opstart.txt; do
+          for foto in scherm-kaart.png scherm-level.png scherm-sudoku.png scherm-sudoku16.png scherm-prestaties.png logcat-opstart.txt; do
             [ -f "$foto" ] && cp "$foto" docs/android/ || true
           done
           git config user.name "Smakenland-bouw"
@@ -254,6 +254,7 @@ jobs:
             scherm-level.png
             scherm-sudoku.png
             scherm-sudoku16.png
+            scherm-prestaties.png
             logcat-opstart.txt
           retention-days: 7
           if-no-files-found: warn

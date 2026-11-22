@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Maakt de 800 levels van Smakenland en schrijft ze naar levels.js.
+"""Maakt de levels van Smakenland en schrijft ze naar levels.js.
 
 Elk level is een opdracht: lever zoveel items van die tree. Het energietegoed van
 een level wordt BEREKEND uit de doelen (niet gegokt): een item van tree T maken
@@ -7,7 +7,7 @@ kost 3^(T-kistniveau) oogsten van kistniveau `kistniveau`, elk één energie. Da
 komt een kwart speling bij, zodat een level haalbaar is maar niet gratis.
 
 Gebruik:  python3 tools/gen_levels.py [--check]
---check rekent alle 800 levels na tegen het bestaande levels.js zonder te schrijven.
+--check rekent alle levels na tegen het bestaande levels.js zonder te schrijven.
 """
 import json
 import math
@@ -31,9 +31,15 @@ KIST_VAN = {
 
 MAX_TIER = {"tuin": 6, "bakkerij": 6, "bloemen": 6, "smidse": 6, "haven": 6, "magie": 6}
 
-# Tweeëndertig hoofdstukken van 25 levels: samen 800. Elk hoofdstuk opent zijn
-# eigen ketens, en de ketens worden gaandeweg rijker (één keten, dan twee, en in
-# de laatste hoofdstukken komen alle zes samen).
+# Veertig gewone hoofdstukken van 25 levels (samen 1000), plus acht
+# seizoenshoofdstukken (twee per seizoen, levels 1001 t/m 1200). Elk hoofdstuk
+# opent zijn eigen ketens, en de ketens worden gaandeweg rijker (één keten, dan
+# twee, en in de laatste hoofdstukken komen alle zes samen).
+#
+# De seizoenshoofdstukken zijn een zijpad: de app laat alleen de hoofdstukken van
+# het seizoen zien dat het op dat moment is. Ze staan achteraan, zodat de levels
+# 1 t/m 800 precies dezelfde zijn gebleven als voorheen (bestaande voortgang
+# blijft dus kloppen).
 HOOFDSTUKKEN = [
     {"naam": "Smakendorp", "ketens": ["tuin"], "e": "🏘️"},
     {"naam": "Bakkerslaan", "ketens": ["tuin", "bakkerij"], "e": "🥖"},
@@ -67,6 +73,23 @@ HOOFDSTUKKEN = [
     {"naam": "Wereldkeuken", "ketens": ["tuin", "bakkerij", "haven", "magie", "bloemen"], "e": "🍽️"},
     {"naam": "Sterrenslag", "ketens": ["tuin", "bakkerij", "bloemen", "smidse", "haven"], "e": "🌌"},
     {"naam": "Het Laatste Feest", "ketens": ["tuin", "bakkerij", "bloemen", "smidse", "haven", "magie"], "e": "🎉"},
+    {"naam": "Suikermolen", "ketens": ["bakkerij", "magie"], "e": "🍬"},
+    {"naam": "Verre Oosten", "ketens": ["tuin", "haven", "magie"], "e": "🏮"},
+    {"naam": "Wolfshaar", "ketens": ["smidse", "tuin", "haven"], "e": "🐺"},
+    {"naam": "Zonneweide", "ketens": ["bloemen", "tuin", "bakkerij"], "e": "🌻"},
+    {"naam": "Diepzee", "ketens": ["haven", "magie", "smidse"], "e": "🐙"},
+    {"naam": "Ambrosia", "ketens": ["bakkerij", "bloemen", "tuin", "magie"], "e": "🍯"},
+    {"naam": "Titaansmeed", "ketens": ["smidse", "magie", "haven", "bakkerij"], "e": "🗡️"},
+    {"naam": "Smakenland Slot", "ketens": ["tuin", "bakkerij", "bloemen", "smidse", "haven", "magie"], "e": "🏰"},
+    # Seizoenshoofdstukken: alleen te spelen in hun eigen seizoen.
+    {"naam": "Lentefeest", "ketens": ["bloemen", "tuin"], "e": "🌷", "seizoen": "lente"},
+    {"naam": "Meiregen", "ketens": ["tuin", "haven"], "e": "🌦️", "seizoen": "lente"},
+    {"naam": "Zonnewende", "ketens": ["haven", "bloemen"], "e": "🌞", "seizoen": "zomer"},
+    {"naam": "IJskaravaan", "ketens": ["bakkerij", "haven"], "e": "🍦", "seizoen": "zomer"},
+    {"naam": "Oogstmaand", "ketens": ["tuin", "bakkerij"], "e": "🍂", "seizoen": "herfst"},
+    {"naam": "Stormseizoen", "ketens": ["haven", "smidse"], "e": "🌧️", "seizoen": "herfst"},
+    {"naam": "Wintermarkt", "ketens": ["bakkerij", "magie"], "e": "❄️", "seizoen": "winter"},
+    {"naam": "Vuurfeest", "ketens": ["smidse", "magie"], "e": "🔥", "seizoen": "winter"},
 ]
 
 LEVELS_PER_HFST = 25
@@ -233,10 +256,11 @@ def bundel(levels):
            "    niveauPerHoofdstuk: %d," % LEVELS_PER_HFST,
            "    hoofdstukken: ["]
     for h in HOOFDSTUKKEN:
-        uit.append('      {naam: %s, e: %s, ketens: %s},'
+        uit.append('      {naam: %s, e: %s, ketens: %s, seizoen: %s},'
                    % (json.dumps(h["naam"], ensure_ascii=False),
                       json.dumps(h["e"], ensure_ascii=False),
-                      json.dumps(h["ketens"])))
+                      json.dumps(h["ketens"]),
+                      json.dumps(h.get("seizoen"))))
     uit.append("    ],")
     uit.append("    levels: [")
     for lv in levels:

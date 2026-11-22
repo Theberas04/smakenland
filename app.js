@@ -11,6 +11,10 @@
   const SLEUTEL_VRIJ = 'smakenland.vrij.v2';
   const SLEUTEL_VOORTGANG = 'smakenland.voortgang.v1';
   const SLEUTEL_GELUID = 'smakenland.geluid';
+  const SLEUTEL_THEMA = 'smakenland.thema';
+
+  const PRE = window.SmakenlandPrestaties;          // de prestaties (los te toetsen)
+  const VC = window.SmakenlandVoortgangscode;       // de voortgangscode
 
   const $ = function (id) { return document.getElementById(id); };
   const bord = $('bord');
@@ -18,7 +22,13 @@
 
   let vrij = null;         // stand van het vrije spel
   let level = null;        // stand van het level dat nu gespeeld wordt
-  let voortgang = { levelSterren: {}, sudoku: {} };
+  /** Een lege voortgang, inclusief de tellers voor de prestaties. */
+  function legeVoortgang() {
+    return { levelSterren: {}, sudoku: {}, stats: {}, prestaties: [], thema: 'licht' };
+  }
+
+  let voortgang = legeVoortgang();
+  let volgendLevel = null;   // welk level de knop "Volgende level" opent
   let tab = 'levels';
   let scherm = 'kaart';    // 'kaart' | 'level' | 'vrij' | 'sudoku'
   let borden = [];         // de 56 cel-elementen van het bord
@@ -110,12 +120,18 @@
   function laadVoortgang() {
     let ruw = null;
     try { ruw = localStorage.getItem(SLEUTEL_VOORTGANG); } catch (e) { ruw = null; }
-    if (!ruw) return { levelSterren: {}, sudoku: {} };
+    if (!ruw) return legeVoortgang();
     try {
       const p = JSON.parse(ruw);
-      return { levelSterren: p.levelSterren || {}, sudoku: p.sudoku || {} };
+      return {
+        levelSterren: p.levelSterren || {},
+        sudoku: p.sudoku || {},
+        stats: p.stats || {},
+        prestaties: p.prestaties || [],
+        thema: p.thema === 'donker' ? 'donker' : 'licht'
+      };
     } catch (e) {
-      return { levelSterren: {}, sudoku: {} };
+      return legeVoortgang();
     }
   }
 
@@ -180,6 +196,7 @@
     (events || []).forEach(function (ev) {
       const p = ev.cel !== undefined ? rectVan(ev.cel) : (anker || { x: 40, y: 90 });
       if (ev.type === 'merge') {
+        telOp('versmeltingen');
         const doel = s && s.cells[ev.cel];
         if (doel && p) { zwevendeTekst(p.x, p.y, (ev.aantal > 1 ? ev.aantal + '× ' : '') + naamVan(doel)); pufjes(p.x, p.y); }
         geluid.versmelt();
@@ -188,6 +205,7 @@
           setTimeout(function () { if (borden[ev.cel]) borden[ev.cel].classList.remove('net-versmelt'); }, 500);
         }
       } else if (ev.type === 'oogst') {
+        telOp('oogsten');
         geluid.tik();
         if (borden[ev.cel]) {
           borden[ev.cel].classList.add('net-geoogst');
@@ -195,10 +213,13 @@
         }
       } else if (ev.type === 'munten') {
         if (ev.bedrag > 0) {
+          telOp('muntenVerdiend', ev.bedrag);
           geluid.munt();
           if (p) zwevendeTekst(p.x, p.y, '+' + ev.bedrag + ' 🪙', 'munten');
         }
       } else if (ev.type === 'levering') {
+        telOp('klanten');
+        if (ev.munten > 0) telOp('muntenVerdiend', ev.munten);
         geluid.feest();
         zwevendeTekst(window.innerWidth / 2, 120,
           ev.munten > 0 ? '+' + ev.munten + ' 🪙  +' + ev.sterren + ' ⭐' : 'Doel gehaald!', 'munten');
@@ -226,17 +247,19 @@
 
   function zetTab(naam, opties) {
     opties = opties || {};
-    if (naam !== 'levels' && naam !== 'sudoku' && naam !== 'vrij') naam = 'levels';
+    if (naam !== 'levels' && naam !== 'sudoku' && naam !== 'vrij' && naam !== 'prestaties') naam = 'levels';
     tab = naam;
     Array.from(document.querySelectorAll('.tab')).forEach(function (b) {
       b.setAttribute('aria-current', b.dataset.tab === naam ? 'true' : 'false');
     });
     if (naam === 'sudoku') scherm = 'sudoku';
+    else if (naam === 'prestaties') scherm = 'prestaties';
     else if (naam === 'levels') scherm = opties.level ? 'level' : 'kaart';
     else scherm = 'vrij';
     if (scherm === 'level' && !level) scherm = 'kaart';
     renderAlles();
     if (naam === 'sudoku' && window.SmakenlandSudokuView) window.SmakenlandSudokuView.toon();
+    if (naam === 'prestaties') checkPrestaties();
     // De maat van de sudoku hoort in de adresbalk te blijven staan: stond er
     // #sudoku16, dan mag dat geen #sudoku worden, want dan raakt de maat kwijt
     // voordat de sudokuvieuw hem kan lezen.
@@ -257,6 +280,7 @@
     if (sud) { sudokuMaat = Number(sud[1]); zetTab('sudoku'); return true; }
     if (ruw === 'sudoku') { sudokuMaat = null; zetTab('sudoku'); return true; }
     if (ruw === 'vrij') { zetTab('vrij'); return true; }
+    if (ruw === 'prestaties') { zetTab('prestaties'); return true; }
     if (ruw === 'levels' || ruw === 'kaart') { zetTab('levels'); return true; }
     const m = /^level(\d+)$/.exec(ruw);
     if (m) {
@@ -270,10 +294,11 @@
   }
 
   function toonScherm() {
-    const breed = scherm === 'kaart' || scherm === 'sudoku';
+    const breed = scherm === 'kaart' || scherm === 'sudoku' || scherm === 'prestaties';
     document.querySelector('main').dataset.scherm = breed ? 'breed' : 'kolommen';
     $('scherm-kaart').hidden = scherm !== 'kaart';
     $('scherm-sudoku').hidden = scherm !== 'sudoku';
+    $('scherm-prestaties').hidden = scherm !== 'prestaties';
     $('bord-paneel').hidden = breed;
     $('links-paneel').hidden = breed;
     $('rechts-paneel').hidden = breed;
@@ -287,6 +312,15 @@
 
   function renderKop() {
     const houder = $('statistieken');
+    if (tab === 'prestaties') {
+      const stand = spelerStand();
+      const tel = PRE.tel(stand);
+      houder.innerHTML = pil('<span class="e">🏆</span><b id="kop-prestaties">' +
+        tel.behaald + '/' + tel.totaal + '</b>') +
+        pil('<span class="e">⭐</span><b>' + stand.sterren + '</b>');
+      $('merk-klein').textContent = 'prestaties';
+      return;
+    }
     if (tab === 'sudoku') {
       const view = window.SmakenlandSudokuView;
       houder.innerHTML = view ? view.kop() : '';
@@ -654,14 +688,36 @@
       gehaald++;
       sterren += voortgang.levelSterren[nr] || 0;
     });
-    $('kaart-sterren').textContent = sterren + ' / ' + (LV.levels.length * 3) + ' ⭐';
-    $('kaart-gehaald').textContent = gehaald + ' van ' + LV.levels.length + ' gehaald';
-
-    LV.hoofdstukken.forEach(function (hfst, h) {
+    // Alleen de hoofdstukken van dit seizoen; de andere seizoenen komen later terug
+    // (die staan onderaan de kaart vermeld).
+    const zichtbaar = E.zichtbareHoofdstukken();
+    const perHfst = LV.niveauPerHoofdstuk;
+    const aantalZichtbaar = E.aantalZichtbareLevels();
+    let sterrenZichtbaar = 0;
+    let gehaaldZichtbaar = 0;
+    zichtbaar.forEach(function (x) {
+      const van0 = x.hfst * perHfst + 1;
+      for (let nr = van0; nr < van0 + perHfst; nr++) {
+        if (voortgang.levelSterren[nr]) gehaaldZichtbaar++;
+        sterrenZichtbaar += voortgang.levelSterren[nr] || 0;
+      }
+    });
+    $('kaart-titel').textContent = LV.levels.length + ' levels';
+    const uitlegLevels = $('uitleg-levels');
+    if (uitlegLevels) {
+      uitlegLevels.textContent = LV.levels.length + ' levels over ' + LV.hoofdstukken.length +
+        ' hoofdstukken, waarvan twee per seizoen';
+    }
+    $('kaart-sterren').textContent = sterrenZichtbaar + ' / ' + (aantalZichtbaar * 3) + ' ⭐';
+    $('kaart-gehaald').textContent = gehaaldZichtbaar + ' van ' + aantalZichtbaar + ' gehaald · ' +
+      LV.hoofdstukken.length + ' hoofdstukken';
+    zichtbaar.forEach(function (punt) {
+      const hfst = punt.hoofdstuk;
+      const h = punt.hfst;
       const blok = document.createElement('section');
-      blok.className = 'hoofdstuk';
-      const van = h * LV.niveauPerHoofdstuk + 1;
-      const tot = van + LV.niveauPerHoofdstuk - 1;
+      blok.className = 'hoofdstuk' + (hfst.seizoen ? ' seizoen' : '');
+      const van = h * perHfst + 1;
+      const tot = van + perHfst - 1;
       let hfstSterren = 0;
       let hfstGehaald = 0;
       for (let nr = van; nr <= tot; nr++) {
@@ -671,7 +727,10 @@
       blok.innerHTML =
         '<div class="hoofdstuk-kop">' +
           '<span class="hoofdstuk-e">' + hfst.e + '</span>' +
-          '<div class="hoofdstuk-tekst"><b>' + hfst.naam + '</b><small>level ' + van + '–' + tot + ' · ' +
+          '<div class="hoofdstuk-tekst"><b>' + hfst.naam +
+            (hfst.seizoen ? ' <span class="seizoen-vlag">' + E.SEIZOENEN[hfst.seizoen].e + ' ' +
+              E.SEIZOENEN[hfst.seizoen].naam.toLowerCase() + '</span>' : '') +
+            '</b><small>level ' + van + '–' + tot + ' · ' +
             hfst.ketens.map(function (k) { return C.CHAINS[k].naam; }).join(', ') + '</small></div>' +
           '<span class="hoofdstuk-sterren">' + hfstGehaald + '/' + LV.niveauPerHoofdstuk +
             ' · ' + hfstSterren + ' ⭐</span>' +
@@ -694,6 +753,23 @@
       blok.appendChild(rooster);
       houder.appendChild(blok);
     });
+
+    // Wat er nog meer is: de andere seizoenen, met de naam van hun hoofdstukken.
+    const andere = E.andereSeizoenen();
+    const anderBestaand = andere.filter(function (s) { return s.hoofdstukken.length; });
+    if (anderBestaand.length) {
+      const doos = document.createElement('section');
+      doos.className = 'seizoen-noot';
+      doos.innerHTML = '<div class="hoofdstuk-kop"><span class="hoofdstuk-e">🗓️</span>' +
+        '<div class="hoofdstuk-tekst"><b>Seizoenshoofdstukken</b><small>' +
+        'Elk seizoen heeft twee eigen hoofdstukken. Nu: ' +
+        E.SEIZOENEN[E.seizoenNu()].e + ' ' + E.SEIZOENEN[E.seizoenNu()].naam.toLowerCase() + '.</small></div></div>' +
+        '<div class="seizoen-lijst">' + anderBestaand.map(function (s) {
+          return '<span class="seizoen-regel"><b>' + s.e + ' ' + s.naam + '</b>: ' +
+            s.hoofdstukken.join(', ') + ' <i>(komt terug in de ' + s.naam.toLowerCase() + ')</i></span>';
+        }).join('') + '</div>';
+      houder.appendChild(doos);
+    }
   }
 
   // -------------------------------------------------------- levels spelen
@@ -796,8 +872,12 @@
       voortgang.levelSterren[ev.level] = ev.sterren;
       bewaarVoortgang();
     }
-    const volgende = ev.level + 1;
+    // Het volgende level dat nu te spelen is: na het laatste gewone level (1000)
+    // komt het seizoenshoofdstuk, en dat is er alleen in zijn eigen seizoen.
+    let volgende = ev.level + 1;
+    while (E.levelVan(volgende) && !E.levelZichtbaar(volgende)) volgende++;
     const bestaat = !!E.levelVan(volgende);
+    volgendLevel = bestaat ? volgende : null;    // de knop "Volgende level" staat elders
     $('level-e').textContent = ev.sterren === 3 ? '🏆' : '⭐';
     $('level-klein').textContent = 'Level ' + ev.level + ' gehaald';
     $('level-titel').textContent = ev.sterren === 3 ? 'Perfect gespeeld!' : 'Goed gedaan!';
@@ -806,12 +886,16 @@
       (ev.sterren < 3 ? ' Met meer energie over verdien je drie sterren.' : ' Mooi zuinig gespeeld.');
     $('level-volgende').hidden = !bestaat;
     $('modal-level').hidden = false;
+    // Prestaties nakijken (en vieren) nadat de uitslag in de voortgang staat.
+    if (level && level.hulpGebruikt === 0) telOp('levelZonderHulp');
+    bewaarVoortgang();
+    checkPrestaties();
   }
 
   function bindLevelModal() {
     $('level-volgende').addEventListener('click', function () {
       $('modal-level').hidden = true;
-      if (!startLevel(level.level + 1)) zetTab('levels');
+      if (!volgendLevel || !startLevel(volgendLevel)) zetTab('levels');
     });
     $('level-opnieuw').addEventListener('click', function () {
       $('modal-level').hidden = true;
@@ -904,11 +988,250 @@
 
   // --------------------------------------------------------------- tekenen
 
+  // ------------------------------------------------------- prestaties
+
+  /** Een teller ophogen. De tellers staan in `voortgang.stats` en worden bewaard. */
+  function telOp(naam, hoeveel) {
+    if (!voortgang.stats) voortgang.stats = {};
+    voortgang.stats[naam] = (voortgang.stats[naam] || 0) + (hoeveel === undefined ? 1 : hoeveel);
+  }
+
+  /** Hoeveel sterren er in een hoofdstuk zitten, en hoeveel levels eruit zijn. */
+  function hoofdstukStand(hfst) {
+    const perHfst = LV.niveauPerHoofdstuk;
+    const van = hfst * perHfst + 1;
+    let gehaald = 0;
+    let perfect = true;
+    let sterren = 0;
+    for (let nr = van; nr < van + perHfst; nr++) {
+      const s = voortgang.levelSterren[nr] || 0;
+      if (s > 0) gehaald++;
+      else perfect = false;
+      if (s !== 3) perfect = false;
+      sterren += s;
+    }
+    return { gehaald: gehaald, perfect: perfect && gehaald === perHfst, sterren: sterren };
+  }
+
+  /**
+   * De stand van de speler waar de prestaties naar kijken. Alles wat te herleiden is
+   * (sterren, levels, hoofdstukken) rekenen we hier uit; de rest zijn tellers uit
+   * `voortgang.stats` en het sudokupaneel. Zo hoeft er nergens anders bijgehouden te
+   * worden wat een prestatie is.
+   */
+  function spelerStand() {
+    const stats = voortgang.stats || {};
+    let levelsGehaald = 0;
+    let sterren = 0;
+    let seizoensLevels = 0;
+    Object.keys(voortgang.levelSterren).forEach(function (nr) {
+      const s = voortgang.levelSterren[nr] || 0;
+      if (!s) return;
+      levelsGehaald++;
+      sterren += s;
+      if (E.seizoenVanLevel(Number(nr))) seizoensLevels++;
+    });
+    let hoofdstukkenUit = 0;
+    let perfecteHoofdstukken = 0;
+    if (LV) {
+      LV.hoofdstukken.forEach(function (h, i) {
+        const stand = hoofdstukStand(i);
+        if (stand.gehaald === LV.niveauPerHoofdstuk) hoofdstukkenUit++;
+        if (stand.perfect) perfecteHoofdstukken++;
+      });
+    }
+    const sudoku = window.SmakenlandSudokuView ? window.SmakenlandSudokuView.statistiek() : null;
+    const sudokuMaten = sudoku && sudoku.gewonnenPerMaat
+      ? Object.keys(sudoku.gewonnenPerMaat).filter(function (k) { return sudoku.gewonnenPerMaat[k] > 0; }).length
+      : 0;
+    return {
+      levelsGehaald: levelsGehaald,
+      sterren: sterren,
+      seizoensLevels: seizoensLevels,
+      hoofdstukkenUit: hoofdstukkenUit,
+      perfecteHoofdstukken: perfecteHoofdstukken,
+      versmeltingen: stats.versmeltingen || 0,
+      oogsten: stats.oogsten || 0,
+      levelZonderHulp: stats.levelZonderHulp || 0,
+      muntenVerdiend: stats.muntenVerdiend || 0,
+      klanten: vrij ? (vrij.ordersKlaar || 0) : 0,
+      dagenOpRij: stats.dagenOpRij || 0,
+      dagenGespeeld: stats.dagenGespeeld || 0,
+      sudokuGewonnen: sudoku ? (sudoku.gewonnen || 0) : 0,
+      sudokuFoutloos: sudoku ? (sudoku.gewonnenFoutloos || 0) : 0,
+      sudokuGroot: sudoku && sudoku.gewonnenPerMaat ? (sudoku.gewonnenPerMaat['16'] || 0) : 0,
+      sudokuMaten: sudokuMaten
+    };
+  }
+
+  function renderPrestaties() {
+    const rooster = $('prestaties-rooster');
+    if (!rooster) return;
+    const stand = spelerStand();
+    const lijst = PRE.bereken(stand);
+    const tel = PRE.tel(stand);
+    $('prestaties-teller').textContent = tel.behaald + ' van ' + tel.totaal;
+    $('prestaties-klein').textContent = tel.behaald === tel.totaal
+      ? 'Alles gehaald! Petje af.'
+      : 'Speel verder om de rest te halen';
+    // De emulator-smoketest leest deze regel uit logcat: zo is op een echt toestel
+    // te zien dat het scherm niet alleen opent, maar ook gevuld is.
+    console.info('SmakenlandPrestaties behaald=' + tel.behaald + ' van=' + tel.totaal +
+      ' kaartjes=' + document.querySelectorAll('.prestatie').length);
+    rooster.innerHTML = lijst.map(function (p) {
+      const percentage = Math.round(p.deel * 100);
+      return '<div class="prestatie' + (p.behaald ? ' behaald' : '') + '">' +
+        '<span class="prestatie-e">' + (p.behaald ? p.e : '🔒') + '</span>' +
+        '<div class="prestatie-tekst"><b>' + p.naam + '</b>' +
+          '<small>' + p.tekst + '</small>' +
+          '<span class="prestatie-balk"><i style="width:' + percentage + '%"></i></span>' +
+          '<span class="prestatie-teller">' + p.nu + ' / ' + p.doel + '</span>' +
+        '</div></div>';
+    }).join('');
+  }
+
+  /** Kijkt of er een prestatie bijgekomen is en viert dat met een klein venster. */
+  function checkPrestaties() {
+    const stand = spelerStand();
+    const nieuw = PRE.nieuwe(stand, voortgang.prestaties || []);
+    if (!nieuw.length) return;
+    nieuw.forEach(function (p) { voortgang.prestaties.push(p.id); });
+    bewaarVoortgang();
+    if (tab === 'prestaties') renderPrestaties();
+    toonPrestatie(nieuw[0], nieuw.length);
+  }
+
+  function toonPrestatie(p, aantal) {
+    const oud = document.getElementById('prestatie-viering');
+    if (oud) oud.remove();
+    const doos = document.createElement('div');
+    doos.className = 'prestatie-viering';
+    doos.id = 'prestatie-viering';
+    doos.innerHTML = '<span class="prestatie-e">' + p.e + '</span>' +
+      '<div><small>Prestatie behaald</small><b>' + p.naam + '</b>' +
+      '<small>' + p.tekst + (aantal > 1 ? ' (+' + (aantal - 1) + ' meer)' : '') + '</small></div>';
+    document.body.appendChild(doos);
+    setTimeout(function () { doos.classList.add('weg'); }, 3200);
+    setTimeout(function () { doos.remove(); }, 3800);
+  }
+
+  // ------------------------------------------------------ voortgangscode
+
+  function codeGegevens() {
+    const sudoku = window.SmakenlandSudokuView ? window.SmakenlandSudokuView.statistiek() : null;
+    return {
+      sterren: voortgang.levelSterren,
+      munten: vrij ? vrij.munten : 0,
+      sudokuBeste: (sudoku && sudoku.beste) || {},
+      sudokuGewonnen: (sudoku && sudoku.gewonnen) || 0,
+      prestaties: voortgang.prestaties || [],
+      thema: voortgang.thema || 'licht'
+    };
+  }
+
+  function vulCode() {
+    if (!$('code-uit')) return;
+    $('code-uit').value = VC.maak(codeGegevens());
+  }
+
+  function meldCode(tekst, goed) {
+    const vak = $('code-melding');
+    vak.textContent = tekst;
+    vak.className = 'code-melding' + (goed === undefined ? '' : (goed ? ' goed' : ' fout'));
+  }
+
+  function laadCode() {
+    const uit = VC.lees($('code-in').value);
+    if (!uit.ok) { meldCode(uit.fout, false); return; }
+    const g = uit.gegevens;
+    if (!window.confirm('Je huidige voortgang wordt vervangen door de code. Zeker weten?')) {
+      meldCode('Niets veranderd.', false);
+      return;
+    }
+    voortgang.levelSterren = g.sterren;
+    voortgang.prestaties = g.prestaties;
+    voortgang.thema = g.thema;
+    if (!voortgang.stats) voortgang.stats = {};
+    voortgang.stats.muntenVerdiend = voortgang.stats.muntenVerdiend || 0;
+    bewaarVoortgang();
+    if (vrij) { vrij.munten = g.munten; bewaarVrijNu(); }
+    if (window.SmakenlandSudokuView && window.SmakenlandSudokuView.zetStatistiek) {
+      window.SmakenlandSudokuView.zetStatistiek({
+        beste: g.sudokuBeste, gewonnen: g.sudokuGewonnen,
+        gewonnenPerMaat: {}, gewonnenFoutloos: 0
+      });
+    }
+    zetThema(g.thema);
+    renderAlles();
+    vulCode();
+    meldCode('Gelukt: ' + Object.keys(g.sterren).length + ' levels met sterren en ' + g.munten +
+      ' munten overgenomen.', true);
+  }
+
+  function bindCode() {
+    if (!$('code-kopieer')) return;
+    $('code-laden').addEventListener('click', function () { vulCode(); meldCode('Nieuwe code gemaakt.', true); });
+    $('code-kopieer').addEventListener('click', function () {
+      const vak = $('code-uit');
+      vak.select();
+      let gelukt = false;
+      try { gelukt = document.execCommand('copy'); } catch (e) { gelukt = false; }
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(vak.value).then(function () { meldCode('Code gekopieerd.', true); },
+          function () { meldCode('Kopieer de code hierboven met de hand.', false); });
+        return;
+      }
+      meldCode(gelukt ? 'Code gekopieerd.' : 'Kopieer de code hierboven met de hand.', gelukt);
+    });
+    $('code-terug').addEventListener('click', laadCode);
+  }
+
+  // ------------------------------------------------------------- thema
+
+  function zetThema(thema) {
+    const donker = thema === 'donker';
+    document.documentElement.setAttribute('data-thema', donker ? 'donker' : 'licht');
+    voortgang.thema = donker ? 'donker' : 'licht';
+    if ($('knop-thema')) {
+      $('knop-thema').textContent = donker ? '☀️' : '🌙';
+      $('knop-thema').setAttribute('aria-pressed', donker ? 'true' : 'false');
+      $('knop-thema').setAttribute('title', donker ? 'Terug naar de lichte weergave' : 'Donkere weergave');
+    }
+    try { localStorage.setItem(SLEUTEL_THEMA, voortgang.thema); } catch (e) { /* stil */ }
+    if (window.SmakenlandSudokuView && window.SmakenlandSudokuView.pasMaat) {
+      window.SmakenlandSudokuView.pasMaat();
+    }
+  }
+
+  /** Bij de eerste keer kijken we naar de voorkeur van het toestel. */
+  function eersteThema() {
+    if (voortgang.thema) return voortgang.thema;
+    try {
+      if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) return 'donker';
+    } catch (e) { /* stil */ }
+    return 'licht';
+  }
+
+  /** Houdt bij hoeveel dagen op rij er gespeeld is (voor de prestatie daarvan). */
+  function telDagen() {
+    const vandaag = new Date().toISOString().slice(0, 10);
+    if (!voortgang.stats) voortgang.stats = {};
+    if (voortgang.stats.laatsteDag === vandaag) return;
+    const gisteren = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+    voortgang.stats.dagenOpRij = voortgang.stats.laatsteDag === gisteren
+      ? (voortgang.stats.dagenOpRij || 0) + 1
+      : 1;
+    voortgang.stats.laatsteDag = vandaag;
+    voortgang.stats.dagenGespeeld = (voortgang.stats.dagenGespeeld || 0) + 1;
+    bewaarVoortgang();
+  }
+
   function renderAlles() {
     toonScherm();
     renderKop();
     if (scherm === 'kaart') { renderKaart(); renderHint(); return; }
     if (scherm === 'sudoku') return;
+    if (scherm === 'prestaties') { renderPrestaties(); return; }
     if (scherm === 'level') { tekenLevelPanelen(); tekenDoelen(); }
     else { tekenReisPaneel(); tekenKlantenPaneel(); }
     renderBord();
@@ -934,6 +1257,8 @@
       bewaarVrijNu();
     });
     $('knop-uitleg').addEventListener('click', function () {
+      vulCode();
+      meldCode('');
       const gehaald = Object.keys(voortgang.levelSterren).length;
       const sterren = Object.keys(voortgang.levelSterren)
         .reduce(function (n, k) { return n + voortgang.levelSterren[k]; }, 0);
@@ -947,7 +1272,7 @@
         localStorage.removeItem(SLEUTEL_VRIJ);
         localStorage.removeItem(SLEUTEL_VOORTGANG);
       } catch (e) { /* stil */ }
-      voortgang = { levelSterren: {}, sudoku: {} };
+      voortgang = legeVoortgang();
       vrij = E.createState();
       level = null;
       if (window.SmakenlandSudokuView) window.SmakenlandSudokuView.opnieuw();
@@ -963,6 +1288,12 @@
     });
     $('knop-geluid').textContent = geluid.isAan() ? '🔊' : '🔇';
     $('knop-geluid').setAttribute('aria-pressed', geluid.isAan() ? 'true' : 'false');
+
+    $('knop-thema').addEventListener('click', function () {
+      zetThema(voortgang.thema === 'donker' ? 'licht' : 'donker');
+      bewaarVoortgang();
+    });
+    bindCode();
 
     $('tabs').addEventListener('click', function (e) {
       const knop = e.target.closest ? e.target.closest('.tab') : null;
@@ -1019,6 +1350,14 @@
     bindLevelModal();
     toonAppVersie();
     voortgang = laadVoortgang();
+    // Het thema staat in de voortgang, maar bij een eerste bezoek kijken we naar wat
+    // het toestel zelf wil (donker of licht).
+    try {
+      const bewaardThema = localStorage.getItem(SLEUTEL_THEMA);
+      if (bewaardThema) voortgang.thema = bewaardThema === 'donker' ? 'donker' : 'licht';
+    } catch (e) { /* stil */ }
+    zetThema(eersteThema());
+    telDagen();
     const hadOpslag = laadVrij();
     E.tickEnergie(vrij);
     // Een diepe link (#sudoku, #level12) gaat meteen naar dat scherm; dan is de
@@ -1073,7 +1412,11 @@
         borden: borden,
         sterrenBeeld: sterrenBeeld,
         geluid: geluid,
-        sudokuPaneel: function () { return window.SmakenlandSudokuView; }
+        sudokuPaneel: function () { return window.SmakenlandSudokuView; },
+        checkPrestaties: checkPrestaties,
+        prestaties: function () { return PRE.bereken(spelerStand()); },
+        voortgangscode: function () { return VC.maak(codeGegevens()); },
+        thema: function (nieuw) { if (nieuw) { zetThema(nieuw); bewaarVoortgang(); } return voortgang.thema; }
       };
     }
   }

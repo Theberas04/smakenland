@@ -30,6 +30,7 @@ public final class SchermenTest {
         moet("levels", true);
         moet("sudoku", true);
         moet("vrij", true);
+        moet("prestaties", true);
         moet("level1", true);
         moet("level12", true);
         moet("level800", true);
@@ -47,6 +48,8 @@ public final class SchermenTest {
         moet("sudoku0", false);
         moet("sudoku16x", false);
         moet("sudoku 16", false);
+        moet("prestaties2", false);
+        moet("Prestaties", false);
         moet("level1234", false);
         moet("levels/../etc", false);
         moet("javascript:alert(1)", false);

@@ -23,6 +23,7 @@
   </div>
   <div class="statistieken" id="statistieken"></div>
   <div class="balk-knoppen">
+    <button id="knop-thema" class="rond" type="button" aria-pressed="false" title="Lichte of donkere weergave">🌙</button>
     <button id="knop-geluid" class="rond" type="button" aria-pressed="true" title="Geluid aan of uit">🔊</button>
     <button id="knop-uitleg" class="rond" type="button" title="Uitleg en instellingen">?</button>
   </div>
@@ -32,6 +33,7 @@
   <button class="tab" type="button" data-tab="levels">Levels</button>
   <button class="tab" type="button" data-tab="sudoku">Sudoku</button>
   <button class="tab" type="button" data-tab="vrij">Vrij</button>
+  <button class="tab" type="button" data-tab="prestaties">Prestaties</button>
 </nav>
 
 <main>
@@ -41,7 +43,7 @@
       <span class="kaart-e" id="kaart-e">🗺️</span>
       <div class="kaart-titel">
         <small>Reis door Smakenland</small>
-        <h1>800 levels</h1>
+        <h1 id="kaart-titel">1200 levels</h1>
       </div>
       <div class="kaart-teller">
         <b id="kaart-sterren">0 ⭐</b>
@@ -100,6 +102,22 @@
       </div>
     </div>
   </section>
+
+  <!-- -------------------------------------------------------- prestaties -->
+  <section class="scherm breed paneel" id="scherm-prestaties" aria-label="Prestaties">
+    <div class="kaart-kop">
+      <span class="kaart-e">🏆</span>
+      <div class="kaart-titel">
+        <small>Wat je al hebt bereikt</small>
+        <h1 id="prestaties-titel">Prestaties</h1>
+      </div>
+      <div class="kaart-teller">
+        <b id="prestaties-teller">0 van 0</b>
+        <small id="prestaties-klein">Speel verder om ze te halen</small>
+      </div>
+    </div>
+    <div class="prestaties-rooster" id="prestaties-rooster"></div>
+  </section>
 </main>
 
 <div class="zwevend" id="zwevend" aria-hidden="true"></div>
@@ -135,7 +153,7 @@
     <small>Zo speel je</small>
     <h2 id="uitleg-titel">Smakenland</h2>
     <ul class="uitleg-lijst">
-      <li><b>Levels</b> — 800 levels over 32 hoofdstukken. Elk level heeft vaste doelen en een eigen
+      <li><b>Levels</b> — <span id="uitleg-levels">1200 levels over 48 hoofdstukken</span>. Elk level heeft vaste doelen en een eigen
         energietegoed. Haal de doelen: meer energie over betekent meer ⭐.</li>
       <li><b>Tik op een kist</b> 🧺 💰 — die oogst een item en kost energie. Het item komt op een vrij
         vak; er wordt niets vanzelf op elkaar gelegd. Een kist van niveau 2 of 3 oogst meteen een hogere
@@ -143,9 +161,29 @@
       <li><b>Sleep twee gelijke items op elkaar</b> — ze stapelen; de derde die erbij komt versmelt tot
         één item een tree hoger. <b>4 gelijk</b> geeft 1 hoger + 1 over, <b>5 gelijk</b> geeft er 2.</li>
       <li><b>Drie dezelfde kisten</b> op elkaar geven een kist van niveau 2.</li>
-      <li><b>Sudoku</b> — drie moeilijkheden, met notities, hints, foutenteller en je beste tijd per niveau.</li>
+      <li><b>Sudoku</b> — vijf maten (4×4 tot 16×16) en drie moeilijkheden, met notities, hints,
+        foutenteller en je beste tijd per maat.</li>
+      <li><b>Prestaties</b> — twintig dingen om te halen, van je eerste level tot een sudoku van 16×16
+        zonder fouten.</li>
       <li><b>Vrij</b> — onbeperkt spelen met klanten, munten, de winkel en de reis langs de gebieden.</li>
     </ul>
+    <div class="code-blok">
+      <h3>Voortgangscode</h3>
+      <p class="code-uitleg">Je voortgang staat op dit toestel. Met deze code bewaar je hem of zet je hem
+        over naar een ander toestel: je sterren, munten, sudokutijden, prestaties en je thema. Het losse
+        bord van Vrij spelen gaat niet mee.</p>
+      <textarea id="code-uit" readonly rows="3" aria-label="Jouw voortgangscode"></textarea>
+      <div class="code-knoppen">
+        <button type="button" id="code-kopieer">📋 Kopieer mijn code</button>
+        <button type="button" id="code-laden">🔄 Maak een nieuwe code</button>
+      </div>
+      <textarea id="code-in" rows="3" placeholder="Plak hier een code om je voortgang terug te zetten"
+        aria-label="Een code om te laden"></textarea>
+      <div class="code-knoppen">
+        <button type="button" class="gevaar" id="code-terug">⬇️ Deze code laden</button>
+      </div>
+      <p class="code-melding" id="code-melding" role="status"></p>
+    </div>
     <p class="bewaard" id="bewaard"></p>
     <div class="modal-knoppen">
       <button class="primair" id="uitleg-sluiten" type="button">Spelen</button>
@@ -158,6 +196,8 @@
 <script src="art.js"></script>
 <script src="levels.js"></script>
 <script src="engine.js"></script>
+<script src="prestaties.js"></script>
+<script src="voortgangscode.js"></script>
 <script src="sudoku.js"></script>
 <script src="sudokus.js"></script>
 <script src="app.js"></script>

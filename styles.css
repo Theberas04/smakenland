@@ -12,6 +12,78 @@
   --schaduw: 0 1px 2px rgba(43, 39, 33, .06), 0 8px 24px rgba(43, 39, 33, .06);
   --rond: 12px;
   --tegel: 62px;
+  /* Vlakken en lijntjes die per thema verschillen. Alles wat hieronder staat is
+     licht van kleur; het donkere thema zet ze in één keer om. */
+  --paneel: #fffdf7;
+  --paneel-2: #fdfaf3;
+  --paneel-3: #faf6ec;
+  --tab-uit: #f4eee0;
+  --cel: #fffdf7;
+  --cel-lijn: #e6dfd0;
+  --blok-lijn: #c9bfa9;
+  --kader: 3px solid #4a3a22;
+  --kader-kleur: #4a3a22;
+  --accent-licht: #eaf1e7;
+  --accent-licht-2: #f2f6ef;
+  --rood-licht: #fbeeea;
+  --knop-van: #fffdf6;
+  --knop-tot: #f2ecdc;
+  --knop-tot-2: #f3ecdb;
+  --uit-aan: #ded6c6;
+  --accent-licht-3: #f4f8f1;
+  --inkt-zacht: #4a443b;
+  --muted-2: #5c5347;
+  --tegel-van: #fbf6ea;
+  --tegel-tot: #eee5d2;
+  --tegel-lijn: #d9cbaa;
+  --balk: #e8e0cf;
+  --seizoen-van: #fdf9ff;
+  --seizoen-tot: #f7f1fb;
+  --seizoen-vlag: #efe4f7;
+  --seizoen-vlag-tekst: #6b4a86;
+  --seizoen-lijn: #cbb7d6;
+}
+
+/* Donker thema: dezelfde indeling, andere kleuren. Alleen de waarden hierboven
+   worden omgezet, zodat er geen enkel onderdeel vergeten kan worden. */
+:root[data-thema="donker"] {
+  --papier: #191b1f;
+  --kaart: #23262c;
+  --inkt: #ece7dd;
+  --muted: #a49c8e;
+  --lijn: #3a3e46;
+  --accent: #6cbb85;
+  --accent-donker: #4e9a68;
+  --ster: #e8c65a;
+  --rood: #e58a72;
+  --schaduw: 0 1px 2px rgba(0, 0, 0, .4), 0 8px 24px rgba(0, 0, 0, .35);
+  --paneel: #23262c;
+  --paneel-2: #1f2227;
+  --paneel-3: #212429;
+  --tab-uit: #212429;
+  --cel: #23262c;
+  --cel-lijn: #3a3e46;
+  --blok-lijn: #565c66;
+  --kader-kleur: #0f1114;
+  --accent-licht: #2b3a31;
+  --accent-licht-2: #27332c;
+  --rood-licht: #3a2723;
+  --knop-van: #2b2f36;
+  --knop-tot: #23262c;
+  --knop-tot-2: #292d33;
+  --uit-aan: #3a3e46;
+  --accent-licht-3: #26332a;
+  --inkt-zacht: #d6d0c5;
+  --muted-2: #a49c8e;
+  --tegel-van: #2e3238;
+  --tegel-tot: #262a30;
+  --tegel-lijn: #454a53;
+  --balk: #3a3e46;
+  --seizoen-van: #262130;
+  --seizoen-tot: #221e29;
+  --seizoen-vlag: #362c40;
+  --seizoen-vlag-tekst: #cbb2dd;
+  --seizoen-lijn: #4c3f5a;
 }
 
 * { box-sizing: border-box; }
@@ -20,7 +92,7 @@ html, body { margin: 0; }
 
 body {
   background: var(--papier);
-  background-image: radial-gradient(circle at 20% 0%, #fffdf7 0%, rgba(255, 253, 247, 0) 55%),
+  background-image: radial-gradient(circle at 20% 0%, var(--paneel) 0%, rgba(255, 253, 247, 0) 55%),
     radial-gradient(circle at 85% 15%, #fdf6e6 0%, rgba(253, 246, 230, 0) 45%);
   color: var(--inkt);
   font: 16px/1.5 "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
@@ -54,7 +126,7 @@ small { color: var(--muted); }
   width: 40px; height: 40px; flex: 0 0 auto;
   display: grid; place-items: center;
   font-size: 1.4rem;
-  background: #eaf1e7; border-radius: 11px;
+  background: var(--accent-licht); border-radius: 11px;
 }
 .merk-tekst { display: flex; flex-direction: column; line-height: 1.15; }
 .merk-tekst strong { font-size: 1.05rem; letter-spacing: .01em; }
@@ -64,7 +136,7 @@ small { color: var(--muted); }
 .stat {
   display: flex; align-items: center; gap: .4rem;
   padding: .3rem .6rem;
-  background: #faf6ec;
+  background: var(--paneel-3);
   border: 1px solid var(--lijn);
   border-radius: 999px;
   font-variant-numeric: tabular-nums;
@@ -75,7 +147,7 @@ small { color: var(--muted); }
 .energie-houder { display: flex; flex-direction: column; gap: 2px; min-width: 62px; }
 .balk {
   display: block; height: 5px; width: 62px;
-  background: #e8e0cf; border-radius: 999px; overflow: hidden;
+  background: var(--balk); border-radius: 999px; overflow: hidden;
 }
 .balk.groot { width: 100%; height: 9px; }
 .balk i { display: block; height: 100%; width: 0; background: var(--accent); transition: width .35s ease; }
@@ -130,7 +202,7 @@ main {
 .gebied-kaart h2 { margin: .1rem 0 0; color: #fff; }
 .gebied-e { font-size: 2rem; line-height: 1; }
 
-.verhaal { font-size: .9rem; color: #4a443b; margin: 0 0 .9rem; }
+.verhaal { font-size: .9rem; color: var(--inkt-zacht); margin: 0 0 .9rem; }
 .voortgang-kop { display: flex; justify-content: space-between; font-size: .78rem; color: var(--muted); margin-bottom: .3rem; }
 .voortgang .balk { margin-bottom: .3rem; }
 
@@ -141,7 +213,7 @@ main {
   font-size: .76rem;
   border: 1px solid var(--lijn);
   border-radius: 999px;
-  background: #faf6ec;
+  background: var(--paneel-3);
 }
 .keten-chip.op-slot { opacity: .45; }
 
@@ -182,8 +254,8 @@ main {
      zelf berekent uit de breedte van het bord. */
   height: var(--tegel, 62px);
   border-radius: 10px;
-  background: linear-gradient(#fbf6ea, #eee5d2);
-  border: 1px solid #d9cbaa;
+  background: linear-gradient(var(--tegel-van), var(--tegel-tot));
+  border: 1px solid var(--tegel-lijn);
   box-shadow: inset 0 -1px 0 rgba(255, 255, 255, .7), inset 0 1px 2px rgba(120, 90, 40, .12);
   display: grid; place-items: center;
   user-select: none;
@@ -224,7 +296,7 @@ main {
 .cel.munt .stapel { background: var(--ster); }
 
 .cel.leeg-doel { outline: 2px dashed rgba(63, 122, 79, .45); outline-offset: -3px; }
-.cel.doel { outline: 3px solid var(--accent); outline-offset: -3px; background: #eaf1e7; }
+.cel.doel { outline: 3px solid var(--accent); outline-offset: -3px; background: var(--accent-licht); }
 .cel.gekozen { transform: scale(1.06); box-shadow: 0 0 0 3px var(--ster) inset; z-index: 2; }
 .cel.net-versmelt { animation: pop .45s ease; }
 .cel.net-geoogst { animation: binnenkomst .3s ease; }
@@ -269,9 +341,9 @@ main {
   border: 1px solid var(--lijn);
   border-radius: 10px;
   padding: .6rem .7rem;
-  background: #fdfaf3;
+  background: var(--paneel-2);
 }
-.order.klaar { border-color: rgba(63, 122, 79, .5); background: #f4f8f1; }
+.order.klaar { border-color: rgba(63, 122, 79, .5); background: var(--accent-licht-3); }
 .order-kop { display: flex; justify-content: space-between; align-items: baseline; gap: .5rem; }
 .order-kop b { font-size: .86rem; }
 .order-kop small { font-size: .72rem; }
@@ -284,20 +356,20 @@ main {
 .order-heb.ok { color: var(--accent-donker); font-weight: 700; }
 .order-heb.mis { color: var(--muted); }
 .order-voet { display: flex; align-items: center; justify-content: space-between; gap: .5rem; }
-.order-beloning { font-size: .8rem; color: #5c5347; }
+.order-beloning { font-size: .8rem; color: var(--muted-2); }
 button.lever {
   padding: .32rem .7rem; font-size: .82rem;
   border-radius: 8px; border: 1px solid var(--accent-donker);
   background: var(--accent); color: #fff;
 }
-button.lever:disabled { background: #ded6c6; border-color: #ded6c6; color: #9c9384; cursor: default; }
+button.lever:disabled { background: var(--uit-aan); border-color: var(--uit-aan); color: var(--muted); cursor: default; }
 
 .winkel { display: grid; gap: .5rem; }
 .artikel {
   display: flex; align-items: center; gap: .6rem;
   padding: .45rem .6rem;
   border: 1px solid var(--lijn); border-radius: 10px;
-  background: #fdfaf3;
+  background: var(--paneel-2);
 }
 .artikel .e { font-size: 1.3rem; }
 .artikel .tekst { display: flex; flex-direction: column; line-height: 1.25; flex: 1 1 auto; min-width: 0; }
@@ -309,7 +381,7 @@ button.lever:disabled { background: #ded6c6; border-color: #ded6c6; color: #9c93
   border: 1px solid var(--accent-donker); border-radius: 8px;
   background: var(--accent); color: #fff;
 }
-.artikel button:disabled { background: #ded6c6; border-color: #ded6c6; color: #9c9384; cursor: default; }
+.artikel button:disabled { background: var(--uit-aan); border-color: var(--uit-aan); color: var(--muted); cursor: default; }
 
 /* -------------------------------------------------------------- zwevend */
 
@@ -358,7 +430,7 @@ button.lever:disabled { background: #ded6c6; border-color: #ded6c6; color: #9c93
 }
 .kaart-e { font-size: 2.6rem; display: block; line-height: 1; margin-bottom: .4rem; }
 .kaart h2 { font-size: 1.3rem; }
-.verhaal-kaart p { font-size: .94rem; color: #4a443b; }
+.verhaal-kaart p { font-size: .94rem; color: var(--inkt-zacht); }
 .cadeau { font-size: .86rem; color: var(--accent-donker); font-weight: 600; }
 .uitleg-lijst { padding-left: 1.1rem; font-size: .89rem; }
 .uitleg-lijst li { margin-bottom: .45rem; }
@@ -378,7 +450,7 @@ button.primair {
 button.primair:hover { background: var(--accent-donker); }
 button.gevaar {
   padding: .5rem 1rem; border-radius: 9px;
-  border: 1px solid var(--lijn); background: #fdfaf3; color: var(--rood);
+  border: 1px solid var(--lijn); background: var(--paneel-2); color: var(--rood);
 }
 
 /* ---------------------------------------------------------- smal scherm */
@@ -424,7 +496,7 @@ button.gevaar {
   display: flex;
   gap: .3rem;
   padding: .35rem .6rem 0;
-  background: linear-gradient(#fffdf8 70%, rgba(255, 253, 248, 0));
+  background: linear-gradient(var(--paneel) 70%, rgba(255, 253, 248, 0));
   max-width: 1320px;
   margin: 0 auto;
   width: 100%;
@@ -436,8 +508,8 @@ button.gevaar {
   border: 1px solid var(--lijn);
   border-bottom: none;
   border-radius: 10px 10px 0 0;
-  background: #f4eee0;
-  color: #6c6459;
+  background: var(--tab-uit);
+  color: var(--muted);
 }
 .tab[aria-current="true"] {
   background: var(--kaart);
@@ -520,14 +592,14 @@ main[data-scherm="breed"] { grid-template-columns: minmax(0, 1fr); }
   padding: .5rem .2rem .35rem;
   border-radius: 11px;
   border: 1px solid var(--lijn);
-  background: linear-gradient(#fffdf6, #f3ecdb);
+  background: linear-gradient(var(--knop-van), var(--knop-tot-2));
   box-shadow: 0 1px 0 rgba(255, 255, 255, .8) inset, 0 1px 3px rgba(70, 45, 15, .1);
   font-variant-numeric: tabular-nums;
 }
 .level-knop:hover { border-color: var(--accent); }
 .level-nr { font-size: .95rem; font-weight: 600; }
 .level-knop.gehaald { border-color: rgba(63, 122, 79, .55); background: linear-gradient(#f6fbf3, #eaf3e6); }
-.level-knop.op-slot { opacity: .5; cursor: default; background: #f0ebdf; }
+.level-knop.op-slot { opacity: .5; cursor: default; background: var(--paneel-3); }
 .level-sterren, .sterren-rij, .sterren-groot { display: flex; gap: 1px; }
 .level-sterren { font-size: .62rem; }
 .level-sterren i, .sterren-rij i, .sterren-groot i { color: #ded6c6; font-style: normal; }
@@ -543,10 +615,33 @@ main[data-scherm="breed"] { grid-template-columns: minmax(0, 1fr); }
   font-size: .85rem;
   border: 1px solid var(--lijn);
   border-radius: 9px;
-  background: #fdfaf3;
+  background: var(--paneel-2);
 }
 .knop-rij button:hover { border-color: var(--accent); }
 .level-kop h2 { margin: 0; }
+
+/* Seizoenshoofdstukken: een eigen kleur en een vlaggetje, zodat je ziet dat dit
+   een zijpad is dat maar een deel van het jaar meedoet. */
+.hoofdstuk.seizoen { border-color: var(--seizoen-lijn); background: linear-gradient(var(--seizoen-van), var(--seizoen-tot)); }
+.seizoen-vlag {
+  font-size: .68rem;
+  font-weight: 600;
+  padding: .1rem .45rem;
+  border-radius: 999px;
+  background: var(--seizoen-vlag);
+  color: var(--seizoen-vlag-tekst);
+  vertical-align: middle;
+}
+.seizoen-noot {
+  grid-column: 1 / -1;
+  border: 1px dashed var(--lijn);
+  border-radius: 12px;
+  padding: .7rem .9rem;
+  background: var(--paneel-2);
+}
+.seizoen-lijst { display: grid; gap: .3rem; margin-top: .4rem; }
+.seizoen-regel { font-size: .82rem; color: var(--muted); }
+.seizoen-regel b { color: var(--inkt); }
 
 /* ============================================================= sudoku */
 
@@ -562,7 +657,7 @@ main[data-scherm="breed"] { grid-template-columns: minmax(0, 1fr); }
   padding: .4rem .8rem;
   border-radius: 999px;
   border: 1px solid var(--lijn);
-  background: #fdfaf3;
+  background: var(--paneel-2);
   font-size: .88rem;
 }
 .niveaus button[aria-pressed="true"] {
@@ -585,8 +680,8 @@ main[data-scherm="breed"] { grid-template-columns: minmax(0, 1fr); }
   display: grid;
   grid-template-columns: repeat(9, 1fr);
   gap: 0;
-  background: #fffdf7;
-  border: 3px solid #4a3a22;
+  background: var(--paneel);
+  border: 3px solid var(--kader-kleur);
   border-radius: 8px;
   padding: 4px;
   width: 100%;
@@ -602,15 +697,15 @@ main[data-scherm="breed"] { grid-template-columns: minmax(0, 1fr); }
   font-weight: 500;
   color: #2a5f9e;
   background: transparent;
-  border: 1px solid #e6dfd0;
+  border: 1px solid var(--cel-lijn);
   border-radius: 0;
   padding: 0;
   font-variant-numeric: tabular-nums;
 }
 .sudoku-cel.geven { color: var(--inkt); font-weight: 700; }
-.sudoku-cel.gekozen { background: #eaf1e7; box-shadow: inset 0 0 0 2px var(--accent); }
-.sudoku-cel.zelfde { background: #f2f6ef; }
-.sudoku-cel.fout { color: var(--rood); background: #fbeeea; }
+.sudoku-cel.gekozen { background: var(--accent-licht); box-shadow: inset 0 0 0 2px var(--accent); }
+.sudoku-cel.zelfde { background: var(--accent-licht-2); }
+.sudoku-cel.fout { color: var(--rood); background: var(--rood-licht); }
 .sudoku-cel.botsing { color: var(--rood); }
 .sudoku-cel .notitie {
   display: grid;
@@ -624,8 +719,8 @@ main[data-scherm="breed"] { grid-template-columns: minmax(0, 1fr); }
 /* Dikkere lijnen tussen de blokken. Welke vakken dat zijn hangt van de maat af
    (3 bij 3, 2 bij 3, 4 bij 4), dus zet sudoku-view.js de klassen; niet hier met
    nth-child, want dat werkt alleen voor 9 bij 9. */
-.sudoku-cel.blok-rechts { border-right-width: 2px; border-right-color: #c9bfa9; }
-.sudoku-cel.blok-onder { border-bottom-width: 2px; border-bottom-color: #c9bfa9; }
+.sudoku-cel.blok-rechts { border-right-width: 2px; border-right-color: var(--blok-lijn); }
+.sudoku-cel.blok-onder { border-bottom-width: 2px; border-bottom-color: var(--blok-lijn); }
 
 /* Per maat: hoe groot de tekens staan. Een bord van 16 bij 16 heeft op een telefoon
    vakjes van nog geen 20 pixels, daar past alleen kleine tekst in. */
@@ -647,7 +742,7 @@ main[data-scherm="breed"] { grid-template-columns: minmax(0, 1fr); }
   font-size: 1.15rem;
   border: 1px solid var(--lijn);
   border-radius: 10px;
-  background: linear-gradient(#fffdf6, #f2ecdc);
+  background: linear-gradient(var(--knop-van), #f2ecdc);
   font-variant-numeric: tabular-nums;
 }
 /* Meer vakjes betekent meer knoppen: die mogen kleiner en over twee rijen vallen,
@@ -667,7 +762,7 @@ main[data-scherm="breed"] { grid-template-columns: minmax(0, 1fr); }
   font-size: .82rem;
   border: 1px solid var(--lijn);
   border-radius: 9px;
-  background: #fdfaf3;
+  background: var(--paneel-2);
 }
 .sudoku-knoppen button[aria-pressed="true"] { background: var(--accent); color: #fff; border-color: var(--accent-donker); }
 .sudoku-status { font-size: .82rem; color: var(--muted); margin: 0; }
@@ -679,3 +774,92 @@ main[data-scherm="breed"] { grid-template-columns: minmax(0, 1fr); }
   .levels { grid-template-columns: repeat(auto-fill, minmax(58px, 1fr)); }
   .kaart-kop { flex-wrap: wrap; }
 }
+
+/* ========================================================= prestaties */
+
+.prestaties-rooster {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: .7rem;
+}
+.prestatie {
+  display: flex;
+  gap: .7rem;
+  align-items: flex-start;
+  border: 1px solid var(--lijn);
+  border-radius: 12px;
+  padding: .7rem .8rem;
+  background: var(--paneel-2);
+  opacity: .72;
+}
+.prestatie.behaald { opacity: 1; background: var(--accent-licht-3); border-color: var(--accent); }
+.prestatie-e { font-size: 1.7rem; line-height: 1; }
+.prestatie-tekst { display: flex; flex-direction: column; gap: .15rem; min-width: 0; flex: 1 1 auto; }
+.prestatie-tekst b { font-size: .92rem; }
+.prestatie-tekst small { font-size: .76rem; }
+.prestatie-balk {
+  display: block;
+  height: 5px;
+  border-radius: 999px;
+  background: var(--balk);
+  overflow: hidden;
+  margin-top: .25rem;
+}
+.prestatie-balk i { display: block; height: 100%; background: var(--accent); }
+.prestatie-teller { font-size: .72rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+.prestatie-viering {
+  position: fixed;
+  left: 50%;
+  bottom: 1.2rem;
+  transform: translateX(-50%);
+  z-index: 90;
+  display: flex;
+  align-items: center;
+  gap: .6rem;
+  max-width: min(92vw, 420px);
+  padding: .6rem .9rem;
+  border-radius: 14px;
+  border: 1px solid var(--accent);
+  background: var(--kaart);
+  box-shadow: var(--schaduw);
+  animation: prestatie-in .35s ease;
+}
+.prestatie-viering.weg { opacity: 0; transition: opacity .5s ease; }
+.prestatie-viering .prestatie-e { font-size: 1.8rem; }
+.prestatie-viering div { display: flex; flex-direction: column; line-height: 1.25; }
+.prestatie-viering b { font-size: .95rem; }
+.prestatie-viering small { font-size: .75rem; }
+@keyframes prestatie-in { from { transform: translate(-50%, 12px); opacity: 0; } to { transform: translate(-50%, 0); opacity: 1; } }
+
+/* ==================================================== voortgangscode */
+
+.code-blok {
+  border-top: 1px solid var(--lijn);
+  margin-top: 1rem;
+  padding-top: .6rem;
+}
+.code-uitleg { font-size: .82rem; color: var(--muted); margin: 0 0 .5rem; }
+.code-blok textarea {
+  width: 100%;
+  font: .74rem/1.4 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  padding: .5rem;
+  border: 1px solid var(--lijn);
+  border-radius: 9px;
+  background: var(--paneel-2);
+  color: var(--inkt);
+  resize: vertical;
+  margin-bottom: .4rem;
+}
+.code-knoppen { display: flex; gap: .4rem; flex-wrap: wrap; margin-bottom: .6rem; }
+.code-knoppen button {
+  flex: 1 1 45%;
+  padding: .45rem .6rem;
+  font-size: .82rem;
+  border: 1px solid var(--lijn);
+  border-radius: 9px;
+  background: var(--paneel-2);
+}
+.code-melding { font-size: .8rem; margin: .1rem 0 0; min-height: 1.1em; color: var(--muted); }
+.code-melding.goed { color: var(--accent); }
+.code-melding.fout { color: var(--rood); }

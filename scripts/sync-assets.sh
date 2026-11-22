@@ -12,7 +12,8 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 DEST="$ROOT/android/app/src/main/assets/www"
 
 BESTANDEN=(
-  index.html styles.css content.js art.js levels.js engine.js sudoku.js sudokus.js app.js sudoku-view.js
+  index.html styles.css content.js art.js levels.js engine.js prestaties.js voortgangscode.js
+  sudoku.js sudokus.js app.js sudoku-view.js
   sw.js manifest.webmanifest
 )
 ICONEN=(icons/icon-192.png icons/icon-512.png icons/icon-512-maskable.png)

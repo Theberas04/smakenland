@@ -368,6 +368,84 @@
     return { ok: true, events: events };
   }
 
+  // ------------------------------------------------------------- seizoenen
+
+  // De seizoenshoofdstukken zijn een zijpad: de app laat alleen de hoofdstukken van
+  // het seizoen zien dat het op dat moment is. De maanden staan erbij zodat dit te
+  // toetsen is (een functie met een datum erin, geen blik op de klok middenin).
+  const SEIZOENEN = {
+    lente: { naam: 'Lente', maanden: [3, 4, 5], e: '🌷' },
+    zomer: { naam: 'Zomer', maanden: [6, 7, 8], e: '🌞' },
+    herfst: { naam: 'Herfst', maanden: [9, 10, 11], e: '🍂' },
+    winter: { naam: 'Winter', maanden: [12, 1, 2], e: '❄️' }
+  };
+
+  /** Welk seizoen hoort bij een maand (1 = januari)? */
+  function seizoenVanMaand(maand) {
+    for (const sleutel of Object.keys(SEIZOENEN)) {
+      if (SEIZOENEN[sleutel].maanden.indexOf(maand) >= 0) return sleutel;
+    }
+    return null;
+  }
+
+  /** Welk seizoen is het op deze datum? Zonder datum: nu. */
+  function seizoenNu(datum) {
+    const d = datum || new Date();
+    return seizoenVanMaand(d.getMonth() + 1);
+  }
+
+  function hoofdstukVan(nr) {
+    const lv = levelVan(nr);
+    if (!lv || !LEVELS) return null;
+    return LEVELS.hoofdstukken[lv.hfst] || null;
+  }
+
+  /** Het seizoen van het hoofdstuk waarin dit level ligt, of null. */
+  function seizoenVanLevel(nr) {
+    const h = hoofdstukVan(nr);
+    return h ? (h.seizoen || null) : null;
+  }
+
+  /** Is dit level in dit seizoen te zien? Gewone levels altijd. */
+  function levelZichtbaar(nr, seizoen) {
+    const eigen = seizoenVanLevel(nr);
+    if (!eigen) return true;
+    const nu = seizoen === undefined ? seizoenNu() : seizoen;
+    return eigen === nu;
+  }
+
+  /** De hoofdstukken die nu te zien zijn: alles behalve de andere seizoenen. */
+  function zichtbareHoofdstukken(seizoen) {
+    if (!LEVELS) return [];
+    const nu = seizoen === undefined ? seizoenNu() : seizoen;
+    const uit = [];
+    LEVELS.hoofdstukken.forEach(function (h, i) {
+      if (h.seizoen && h.seizoen !== nu) return;
+      uit.push({ hfst: i, hoofdstuk: h });
+    });
+    return uit;
+  }
+
+  /** Hoeveel levels er nu te zien zijn (voor "x van y gehaald"). */
+  function aantalZichtbareLevels(seizoen) {
+    return zichtbareHoofdstukken(seizoen).length * (LEVELS ? LEVELS.niveauPerHoofdstuk : 0);
+  }
+
+  /** De seizoenen die nu niet meedoen, met hun hoofdstukken. */
+  function andereSeizoenen(seizoen) {
+    if (!LEVELS) return [];
+    const nu = seizoen === undefined ? seizoenNu() : seizoen;
+    return Object.keys(SEIZOENEN).filter(function (s) { return s !== nu; }).map(function (s) {
+      return {
+        seizoen: s, naam: SEIZOENEN[s].naam, e: SEIZOENEN[s].e,
+        hoofdstukken: LEVELS.hoofdstukken
+          .map(function (h, i) { return { hfst: i, hoofdstuk: h }; })
+          .filter(function (x) { return x.hoofdstuk.seizoen === s; })
+          .map(function (x) { return x.hoofdstuk.naam; })
+      };
+    });
+  }
+
   // ---------------------------------------------------------------- levels
 
   function levels() { return LEVELS; }
@@ -462,11 +540,25 @@
     return Math.max(0, HULP_PER_LEVEL - hulpGebruikt(state));
   }
 
-  /** Is dit level te openen? Level 1 altijd, daarna pas na het vorige. */
-  function levelOpen(voortgang, nr) {
+  /**
+   * Is dit level te openen? Level 1 altijd, daarna pas na het vorige.
+   *
+   * Seizoenshoofdstukken zijn een zijpad: hun eerste level staat open zodra het
+   * seizoen er is, ook als de speler het hoofdpad nog niet uit is. Buiten het
+   * seizoen is zo'n level niet te openen (de app laat het dan ook niet zien).
+   * `seizoen` is er om te kunnen toetsen; zonder opgave is het het echte seizoen.
+   */
+  function levelOpen(voortgang, nr, seizoen) {
+    const nu = seizoen === undefined ? seizoenNu() : seizoen;
     if (nr <= 1) return true;
-    const vorige = voortgang && voortgang[nr - 1];
-    return !!vorige;
+    const perHfst = LEVELS ? LEVELS.niveauPerHoofdstuk : 25;
+    const eersteVanHoofdstuk = (nr - 1) % perHfst === 0;
+    const eigen = seizoenVanLevel(nr);
+    if (eigen) {
+      if (eigen !== nu) return false;              // buiten het seizoen: dicht
+      if (eersteVanHoofdstuk) return true;         // zijpad begint open
+    }
+    return !!(voortgang && voortgang[nr - 1]);
   }
 
   // --------------------------------------------------------------- gebied
@@ -556,6 +648,10 @@
     checkGebied: checkGebied, volgendGebied: volgendGebied, koop: koop,
     levels: levels, levelVan: levelVan, startLevel: startLevel, levelSterren: levelSterren,
     levelKlaar: levelKlaar, levelOpen: levelOpen, hulp: hulp, hulpOver: hulpOver,
+    SEIZOENEN: SEIZOENEN, seizoenVanMaand: seizoenVanMaand, seizoenNu: seizoenNu,
+    hoofdstukVan: hoofdstukVan, seizoenVanLevel: seizoenVanLevel, levelZichtbaar: levelZichtbaar,
+    zichtbareHoofdstukken: zichtbareHoofdstukken, aantalZichtbareLevels: aantalZichtbareLevels,
+    andereSeizoenen: andereSeizoenen,
     HULP_PER_LEVEL: HULP_PER_LEVEL, HULP_ENERGIE: HULP_ENERGIE,
     serialiseer: serialiseer, laad: laad,
     vrijeCell: vrijeCell
