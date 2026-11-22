@@ -73,18 +73,37 @@ jobs:
             tests/java/SchermenTest.java
           java -cp "$RUNNER_TEMP/javatest" SchermenTest
           # En meteen tegen een ECHT antwoord van de GitHub-API: laat de app-code zelf
-          # de nieuwste uitgave lezen. Lukt het ophalen niet (storing of geen netwerk),
-          # dan slaan we het over in plaats van de bouw te laten klappen.
-          if curl -sS --max-time 20 -H "Accept: application/vnd.github+json" \
+          # de nieuwste uitgave lezen. Twee dingen maken dit stevig:
+          #   * het token erbij, want zonder token is de limiet van de API snel op
+          #     (een uur lang 60 verzoeken per adres) en dan komt er geen uitgave terug;
+          #   * -f, zodat een fout antwoord (403/404) in de tak hieronder valt in plaats
+          #     van als "geslaagd" te gelden en de Java-controle te laten klappen.
+          # Van de uitgavenlijst pakken we de nieuwste MET een APK-bestand: een uitgave
+          # die net is aangemaakt heeft heel even geen bijlage, en daarop hoort de bouw
+          # niet te stranden.
+          if curl -sS -f --max-time 20 -H "Accept: application/vnd.github+json" \
+               -H "Authorization: Bearer ${{ github.token }}" \
                -H "User-Agent: Smakenland-app" \
-               https://api.github.com/repos/Theberas04/smakenland/releases/latest \
-               -o "$RUNNER_TEMP/uitgave.json"; then
-            javac -d "$RUNNER_TEMP/javatest" \
-              android/app/src/main/java/nl/werdens/smakenland/Updates.java \
-              tests/java/EchteUitgave.java
-            java -cp "$RUNNER_TEMP/javatest" EchteUitgave "$RUNNER_TEMP/uitgave.json"
+               https://api.github.com/repos/Theberas04/smakenland/releases \
+               -o "$RUNNER_TEMP/uitgaven.json"; then
+            if node -e '
+              const fs = require("fs");
+              const lijst = JSON.parse(fs.readFileSync(process.argv[1], "utf8"));
+              const metApk = Array.isArray(lijst)
+                && lijst.find(function (u) { return (u.assets || []).some(function (a) { return /\.apk$/.test(a.name); }); });
+              if (!metApk) { process.exit(2); }
+              fs.writeFileSync(process.argv[2], JSON.stringify(metApk));
+              console.log("nieuwste uitgave met een APK: " + metApk.tag_name);
+            ' "$RUNNER_TEMP/uitgaven.json" "$RUNNER_TEMP/uitgave.json"; then
+              javac -d "$RUNNER_TEMP/javatest" \
+                android/app/src/main/java/nl/werdens/smakenland/Updates.java \
+                tests/java/EchteUitgave.java
+              java -cp "$RUNNER_TEMP/javatest" EchteUitgave "$RUNNER_TEMP/uitgave.json"
+            else
+              echo "let op: nog geen uitgave met een APK-bestand; de echtheidscontrole is overgeslagen"
+            fi
           else
-            echo "let op: de GitHub-API was niet bereikbaar; de echtheidscontrole is overgeslagen"
+            echo "let op: de GitHub-API gaf geen goed antwoord; de echtheidscontrole is overgeslagen"
           fi
 
       - name: Ondertekeningssleutel klaarzetten
